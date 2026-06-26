@@ -12,6 +12,228 @@
 
 ---
 
+## 可提升工作（Roadmap，未实现）
+
+按优先级记录尚未落地、但有价值的改进方向：
+
+- **按距离分层采样监督**：当前 `build_distance_samples` 对节点对**均匀随机抽样**，导致距离标签集中在
+  中等距离、极近/极远样本稀少；而评估指标 `relative_error` 对小距离最敏感。可加一个可选开关：
+  把可达距离分档（如按分位数），每档抽相近数量，使各距离段训练更均衡。默认保留现有均匀采样以兼容。
+- **highway 分解强基线**：`baseline.py` 补 `access(s)+highway(入口s,入口t)+access(t)` 这条非学习上界，
+  正式回应"GNN 相对分解本身有多少增益"（README Q4）。
+- **多种子 / 跨图评估**：固定配置多种子重复报均值±方差；多张地形交叉验证（当前单种子单次）。
+- **对称化输出**：强制 `d̃(s,t)=d̃(t,s)`（对称读出），并报告对称性违反度（README Q5）。
+- **分区/高速可视化**：把分区盒子 + 高速点画成 PNG，便于审查与论文配图（当前仅 CSV 审查文件）。
+- **Steiner 点 / WSPD spanner / Snell 加权测地距离**：贴近 EAR-Oracle 的更精确监督（依赖几何，较重）。
+
+---
+
+## [v0.9.0] - 2026-06-26 — 记录训练耗时（预处理 / 每轮 / 总时长）
+
+### 动机
+此前只有运行时间戳命名，没有任何耗时记录，无法判断"等待主要花在 CPU 预处理还是 GPU 训练"。
+租 GPU 做实验时这点很关键。
+
+### 改动
+**`main.py`**
+- 预处理（`build_pipeline_inputs_cached`）计时：打印 `preprocess(分区+高速/缓存) done in X.XXs`。
+- 每轮训练日志追加 `time=XX.XXs`（单轮耗时）。
+- 训练结束打印 `timing: preprocess=...s, train=...s, best_epoch=...`。
+- 结果文件 `outputs/results/<run>.txt` 增加字段：`best_epoch / preprocess_seconds / train_seconds`。
+
+**`docs/训练文档.md`**：示例图规模从 1600 点改为 **900 点（`--grid 30`，`terrain_grid_30x30_900v.off`）**，
+新增「关于耗时记录」一节，顶点编号上限与推理 `--s/--t` 同步调整。
+
+### 接口/参数变化
+- 无新增 CLI 参数；仅新增日志与结果文件字段（向后兼容）。
+
+### 兼容性
+- 不影响训练逻辑、模型结构与 checkpoint；纯计时打点 + 多写几个结果字段。
+
+### 验证
+- `main.py` `ast` 解析通过。计时用 `time.time()` 差值，无外部依赖。
+
+---
+
+## [v0.8.0] - 2026-06-26 — 高速上下文磁盘缓存 + 审查文件导出
+
+### 动机
+分区 + 每个高速节点的全图 Dijkstra 预处理在每次训练/推理启动时都重算，大图要等数十秒；
+反复实验时纯属浪费。同时需要可供**审查**的分区/高速结构记录（可追溯性）。
+
+### 改动
+**`build_highway.py`**
+- 新增 `build_pipeline_inputs_cached(...)`：按 `图名 + .off内容指纹 + max_depth/capacity/模式/feature_dim` 作缓存键，
+  首次计算后用 `torch.save` 存 `outputs/cache/<key>.pt`（CPU 张量，cpu/gpu 通用），命中则直接加载、
+  跳过分区与 Dijkstra 预处理。`cache_dir=None` 时禁用。
+- 新增审查导出：`<key>_partition.csv`（node, leaf_id, is_highway, x, y）与
+  `<key>_highway_edges.csv`（高速边还原成全局 id，无向去重）。
+
+**`main.py` / `infer_distance.py`**
+- 改用 `build_pipeline_inputs_cached`；新增 `--cache_dir`（默认 `outputs/cache`，按项目根解析）与 `--no_cache`。
+
+**`.gitignore`**：忽略 `outputs/cache/*.pt`、`outputs/cache/*.csv`（派生物）。
+
+### 接口/参数变化
+- `main.py` / `infer_distance.py` 新增 `--cache_dir`、`--no_cache`。
+
+### 兼容性
+- 模型结构与 checkpoint 不变；缓存仅是预处理结果的存档，命中与否产出的上下文一致（确定性）。
+- 缓存键含四叉树参数与 feature_dim，参数变更自动用不同缓存，不会读到过期结果。
+
+### 验证
+- 8 个 `.py` 全部 `ast` 解析通过；`FeatureBuilder` 及上下文均为可 pickle 的纯数据。
+- ⚠️ 缓存读写依赖 torch，本机未跑；GPU/有 torch 环境下首跑会生成 `.pt` 与两份审查 CSV，二次跑应打印
+  `[cache] 命中...`。
+
+### 已知局限 / 后续 TODO
+- 缓存键含 `.off` 内容指纹（md5 前 8 位）+ 四叉树参数 + feature_dim，**同名但内容不同的图不会误命中**；
+  改图/改参都会自动用新缓存。
+- 可视化（把分区/高速画成 PNG）尚未做，目前审查靠 CSV。
+
+---
+
+## [v0.7.0] - 2026-06-26 — 训练支持 mini-batch（提升 GPU 利用率）
+
+### 动机
+此前训练是**逐样本**前向/反向/优化器步进，GPU 利用率低、租用 GPU 收益有限。本版本引入 mini-batch：
+批内把多个样本的子图与（复制的）高速图合并成一张大图做**一次**消息传递与优化器步进。
+
+### 改动
+**`gnn.py`**
+- `InnerGNN.forward_batch(x_list, edge_index_list, query_idx_list)`：把 B 个子图按节点偏移合并成
+  一张不连通大图，单次消息传递后按偏移后的查询索引取出各样本嵌入，返回 `[B, out]`。
+- `InterGNN.forward_batch(x_highway, edge_index_highway, s_global_feats, t_global_feats, s_connect_list, t_connect_list)`：
+  共享高速图复制 B 份、各加 s/t 两个虚拟节点（特征由 `global_encoder` 批量编码），合并成大图单次消息传递，
+  返回各样本 s/t 虚拟节点拼接 `[B, 2*out]`。
+- `DistancePredictor.forward_batch(samples)`：组合上面两段 + 批量拼接 highway 距离特征 → Fusion MLP → `[B]`。
+- 原单样本 `forward` 保留不变（推理与 `--batch_size 1` 仍走原语义）。
+
+**`model.py`**：`DistanceRegressionNet.forward_batch` 透传到 backbone。
+
+**`main.py`**
+- 新增 `--batch_size`（默认 16；`1` = 旧逐样本行为）。
+- `run_distance_epoch` 改为按 `batch_size` 分块：每块构造各样本输入 → `forward_batch` 单次前向 →
+  批损失 → 一次 `backward`/`optimizer.step()`；指标仍在全量预测上汇总。
+
+### 接口/参数变化
+- `main.py` 新增 `--batch_size`（默认 16）。
+- 模型新增方法 `forward_batch`（`gnn.DistancePredictor` 与 `model.DistanceRegressionNet`）。
+
+### 兼容性
+- 模型结构与 checkpoint **不变**；`forward_batch` 与单样本 `forward` 共享同一套权重。
+- `--batch_size 1` 复现旧逐样本更新语义；`infer_distance.py` 仍用单样本 `forward`，不受影响。
+
+### 验证
+- 8 个 `.py` 全部 `ast` 解析通过。
+- ⚠️ **端到端未在本机执行**：本机无 `torch / torch_geometric`。请在 GPU 机上做冒烟测试确认：
+  ```bash
+  python main.py --off_file sample_terrain.off --max_depth 2 --capacity 64 \
+    --distance_samples 40 --num_epoch 1 --batch_size 8 --device cuda
+  ```
+
+### 已知局限 / 后续 TODO
+- InterGNN 批量化对每个样本复制一份高速图（节点数 ≈ B×K），batch 过大时显存上升；K 大时建议适中 batch。
+- 启动预处理（四叉树分区 + 边界点 Dijkstra）仍为纯 CPU，不随 GPU/batch 加速。
+- `baseline.py` 暂未含 highway 分解强基线；多种子方差、跨图验证仍待补。
+
+---
+
+## [v0.6.0] - 2026-06-26 — 工程目录集成化（data / outputs / docs）
+
+### 动机
+此前源码、数据、产物、文档全平铺在根目录，难以查找、产物无固定归处。本版本按职责分目录，
+让「每个生成文件都有地方存放和查找」，同时保持源码在根目录、运行命令基本不变。
+
+### 改动
+**目录结构**（源码 `.py` 仍在根目录，命令不变）：
+- `data/`：输入地形。`data/sample_terrain.off`、`data/sample_terrains/`（真实地形）、
+  `data/generated/`（`generate_terrain.py` 输出）。
+- `outputs/`：运行产物。`outputs/models/`(.pt) / `outputs/results/`(指标 + `<run>_test_pairs.csv` + 基线) / `outputs/params/`(参数快照)。
+- `docs/`：`项目说明.md` / `流程文档.md` / `CHANGELOG.md` / `note.txt`（`README.md` 留在根目录）。
+
+**路径解析（关键）**：`main.py` / `infer_distance.py` / `baseline.py` / `generate_terrain.py`
+统一以**脚本所在目录（项目根）**为基准解析路径——
+- `--file_folder` 默认 `data`，故 `--off_file sample_terrain.off` 解析为 `data/sample_terrain.off`；
+- 训练产物固定写入 `outputs/{models,results,params}/`；
+- `generate_terrain.py` 默认输出 `data/generated/`。
+因此**在任意工作目录运行都能正确定位**，不再依赖当前目录。
+
+**`.gitignore`**：忽略路径同步为 `outputs/**`、`data/generated/*.off`。
+
+### 接口/参数变化
+- `--file_folder` 默认 `./` → `data`（main/infer/baseline）；`generate_terrain.py --out_dir` 默认 `data/generated`。
+- 训练产物目录 `saved_models|saved_results|saved_params/` → `outputs/{models,results,params}/`。
+
+### 兼容性
+- 模型结构与 checkpoint **不受影响**；训练/推理逻辑不变，仅路径默认值与产物位置变化。
+- 旧的 `saved_*` 目录内容已迁移至 `outputs/`；历史 `saved_params/` 快照现位于 `outputs/params/`。
+- 云端命令 `python main.py --off_file sample_terrain.off ...` 仍可直接用（解析到 `data/`）。
+
+### 验证
+- 8 个 `.py` 全部 `ast` 解析通过。
+- `generate_terrain.py` 从子目录运行，正确输出到 `data/generated/`（root-relative 解析生效）。
+- 全局检索确认源码与文档已无遗留旧路径引用（历史 changelog 条目保留原貌）。
+
+### 已知局限 / 后续 TODO
+- `build_highway.py` CLI 仍按当前目录解析 `--off_file`（用 `data/sample_terrain.off`），未做 root-relative。
+- `baseline.py` 暂未含 highway 分解强基线；多种子方差、跨图验证仍待补。
+
+---
+
+## [v0.5.0] - 2026-06-26 — 新增地形生成器与非学习基线 + 仓库瘦身
+
+### 动机
+1. 云端实验用的规则网格地形（`terrain_grid_NxN`）没有同步到仓库，需要可复现的生成脚本。
+2. 缺少非学习基线，无法回答「GNN 比简单方法好多少」（README Q4）。
+3. 仓库里残留历史子图匹配/计数路线的文件，与 distance 主线无关，影响可读性。
+
+### 改动
+**新增 `generate_terrain.py`**（仅依赖 numpy）：生成规则网格地形 `.off`，带真实起伏（山丘/山谷/带缺口山脊），
+使「图最短路 ≠ 直线距离」，从而适配 highway 分解算法。`--grid` 支持一次生成多种规模，
+`--mode {flat,smooth,mountains,ridges,mixed}` 控制高度场，命名与云端一致（`terrain_grid_NxN_<V>v.off`）。
+
+**新增 `baseline.py`**（纯 Python，无需 torch）：在 `main.py` 导出的 test 点对文件上评估三个朴素基线
+（`mean_constant` 最优常数 / `euclidean_2d` / `euclidean_3d`），直接与模型的 `test_*` 指标并排比较。
+test 集**唯一来源是导出的点对文件**（`--test_pairs_file` 必填），不依赖种子复现。
+
+**`main.py`**：切分后导出 test 查询点对 + 真实距离到 `saved_results/<run_name>_test_pairs.csv`
+（最小版 `s,t,true_distance`），用于审计与基线对齐，消除跨环境复现 test 集的隐患。
+
+**全部 `.py` 文件**：在首行加一句用途注释，便于一眼区分主线/历史。
+
+**仓库瘦身（删除历史文件与死代码）**：删除 `filtering.py`、`graph_coarsen.py`、`graph_operation.py`、
+`viz_grf.py`、`utils.py`（历史子图匹配/计数与 `.grf` 路线，主线不依赖）；
+连带从 `preprocess.py` 移除仅被 `graph_coarsen` 使用的死代码类 `SampleSubgraph`
+及其对 `graph_operation.graph_depth` 的导入。
+进一步清理 `model.py` 的历史计数网络类（`BasicCountNet`/`AttentiveCountNet`/`WasserstainDiscriminator`/
+`QErrorLoss`/`QErrorLikeLoss`/`CoarsenNet`），以及 `gnn.py` 中仅被它们使用的 `GIN`/`GAT` 类；
+`model.py` 现仅保留 `DistanceRegressionNet` + `compute_distance_metrics`，`gnn.py` 仅保留三段式网络。
+
+### 接口/参数变化
+- 新增脚本 `generate_terrain.py`、`baseline.py`（均带 CLI）。
+- `main.py` 新增产物 `saved_results/<run_name>_test_pairs.csv`（不改变任何训练逻辑）。
+- `preprocess.py` 不再导出 `SampleSubgraph`、不再 import `graph_operation`。
+- `model.py` 不再导出历史计数网络类；`gnn.py` 不再导出 `GIN`/`GAT`（主线无引用）。
+
+### 兼容性
+- 模型结构与 checkpoint **不受影响**；训练/推理行为不变。
+- 若有外部代码引用已删除的历史模块或 `SampleSubgraph`，需自行移除（主线无引用）。
+
+### 验证
+- 全部保留的 `.py`（baseline/build_highway/generate_terrain/gnn/infer_distance/main/model/preprocess）
+  通过 `ast` 解析。
+- `generate_terrain.py` 本地生成 100/400 点 `.off`，经 `build_highway.py` 读取分区成功
+  （400 点 → 16 叶、204 高速点，与云端结构一致）。
+- `baseline.py` 本地（无 torch）在小型 test 点对文件上跑通，三个基线指标输出正常。
+- 全局搜索确认无任何残留文件引用已删除模块。
+
+### 已知局限 / 后续 TODO
+- `baseline.py` 暂未含 highway 分解强基线（`access+highway+access`），后续按需补充以正式回应审稿。
+- 分区每次训练重算（无缓存）；多种子方差、跨图验证仍待补。
+
+---
+
 ## [v0.4.1] - 2026-06-12 — Inner-GNN 改吃四叉树分区子图（落地论文 G1~G4）
 
 ### 动机

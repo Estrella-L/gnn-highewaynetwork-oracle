@@ -3,8 +3,9 @@
 基于图神经网络的**节点对最短路距离回归**项目。给定图上两个节点 `(s, t)`，
 用「highway（高速骨架）分解」的三段式 GNN 预测它们之间的近似最短路距离 `d̃(s, t)`。
 
-> 当前可运行主线只有 distance 任务。仓库中的 `Filtering / CoarsenNet / BasicCountNet /
-> AttentiveCountNet` 等模块属于历史的子图匹配/计数路线，不在本主线内。
+> 当前可运行主线只有 distance 任务。历史的子图匹配/计数路线（`filtering / graph_coarsen /
+> graph_operation / viz_grf / utils` 等独立文件，以及 `model.py`/`gnn.py` 中的
+> `BasicCountNet / AttentiveCountNet / CoarsenNet / GIN / GAT` 等类）已于 v0.5.0 全部删除。
 
 ---
 
@@ -26,7 +27,7 @@ d(s, t) ≈ d(s → 入口s) + d_highway(入口s → 入口t) + d(入口t → t)
    `[h_s_inner | h_t_inner | h_s_inter | h_t_inter]`（可选再拼接 highway 分解距离特征），
    经 MLP + `Softplus` 输出非负距离。
 
-详细的逐模块说明见 `项目说明.md`，版本演进见 `CHANGELOG.md`。
+详细的逐模块说明见 `docs/项目说明.md`，版本演进见 `docs/CHANGELOG.md`。
 
 ---
 
@@ -34,20 +35,34 @@ d(s, t) ≈ d(s → 入口s) + d_highway(入口s → 入口t) + d(入口t → t)
 
 ```
 .
-├── main.py                # 训练入口（distance 主线，输入 .off）
+├── main.py                # 训练入口（distance 主线，输入 .off）；导出 test 点对 CSV
 ├── infer_distance.py      # 单对节点推理入口
+├── generate_terrain.py    # 生成规则网格地形 .off（带起伏，适配距离分解算法；仅需 numpy）
+├── baseline.py            # 非学习基线（常数/直线距离），读 test 点对文件与模型对比
 ├── build_highway.py       # .off → 全局图 + 真正的四叉树分区 + 高速骨干（对齐 EAR-Oracle）
 ├── preprocess.py          # 样本采样、特征构造、highway 上下文与距离预计算
 ├── gnn.py                 # InnerGNN / InterGNN / DistancePredictor
 ├── model.py               # DistanceRegressionNet 包装 + 评估指标
-├── utils.py               # 辅助工具（含历史 .grf 读取，已不在主线使用）
-├── sample_terrain.off     # 示例地形网格（来自 EAR-Oracle datasets/small，793 顶点）
-├── saved_models/          # 训练得到的 .pt 权重
-├── saved_results/         # 测试指标
-├── saved_params/          # 运行参数快照
-├── 项目说明.md            # 实现细节说明
-└── CHANGELOG.md           # 版本更新文档
+├── data/                  # 输入地形数据
+│   ├── sample_terrain.off #   默认示例地形（来自 EAR-Oracle HorseMount，793 顶点）
+│   └── generated/         #   generate_terrain.py 生成的规则网格地形
+├── outputs/               # 所有运行产物
+│   ├── models/            #   训练得到的 .pt 权重
+│   ├── results/           #   测试指标 + <run_name>_test_pairs.csv + 基线结果
+│   └── params/            #   运行参数快照
+├── docs/                  # 文档
+│   ├── 项目说明.md        #   实现细节说明
+│   ├── 流程文档.md        #   端到端流程与流程图
+│   ├── 训练文档.md        #   GPU 实操：1600 点图全流程命令
+│   ├── CHANGELOG.md       #   版本更新文档
+│   └── note.txt           #   零散笔记
+├── README.md              # 本文件
+└── requirements.txt
 ```
+
+> 路径约定：脚本默认在**项目根目录**下解析路径——输入地形相对 `data/` 解析（`--file_folder` 默认 `data`），
+> 训练产物固定写入 `outputs/{models,results,params}/`，生成地形默认写入 `data/generated/`。
+> 这些路径按脚本所在目录（项目根）解析，因此**在任意工作目录运行都能正确定位**。
 
 ---
 
@@ -75,11 +90,57 @@ OFF
 ```
 - 由网格自动构造**全局图**：节点 = 顶点，边 = 网格边，边权 = 顶点间 3D 欧氏距离。
 - 用顶点 (x,y) 做四叉树分区与位置特征；不再需要单独的坐标文件。
-- 可用自带的 `sample_terrain.off`，或 `sample_terrains/` 下的其它示例地形（793~3696 顶点）。
+- 可用自带的 `data/sample_terrain.off`（真实地形示例），或用 `generate_terrain.py` 生成规则网格地形。
 
 ---
 
 ## 使用方法
+
+### 工作流总览（三步独立、按需运行）
+
+三个环节是**相互解耦的独立脚本**，谁都不会自动触发谁：
+
+```
+①（按需）生成地形    ②（核心）训练            ③（可选）基线对比
+generate_terrain.py → main.py            → baseline.py
+   ↓ data/generated/    ↓ outputs/models/      ↓ outputs/results/
+   .off                 .pt + 指标 + test点对   基线指标
+```
+
+- **① 地形生成是可选、一次性的**：只在你需要新的规则网格地形时才跑。生成的 `.off` 存到
+  `data/generated/`，之后反复训练都直接复用，不会重新生成。用现成的 `data/sample_terrain.off`
+  时这一步**完全跳过**。`generate_terrain.py` 只依赖 numpy，不碰 torch。
+- **② 训练只读 `--off_file` 指向的 `.off`**，不 import 也不调用生成逻辑，启动开销与地形生成无关。
+- **③ 基线在训练导出的 test 点对上评估**，纯 Python、无需 torch，可在训练后任意时刻单独跑。
+
+即"造地形 → 训练 → 评估"按需逐步进行，互不强制依赖。各步骤命令见下。
+
+#### 完整示例：在生成地形上跑一遍（生成 → 训练 → 推理 → 基线）
+
+```bash
+# ① 生成一张 400 点地形 → data/generated/terrain_grid_20x20_400v.off
+python generate_terrain.py --grid 20
+
+# ② 训练（--off_file 默认相对 data/ 解析，故写 generated/...）
+python main.py \
+  --off_file generated/terrain_grid_20x20_400v.off \
+  --max_depth 3 --capacity 32 \
+  --num_epoch 30 --batch_size 32 --device cuda
+
+# ③ 推理（参数须与训练一致；<run> 看 outputs/models/ 下生成的 .pt 名）
+python infer_distance.py \
+  --model_path outputs/models/<run>.pt \
+  --off_file generated/terrain_grid_20x20_400v.off \
+  --max_depth 3 --capacity 32 --s 10 --t 300 --device cuda
+
+# ③ 基线对比（读训练导出的 test 点对，与模型同口径）
+python baseline.py \
+  --off_file generated/terrain_grid_20x20_400v.off \
+  --test_pairs_file outputs/results/<run>_test_pairs.csv
+```
+
+> `<run>` 是训练自动生成的运行名 `<图名>_distance_<时间戳>`，到 `outputs/models/` / `outputs/results/` 查看实际文件名。
+> 换规模：`--grid 10`→100 点、`--grid 40`→1600 点，命令里的 `terrain_grid_NxN_<V>v.off` 同步替换即可。
 
 ### 训练
 ```bash
@@ -88,15 +149,27 @@ python main.py \
   --max_depth 3 --capacity 32 \
   --loss_type log_l1 \
   --num_epoch 50 \
-  --device cpu
+  --batch_size 32 \
+  --device cuda
 ```
-产物：`saved_models/<name>.pt`、`saved_results/<name>.txt`、`saved_params/<name>.txt`。
+产物：`outputs/models/<name>.pt`、`outputs/results/<name>.txt`、`outputs/params/<name>.txt`，
+以及 test 点对 `outputs/results/<name>_test_pairs.csv`。
 模型按验证集 `val_mae` 早停并保存最佳权重。
+
+> GPU 提示：训练支持 `--device cuda` + `--batch_size`，mini-batch 把多个样本的子图/高速图合并成
+> 一张大图做**一次**消息传递与优化器步进，显著提升 GPU 利用率。注意启动时的四叉树分区与 Dijkstra
+> 预处理是纯 CPU 图算法（与 GPU 无关）；GPU 加速的是 GNN 训练部分。`--device cuda` 在无 GPU 时自动回退 CPU。
+> `generate_terrain.py` / `baseline.py` 不涉及神经网络，纯 CPU 运行，无需也无法用 GPU。
+
+> 缓存提示：四叉树分区 + 高速 Dijkstra 预处理结果会缓存到 `outputs/cache/`（按 图名+参数 命名）。
+> 首次训练某张图算一次、存盘；之后**相同图与四叉树参数**的训练/推理直接加载缓存，跳过这段等待。
+> 同时导出两份审查 CSV：`<key>_partition.csv`（每点的叶子/是否高速/坐标）和 `<key>_highway_edges.csv`
+> （高速图的边）。改了 `--max_depth/--capacity/--uniform/--in_feat` 会自动用新缓存；加 `--no_cache` 强制重算。
 
 ### 推理（单对顶点）
 ```bash
 python infer_distance.py \
-  --model_path saved_models/<ckpt>.pt \
+  --model_path outputs/models/<ckpt>.pt \
   --off_file sample_terrain.off \
   --max_depth 3 --capacity 32 \
   --s 10 --t 500 \
@@ -111,12 +184,34 @@ python infer_distance.py \
 `build_highway.py` 是 C++ 项目 **EAR-Oracle (SIGMOD'2023)** 四叉树分区 + 边界点高速方案的
 图层面实现，直接吃 `.off`：
 ```bash
-python build_highway.py --off_file sample_terrain.off --max_depth 3 --capacity 32 --out_prefix terrain
+python build_highway.py --off_file data/sample_terrain.off --max_depth 3 --capacity 32 --out_prefix terrain
 ```
 输出 `terrain_partition.csv`（每个顶点的叶子编号、是否为高速节点、坐标），并打印分区/高速统计。
 - 自适应四叉树（默认）：叶内点数 > `capacity` 且深度 < `max_depth` 才继续四分。
 - 加 `--uniform` 则一律分到 `max_depth`（等大叶子，对应 EAR-Oracle 非自适应模式）。
 - 细网格 + 小盒子会让高速节点占比偏高；用更小 `max_depth` / 更大 `capacity` 可得更稀疏的高速骨架。
+
+### 生成地形（适配算法的规则网格）
+`generate_terrain.py` 仅需 numpy，生成带真实起伏的 `.off`（使图最短路明显偏离直线，适配距离分解）：
+```bash
+# 一次生成 100 / 400 / 1600 点三张图（命名与云端一致）
+python generate_terrain.py --grid 10 20 40
+# 平地对照组（z=0，消融用）
+python generate_terrain.py --grid 20 --mode flat --out_suffix _flat
+```
+默认输出到 `data/generated/`；`--mode {flat,smooth,mountains,ridges,mixed}`、`--relief` 控制起伏。
+
+### 非学习基线（与模型对比）
+训练时 `main.py` 会把 test 点对导出到 `outputs/results/<run_name>_test_pairs.csv`。
+`baseline.py`（纯 Python，无需 torch）读取该文件，在**同一批 test 点对**上算朴素基线：
+```bash
+python baseline.py \
+  --off_file generated/terrain_grid_20x20_400v.off \
+  --test_pairs_file outputs/results/<run_name>_test_pairs.csv \
+  --out_file outputs/results/baseline_400v.txt
+```
+输出 `mean_constant / euclidean_2d / euclidean_3d` 三个基线的 mae/rmse/relative_error；
+拿其中的 `relative_error` 和模型的 `test_relative_error` 并排比较即可。
 
 ---
 
@@ -131,6 +226,7 @@ python build_highway.py --off_file sample_terrain.off --max_depth 3 --capacity 3
 | `--in_feat` / `--hidden_dim` / `--out_dim` | 64 / 128 / 64 | 特征、隐藏、输出维度 |
 | `--learning_rate` | 0.001 | 学习率 |
 | `--num_epoch` | 20 | 最大训练轮数 |
+| `--batch_size` | 16 | mini-batch 大小（每次 GNN 前向/反向/优化器步的样本数）；`1` = 旧逐样本行为 |
 | `--distance_samples` | 3000 | `(s,t)` 对数量上限；`<=0` 表示用全部唯一可达对（大图会自动设保护上限） |
 | `--highway_k` | 3 | 每个端点连接的高速入口数 |
 | `--inner_mode` | `partition` | Inner-GNN 子图：`partition`=四叉树叶子盒子图(对齐 G1~G4) / `ego`=2-hop ego(消融) |
@@ -138,6 +234,8 @@ python build_highway.py --off_file sample_terrain.off --max_depth 3 --capacity 3
 | `--disable_highway_distance_feature` | 关 | 关闭 highway 分解距离特征（回到纯 GNN 嵌入融合） |
 | `--early_stop_patience` | 10 | 早停耐心值 |
 | `--device` | `cpu` | `cpu` 或 `cuda` |
+| `--cache_dir` | `outputs/cache` | 高速上下文缓存目录；首次算完存盘，之后直接读（跳过分区+Dijkstra） |
+| `--no_cache` | 关 | 禁用缓存，每次重新计算分区+高速 |
 
 ---
 
@@ -155,9 +253,9 @@ python build_highway.py --off_file sample_terrain.off --max_depth 3 --capacity 3
 - 距离监督用网格图最短路（折线测地近似）；EAR-Oracle 用 Snell 加权测地距离更精确。
 - 细网格 + 小盒子会让高速节点占比偏高；用更小 `max_depth` / 更大 `capacity` 可得更稀疏的高速骨架。
 - Inner-GNN 已改吃**四叉树叶子盒子图**（`--inner_mode partition`，对齐论文 G1~G4）；可用 `--inner_mode ego` 做消融。
-- 训练为逐样本更新（非 mini-batch）；Steiner Points / WSPD spanner 尚未建模。
+- 训练支持 mini-batch（`--batch_size`，批内合并子图/高速图）；Steiner Points / WSPD spanner 尚未建模。
 
-后续计划见 `CHANGELOG.md` 的 TODO 部分。
+后续计划见 `docs/CHANGELOG.md` 的 TODO 部分。
 
 ---
 
@@ -278,12 +376,13 @@ python build_highway.py --off_file sample_terrain.off --max_depth 3 --capacity 3
 
 预处理对**每个高速（边界）节点**各跑一次全图 Dijkstra，复杂度约 `O(K · (E log V))`，`K` 为高速节点数；
 在细网格 + 小盒子配置下 `K` 可占 `V` 的较大比例，预处理开销显著。高速内部两两最短路为
-`O(K · (E_h log K))`。训练当前为**逐样本更新（非 mini-batch）**，吞吐受限。可扩展性改进方向包括：
-限制每盒边界点数、对 transit 边做稀疏化（如 WSPD spanner）、以及小批量化训练。这些是已知工程局限，
-不影响方法正确性，但影响大规模适用性。
+`O(K · (E_h log K))`。训练支持 **mini-batch**（`--batch_size`，批内把多个样本的子图/高速图合并成
+一张大图做一次前向/反向），提升 GPU 利用率与梯度稳定性。可扩展性改进方向包括：
+限制每盒边界点数、对 transit 边做稀疏化（如 WSPD spanner）。预处理仍为纯 CPU 图算法（已知工程局限，
+不影响方法正确性，但影响大规模适用性）。
 
 > 代码证据：预处理每个边界点一次全图 Dijkstra 见 `build_highway.py` `dist_from_boundary = {b: _dijkstra(adj, b) ...}`（约第 281 行）；
-> 逐样本更新见 `main.py:run_distance_epoch`——对 `sample_list` 逐个 `forward → loss → backward → optimizer.step()`（约第 111 行），无 mini-batch 聚合。
+> mini-batch 训练见 `main.py:run_distance_epoch`（按 `--batch_size` 分块，`distance_model.forward_batch(...)` 单次前向/反向/`optimizer.step()`）。
 
 ### Q7. 结论的统计可靠性如何？是否报告了方差与多次重复？
 

@@ -5,11 +5,17 @@ __pycache__/
 *.pyd
 
 # 训练产物（不入库二进制权重；目录结构用 .gitkeep 保留）
-saved_models/*.pt
-saved_results/*.txt
-saved_params/*.txt
+outputs/models/*.pt
+outputs/results/*.txt
+outputs/results/*.csv
+outputs/params/*.txt
 
-# 生成的分区/可视化（按需重新生成）
+# 高速上下文缓存与审查文件（派生物，按需重新生成）
+outputs/cache/*.pt
+outputs/cache/*.csv
+
+# 生成的地形 / 分区 / 可视化（按需重新生成）
+data/generated/*.off
 *_partition.csv
 
 # 临时文件

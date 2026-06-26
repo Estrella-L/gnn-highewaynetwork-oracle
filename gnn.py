@@ -1,42 +1,7 @@
+# GNN 模块：三段式 DistancePredictor（Inner 本地段 / Inter 高速段 / Fusion 融合段）。
 import torch
 import torch.nn as nn
-import torch_geometric
 import torch_geometric.nn as geo_nn
-
-
-class GIN(nn.Module):
-    def __init__(self, input_feat_dim, hidden_dim, out_dim, train_eps=True):
-        super(GIN, self).__init__()
-        # we can change the sequential nn
-        nn_module_for_gin_1 = nn.Sequential(
-            nn.Linear(input_feat_dim, hidden_dim),
-            nn.ReLU()
-        )
-        nn_module_for_gin_2 = nn.Sequential(
-            nn.Linear(hidden_dim, out_dim),
-            nn.ReLU()
-        )
-        self.GIN_layer_1 = geo_nn.GINConv(nn_module_for_gin_1, train_eps=train_eps)
-        self.GIN_layer_2 = geo_nn.GINConv(nn_module_for_gin_2, train_eps=train_eps)
-
-    def forward(self, in_feat, edge_list):
-        x = self.GIN_layer_1(in_feat, edge_list)
-        x = self.GIN_layer_2(x, edge_list)
-
-        return x
-
-
-class GAT(nn.Module):
-    def __init__(self, input_feat_dim, out_dim, train_eps=True):
-        super(GAT, self).__init__()
-        # we can change the sequential nn
-        self.GAT_layer = geo_nn.GATConv(input_feat_dim, out_dim, add_self_loops=False)
-
-    def forward(self, in_feat, edge_list):
-        x = self.GAT_layer(in_feat, edge_list)
-        # x = self.GIN_layer_2(x, edge_list)
-
-        return x
 
 
 class InnerGNN(nn.Module):
@@ -79,6 +44,37 @@ class InnerGNN(nn.Module):
             query_idx = query_idx.to(h.device)
         query_emb = h[query_idx]
         return h, query_emb
+
+    def forward_batch(self, x_list, edge_index_list, query_idx_list):
+        """
+        批量编码多个子图：合并成一张不连通大图做一次消息传递，返回各自查询点嵌入。
+
+        Args:
+            x_list (list[Tensor]): 每个样本的子图节点特征 [Ni, in_dim]。
+            edge_index_list (list[LongTensor]): 每个样本的子图边 [2, Ei]。
+            query_idx_list (list[int|Tensor]): 每个样本查询点在其子图内的局部索引。
+
+        Returns:
+            Tensor: [B, output_dim] 各样本查询点嵌入。
+        """
+        device = x_list[0].device
+        xs, es, qidx = [], [], []
+        offset = 0
+        for x, e, q in zip(x_list, edge_index_list, query_idx_list):
+            xs.append(x)
+            es.append(e.to(device) + offset)
+            qi = q if isinstance(q, int) else int(torch.as_tensor(q).reshape(-1)[0].item())
+            qidx.append(offset + qi)
+            offset += x.size(0)
+        h = torch.cat(xs, dim=0)
+        edge_index = torch.cat(es, dim=1)
+        for layer_idx, conv in enumerate(self.convs):
+            h = conv(h, edge_index)
+            if layer_idx != len(self.convs) - 1:
+                h = self.act(h)
+                h = nn.functional.dropout(h, p=self.dropout, training=self.training)
+        query = torch.tensor(qidx, dtype=torch.long, device=h.device)
+        return h[query]
 
 
 class InterGNN(nn.Module):
@@ -173,6 +169,58 @@ class InterGNN(nn.Module):
         st_virtual_emb = torch.cat([s_virtual_emb, t_virtual_emb], dim=-1)
         pair_emb = self.readout(st_virtual_emb)
         return h, pair_emb, st_virtual_emb
+
+    def forward_batch(self, x_highway, edge_index_highway, s_global_feats, t_global_feats,
+                      s_connect_list, t_connect_list):
+        """
+        批量版 Inter 段：共享的高速图复制 B 份、各加 s/t 两个虚拟节点，合并成一张大图做一次消息传递。
+
+        Args:
+            x_highway (Tensor): [K, highway_in_dim] 共享高速图节点特征。
+            edge_index_highway (LongTensor): [2, Eh] 共享高速图边。
+            s_global_feats / t_global_feats (Tensor): [B, global_feat_dim] 各样本 s/t 全局特征。
+            s_connect_list / t_connect_list (list[LongTensor]): 各样本 s/t 连接的高速节点 local 索引。
+
+        Returns:
+            Tensor: [B, 2*output_dim] 各样本 s/t 两个虚拟节点嵌入的拼接。
+        """
+        device = x_highway.device
+        K = x_highway.size(0)
+        edge_index_highway = edge_index_highway.to(device)
+        s_virt = self.global_encoder(s_global_feats.to(device))  # [B, highway_in_dim]
+        t_virt = self.global_encoder(t_global_feats.to(device))  # [B, highway_in_dim]
+        B = s_virt.size(0)
+
+        x_parts, edge_parts, s_idx_list, t_idx_list = [], [], [], []
+        offset = 0
+        for b in range(B):
+            x_parts.extend([x_highway, s_virt[b:b + 1], t_virt[b:b + 1]])
+            s_vidx, t_vidx = offset + K, offset + K + 1
+            s_idx_list.append(s_vidx)
+            t_idx_list.append(t_vidx)
+            edge_parts.append(edge_index_highway + offset)
+            sc = s_connect_list[b].to(device).long() + offset
+            tc = t_connect_list[b].to(device).long() + offset
+            s_full = torch.full_like(sc, s_vidx)
+            t_full = torch.full_like(tc, t_vidx)
+            edge_parts.append(torch.cat([
+                torch.stack([s_full, sc], dim=0),
+                torch.stack([sc, s_full], dim=0),
+                torch.stack([t_full, tc], dim=0),
+                torch.stack([tc, t_full], dim=0),
+            ], dim=1))
+            offset += K + 2
+
+        h = torch.cat(x_parts, dim=0)
+        edge_all = torch.cat(edge_parts, dim=1)
+        for layer_idx, conv in enumerate(self.convs):
+            h = conv(h, edge_all)
+            if layer_idx != len(self.convs) - 1:
+                h = self.act(h)
+                h = nn.functional.dropout(h, p=self.dropout, training=self.training)
+        s_emb = h[torch.tensor(s_idx_list, dtype=torch.long, device=device)]
+        t_emb = h[torch.tensor(t_idx_list, dtype=torch.long, device=device)]
+        return torch.cat([s_emb, t_emb], dim=-1)  # [B, 2*output_dim]
 
 
 class DistancePredictor(nn.Module):
@@ -286,6 +334,45 @@ class DistancePredictor(nn.Module):
             "h_st_inter": st_virtual_emb,
             "fusion_input": fusion_input,
         }
+
+    def forward_batch(self, samples):
+        """
+        批量前向：一次处理多个 (s,t) 样本，返回 [B] 预测距离。
+
+        Args:
+            samples (list[dict]): 每个元素是 build_synthetic_partition_inputs 产出的单样本输入字典。
+                同一批样本共享同一份高速图（x_highway / edge_index_highway 取自 samples[0]）。
+
+        Returns:
+            Tensor: [B] 非负预测距离。
+        """
+        h_s_inner = self.inner_gnn.forward_batch(
+            [d["x_s"] for d in samples],
+            [d["edge_index_s"] for d in samples],
+            [d["s_idx"] for d in samples],
+        )
+        h_t_inner = self.inner_gnn.forward_batch(
+            [d["x_t"] for d in samples],
+            [d["edge_index_t"] for d in samples],
+            [d["t_idx"] for d in samples],
+        )
+        device = h_s_inner.device
+        s_global = torch.stack([d["s_global_feat"].reshape(-1) for d in samples], dim=0)
+        t_global = torch.stack([d["t_global_feat"].reshape(-1) for d in samples], dim=0)
+        st_virtual_emb = self.inter_gnn.forward_batch(
+            samples[0]["x_highway"],
+            samples[0]["edge_index_highway"],
+            s_global,
+            t_global,
+            [d["s_connect_idx"] for d in samples],
+            [d["t_connect_idx"] for d in samples],
+        )
+        fusion_parts = [h_s_inner, h_t_inner, st_virtual_emb]
+        if self.use_highway_distance_feature and samples[0].get("highway_dist_feat") is not None:
+            hdf = torch.stack([d["highway_dist_feat"].reshape(-1) for d in samples], dim=0).to(device)
+            fusion_parts.append(hdf)
+        fusion_input = torch.cat(fusion_parts, dim=-1)  # [B, fusion_in_dim]
+        return self.output_activation(self.fusion_mlp(fusion_input)).view(-1)  # [B]
 
 
 if __name__ == "__main__":

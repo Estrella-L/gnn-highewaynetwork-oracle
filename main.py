@@ -1,3 +1,4 @@
+# 训练入口：读 .off → 四叉树分区+高速上下文 → 采样节点对 → 训练三段式 GNN 回归最短路距离。
 import argparse
 import os
 import time
@@ -10,7 +11,7 @@ from preprocess import (
     split_distance_dataset,
     build_synthetic_partition_inputs,
 )
-from build_highway import build_pipeline_inputs
+from build_highway import build_pipeline_inputs_cached
 from model import DistanceRegressionNet, compute_distance_metrics
 
 
@@ -18,7 +19,7 @@ def build_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--task", type=str, default="distance", choices=["distance"], help="only distance task is supported")
     parser.add_argument("--off_file", type=str, required=True, help="input .off terrain mesh path")
-    parser.add_argument("--file_folder", type=str, default="./", help="base folder for relative paths")
+    parser.add_argument("--file_folder", type=str, default="data", help="base folder for relative --off_file paths (resolved under project root)")
 
     # 四叉树分区参数（对齐 EAR-Oracle 的 grid/quadtree）
     parser.add_argument("--max_depth", type=int, default=3, help="quadtree max depth")
@@ -32,6 +33,7 @@ def build_parser():
 
     parser.add_argument("--learning_rate", type=float, default=0.001, help="learning rate")
     parser.add_argument("--num_epoch", type=int, default=20, help="max training epochs")
+    parser.add_argument("--batch_size", type=int, default=16, help="mini-batch size (samples per GNN forward/step); 1 = 旧逐样本行为")
     parser.add_argument("--train_percent", type=float, default=0.8, help="train split ratio")
     parser.add_argument("--early_stop_patience", type=int, default=10, help="early stop patience")
     parser.add_argument("--distance_samples", type=int, default=3000, help="cap on number of (s,t) pairs; <=0 means use ALL unique reachable pairs")
@@ -56,6 +58,8 @@ def build_parser():
         help="disable the highway-decomposition distance feature fed into the fusion MLP",
     )
     parser.add_argument("--device", type=str, default="cpu", help="cpu or cuda")
+    parser.add_argument("--cache_dir", type=str, default="outputs/cache", help="高速上下文缓存目录（按项目根解析）；首次算完存盘，之后直接读")
+    parser.add_argument("--no_cache", action="store_true", help="禁用缓存，每次重新计算分区+高速")
     return parser
 
 
@@ -81,36 +85,44 @@ def run_distance_epoch(distance_model, sample_list, data_graph_info, args, highw
     all_pred = []
     all_true = []
     total_loss = 0.0
+    num_batches = 0
 
     if is_train:
         distance_model.train()
     else:
         distance_model.eval()
 
-    for sample in sample_list:
-        model_inputs = build_synthetic_partition_inputs(
-            graph_info=data_graph_info,
-            sample=sample,
-            k_highway=max(1, args.highway_k),
-            feature_dim=args.in_feat,
-            device=args.device,
-            external_highway_context=highway_context,
-            inner_mode=args.inner_mode,
-        )
+    batch_size = max(1, args.batch_size)
+    for start in range(0, len(sample_list), batch_size):
+        chunk = sample_list[start:start + batch_size]
+        batch_inputs = [
+            build_synthetic_partition_inputs(
+                graph_info=data_graph_info,
+                sample=sample,
+                k_highway=max(1, args.highway_k),
+                feature_dim=args.in_feat,
+                device=args.device,
+                external_highway_context=highway_context,
+                inner_mode=args.inner_mode,
+            )
+            for sample in chunk
+        ]
+        y_true = torch.tensor([s["distance"] for s in chunk], dtype=torch.float, device=args.device)
+
         if is_train:
             optimizer.zero_grad()
-            pred = distance_model(**model_inputs)
-        else:
-            with torch.no_grad():
-                pred = distance_model(**model_inputs)
-
-        y_true = torch.tensor([sample["distance"]], dtype=torch.float, device=args.device)
-        loss = criterion(pred, y_true)
-        if is_train:
+            preds = distance_model.forward_batch(batch_inputs)  # [B]
+            loss = criterion(preds, y_true)
             loss.backward()
             optimizer.step()
+        else:
+            with torch.no_grad():
+                preds = distance_model.forward_batch(batch_inputs)
+                loss = criterion(preds, y_true)
+
         total_loss += float(loss.item())
-        all_pred.append(pred.detach().view(-1))
+        num_batches += 1
+        all_pred.append(preds.detach().view(-1))
         all_true.append(y_true.view(-1))
 
     pred_tensor = torch.cat(all_pred, dim=0) if all_pred else torch.empty(0)
@@ -120,7 +132,7 @@ def run_distance_epoch(distance_model, sample_list, data_graph_info, args, highw
         "rmse": float("nan"),
         "relative_error": float("nan"),
     }
-    avg_loss = total_loss / max(1, len(sample_list))
+    avg_loss = total_loss / max(1, num_batches)
     return avg_loss, metrics
 
 
@@ -139,7 +151,9 @@ if __name__ == "__main__":
         print("CUDA unavailable, fallback to CPU.")
         args.device = "cpu"
 
-    off_path = args.off_file if os.path.isabs(args.off_file) else os.path.join(args.file_folder, args.off_file)
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    base_folder = args.file_folder if os.path.isabs(args.file_folder) else os.path.join(project_root, args.file_folder)
+    off_path = args.off_file if os.path.isabs(args.off_file) else os.path.join(base_folder, args.off_file)
     base_name = os.path.splitext(os.path.basename(off_path))[0]
     current_time = time.strftime("%Y-%m-%d_%H-%M-%S")
     save_name = f"{base_name}_distance_{current_time}"
@@ -147,16 +161,20 @@ if __name__ == "__main__":
     result_save_name = save_name + ".txt"
     params_save_name = save_name + ".txt"
 
-    model_save_path = "./saved_models"
-    result_save_path = "./saved_results"
-    params_save_path = "./saved_params"
+    model_save_path = os.path.join(project_root, "outputs", "models")
+    result_save_path = os.path.join(project_root, "outputs", "results")
+    params_save_path = os.path.join(project_root, "outputs", "params")
     os.makedirs(model_save_path, exist_ok=True)
     os.makedirs(result_save_path, exist_ok=True)
     os.makedirs(params_save_path, exist_ok=True)
     save_run_params(os.path.join(params_save_path, params_save_name), args)
 
-    # .off → 全局图 + 四叉树分区 + 高速上下文
-    data_graph_info, coords, leaf_of, num_leaves, highway_context = build_pipeline_inputs(
+    # .off → 全局图 + 四叉树分区 + 高速上下文（带磁盘缓存，避免每次重算）
+    cache_dir = None if args.no_cache else (
+        args.cache_dir if os.path.isabs(args.cache_dir) else os.path.join(project_root, args.cache_dir)
+    )
+    _t_prep_start = time.time()
+    data_graph_info, coords, leaf_of, num_leaves, highway_context = build_pipeline_inputs_cached(
         off_path=off_path,
         max_depth=args.max_depth,
         capacity=args.capacity,
@@ -164,7 +182,10 @@ if __name__ == "__main__":
         weighted=True,
         feature_dim=args.in_feat,
         device=args.device,
+        cache_dir=cache_dir,
     )
+    preprocess_seconds = time.time() - _t_prep_start
+    print(f"[distance] preprocess(分区+高速/缓存) done in {preprocess_seconds:.2f}s")
     print(
         f"[distance] off={off_path} |V|={len(data_graph_info[0])} "
         f"leaves={num_leaves}(occupied={highway_context['num_leaves_occupied']}) "
@@ -188,6 +209,14 @@ if __name__ == "__main__":
         f"[distance] samples: train={len(train_samples)}, "
         f"val={len(val_samples)}, test={len(test_samples)}"
     )
+
+    # 导出 TEST 查询点对 + 真实距离（用于审计/对齐基线，消除跨环境复现 test 集的隐患）
+    test_pairs_path = os.path.join(result_save_path, save_name + "_test_pairs.csv")
+    with open(test_pairs_path, "w", encoding="utf-8") as f:
+        f.write("s,t,true_distance\n")
+        for smp in test_samples:
+            f.write(f"{int(smp['s'])},{int(smp['t'])},{float(smp['distance'])}\n")
+    print(f"[distance] wrote test pairs: {test_pairs_path} ({len(test_samples)} pairs)")
 
     distance_model = DistanceRegressionNet(
         node_feat_dim=args.in_feat,
@@ -213,7 +242,9 @@ if __name__ == "__main__":
     no_improve_epochs = 0
     best_epoch = -1
 
+    _t_train_start = time.time()
     for epoch in range(args.num_epoch):
+        _t_epoch_start = time.time()
         _, train_metrics = run_distance_epoch(
             distance_model=distance_model,
             sample_list=train_samples,
@@ -232,10 +263,12 @@ if __name__ == "__main__":
             criterion=criterion,
             optimizer=None,
         )
+        epoch_seconds = time.time() - _t_epoch_start
         print(
             f"[distance] epoch={epoch:03d} "
             f"train_mae={train_metrics['mae']:.6f} val_mae={val_metrics['mae']:.6f} "
-            f"train_rmse={train_metrics['rmse']:.6f} val_rmse={val_metrics['rmse']:.6f}"
+            f"train_rmse={train_metrics['rmse']:.6f} val_rmse={val_metrics['rmse']:.6f} "
+            f"time={epoch_seconds:.2f}s"
         )
 
         if val_metrics["mae"] < best_val_mae:
@@ -252,6 +285,8 @@ if __name__ == "__main__":
                 f"best_epoch={best_epoch}, best_val_mae={best_val_mae:.6f}"
             )
             break
+
+    train_seconds = time.time() - _t_train_start
 
     if best_state is not None:
         distance_model.load_state_dict(best_state)
@@ -270,11 +305,18 @@ if __name__ == "__main__":
         f"test_rmse={test_metrics['rmse']:.6f}, "
         f"test_relative_error={test_metrics['relative_error']:.6f}"
     )
+    print(
+        f"[distance] timing: preprocess={preprocess_seconds:.2f}s, "
+        f"train={train_seconds:.2f}s, best_epoch={best_epoch}"
+    )
 
     torch.save(distance_model.state_dict(), os.path.join(model_save_path, model_save_name))
     with open(os.path.join(result_save_path, result_save_name), "w", encoding="utf-8") as f:
         f.write("metric value\n")
         f.write(f"best_val_mae {best_val_mae}\n")
+        f.write(f"best_epoch {best_epoch}\n")
         f.write(f"test_mae {test_metrics['mae']}\n")
         f.write(f"test_rmse {test_metrics['rmse']}\n")
         f.write(f"test_relative_error {test_metrics['relative_error']}\n")
+        f.write(f"preprocess_seconds {preprocess_seconds}\n")
+        f.write(f"train_seconds {train_seconds}\n")

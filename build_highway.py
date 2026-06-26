@@ -1,3 +1,4 @@
+# .off 地形 → 全局图 + 四叉树分区 + 高速骨干网络（对齐 EAR-Oracle）。
 """
 .off 地形网格 → 全局图 + 四叉树分区 + 高速骨干网络。
 
@@ -318,6 +319,112 @@ def build_pipeline_inputs(
     )
     context["num_leaves"] = num_leaves
     context["num_leaves_occupied"] = occupied
+    return graph_info, coords, leaf_of, num_leaves, context
+
+
+def _file_fingerprint(path):
+    """对 .off 文件内容取短哈希，纳入缓存键，避免同名但内容不同的图命中过期缓存。"""
+    import hashlib
+
+    h = hashlib.md5()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()[:8]
+
+
+def _pipeline_cache_key(off_path, max_depth, capacity, adaptive, feature_dim):
+    """缓存键：.off 文件名 + 内容指纹 + 四叉树参数 + 特征维度，任一不同即视为不同缓存。"""
+    base = os.path.splitext(os.path.basename(off_path))[0]
+    mode = "ada" if adaptive else "uni"
+    fp = _file_fingerprint(off_path)
+    return f"{base}_d{max_depth}_c{capacity}_{mode}_f{feature_dim}_{fp}"
+
+
+def _dump_partition_audit(path, graph_info, coords, leaf_of, highway_ids):
+    """审查文件①：每个顶点属于哪个叶子盒、是否高速点、坐标。"""
+    hw = set(highway_ids)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("node,leaf_id,is_highway,x,y\n")
+        for nid in graph_info[0]:
+            x, y = coords.get(nid, (float("nan"), float("nan")))
+            f.write(f"{nid},{leaf_of.get(nid, -1)},{int(nid in hw)},{x},{y}\n")
+
+
+def _dump_highway_edges_audit(path, context):
+    """审查文件②：高速图的边（还原成原图全局节点 id，无向去重）。"""
+    ids = context["highway_global_ids"]
+    ei = context["edge_index_highway"]
+    us, vs = ei[0].tolist(), ei[1].tolist()
+    seen = set()
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("u_global,v_global\n")
+        for lu, lv in zip(us, vs):
+            gu, gv = ids[lu], ids[lv]
+            if gu == gv:
+                continue
+            key = (gu, gv) if gu <= gv else (gv, gu)
+            if key in seen:
+                continue
+            seen.add(key)
+            f.write(f"{key[0]},{key[1]}\n")
+
+
+def build_pipeline_inputs_cached(
+    off_path,
+    max_depth=3,
+    capacity=32,
+    adaptive=True,
+    weighted=True,
+    feature_dim=64,
+    device="cpu",
+    cache_dir=None,
+    audit=True,
+):
+    """带磁盘缓存的 build_pipeline_inputs。
+
+    首次计算后把（图 + 分区 + 高速上下文）存成 .pt，之后命中缓存直接加载，
+    跳过四叉树分区与每个高速节点的全图 Dijkstra 预处理（训练/推理启动不再重复等待）。
+    同时导出两份**人类可读的审查 CSV**（分区表 + 高速边表）。
+
+    缓存按 `_pipeline_cache_key` 区分（.off 名 + max_depth/capacity/模式/feature_dim）；
+    缓存张量统一存在 CPU，对 cpu/gpu 通用（逐样本前向时再 .to(device)）。
+    cache_dir=None 时禁用缓存，每次重新计算（等价于 build_pipeline_inputs）。
+    """
+    if cache_dir is None:
+        return build_pipeline_inputs(off_path, max_depth, capacity, adaptive, weighted, feature_dim, device)
+
+    import torch
+
+    os.makedirs(cache_dir, exist_ok=True)
+    key = _pipeline_cache_key(off_path, max_depth, capacity, adaptive, feature_dim)
+    cache_pt = os.path.join(cache_dir, key + ".pt")
+
+    if os.path.exists(cache_pt):
+        data = torch.load(cache_pt, map_location="cpu")
+        print(f"[cache] 命中，直接加载高速上下文: {cache_pt}（跳过分区+Dijkstra 预处理）")
+        return data["graph_info"], data["coords"], data["leaf_of"], data["num_leaves"], data["context"]
+
+    graph_info, coords, leaf_of, num_leaves, context = build_pipeline_inputs(
+        off_path, max_depth, capacity, adaptive, weighted, feature_dim, device="cpu"
+    )
+    torch.save(
+        {
+            "graph_info": graph_info,
+            "coords": coords,
+            "leaf_of": leaf_of,
+            "num_leaves": num_leaves,
+            "context": context,
+        },
+        cache_pt,
+    )
+    print(f"[cache] 已保存高速上下文: {cache_pt}")
+    if audit:
+        part_csv = os.path.join(cache_dir, key + "_partition.csv")
+        edges_csv = os.path.join(cache_dir, key + "_highway_edges.csv")
+        _dump_partition_audit(part_csv, graph_info, coords, leaf_of, context["highway_global_ids"])
+        _dump_highway_edges_audit(edges_csv, context)
+        print(f"[cache] 审查文件: {part_csv} / {edges_csv}")
     return graph_info, coords, leaf_of, num_leaves, context
 
 

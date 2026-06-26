@@ -1,3 +1,4 @@
+# 推理入口：加载训练好的模型，预测单对顶点 (s,t) 的近似最短路距离。
 import argparse
 import os
 
@@ -5,14 +6,14 @@ import torch
 
 from model import DistanceRegressionNet
 from preprocess import build_synthetic_partition_inputs
-from build_highway import build_pipeline_inputs
+from build_highway import build_pipeline_inputs_cached
 
 
 def build_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_path", type=str, required=True, help="trained model checkpoint path (.pt)")
     parser.add_argument("--off_file", type=str, required=True, help="input .off terrain mesh path (same as training)")
-    parser.add_argument("--file_folder", type=str, default="./", help="base folder for relative paths")
+    parser.add_argument("--file_folder", type=str, default="data", help="base folder for relative --off_file paths (resolved under project root)")
     parser.add_argument("--s", type=int, required=True, help="source vertex id")
     parser.add_argument("--t", type=int, required=True, help="target vertex id")
 
@@ -39,6 +40,8 @@ def build_parser():
         help="disable the highway-decomposition distance feature (must match training config)",
     )
     parser.add_argument("--device", type=str, default="cpu", help="cpu or cuda")
+    parser.add_argument("--cache_dir", type=str, default="outputs/cache", help="高速上下文缓存目录（按项目根解析）")
+    parser.add_argument("--no_cache", action="store_true", help="禁用缓存，每次重新计算分区+高速")
     return parser
 
 
@@ -48,8 +51,13 @@ def main():
         print("CUDA unavailable, fallback to CPU.")
         args.device = "cpu"
 
-    off_path = args.off_file if os.path.isabs(args.off_file) else os.path.join(args.file_folder, args.off_file)
-    graph_info, coords, leaf_of, num_leaves, highway_context = build_pipeline_inputs(
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    base_folder = args.file_folder if os.path.isabs(args.file_folder) else os.path.join(project_root, args.file_folder)
+    off_path = args.off_file if os.path.isabs(args.off_file) else os.path.join(base_folder, args.off_file)
+    cache_dir = None if args.no_cache else (
+        args.cache_dir if os.path.isabs(args.cache_dir) else os.path.join(project_root, args.cache_dir)
+    )
+    graph_info, coords, leaf_of, num_leaves, highway_context = build_pipeline_inputs_cached(
         off_path=off_path,
         max_depth=args.max_depth,
         capacity=args.capacity,
@@ -57,6 +65,7 @@ def main():
         weighted=True,
         feature_dim=args.in_feat,
         device=args.device,
+        cache_dir=cache_dir,
     )
 
     n_nodes = len(graph_info[0])
