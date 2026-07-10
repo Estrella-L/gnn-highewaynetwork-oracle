@@ -49,11 +49,14 @@ d(s, t) ≈ d(s → 入口s) + d_highway(入口s → 入口t) + d(入口t → t)
 ├── outputs/               # 所有运行产物
 │   ├── models/            #   训练得到的 .pt 权重
 │   ├── results/           #   测试指标 + <run_name>_test_pairs.csv + 基线结果
-│   └── params/            #   运行参数快照
+│   ├── params/            #   运行参数快照
+│   └── cache/             #   分区+高速上下文缓存与审查 CSV
+├── logs/                  # 训练日志归档（不同参数/版本的 .log，手动 tee 保存）
 ├── docs/                  # 文档
 │   ├── 项目说明.md        #   实现细节说明
 │   ├── 流程文档.md        #   端到端流程与流程图
-│   ├── 训练文档.md        #   GPU 实操：1600 点图全流程命令
+│   ├── 训练文档.md        #   GPU 实操：900 点图全流程命令
+│   ├── 训练文档2.md       #   超参数消融实验蓝图（LR/scheduler/dropout/ε/测试集重构）
 │   ├── CHANGELOG.md       #   版本更新文档
 │   └── note.txt           #   零散笔记
 ├── README.md              # 本文件
@@ -156,6 +159,14 @@ python main.py \
 以及 test 点对 `outputs/results/<name>_test_pairs.csv`。
 模型按验证集 `val_mae` 早停并保存最佳权重。
 
+> 保存训练日志：程序不自动落盘完整日志，建议用 `tee` 把终端输出存到 `logs/`，文件名体现参数/版本，
+> 便于不同配置横向对比。例如：
+> ```bash
+> python main.py --off_file sample_terrain.off --max_depth 3 --capacity 32 \
+>   --num_epoch 30 --batch_size 32 --device cuda \
+>   2>&1 | tee logs/sample_d3_c32_b32.log
+> ```
+
 > GPU 提示：训练支持 `--device cuda` + `--batch_size`，mini-batch 把多个样本的子图/高速图合并成
 > 一张大图做**一次**消息传递与优化器步进，显著提升 GPU 利用率。注意启动时的四叉树分区与 Dijkstra
 > 预处理是纯 CPU 图算法（与 GPU 无关）；GPU 加速的是 GNN 训练部分。`--device cuda` 在无 GPU 时自动回退 CPU。
@@ -224,7 +235,11 @@ python baseline.py \
 | `--capacity` | 32 | 每叶最大点数（自适应模式生效） |
 | `--uniform` | 关 | 均匀四叉树（分到 max_depth）替代自适应 |
 | `--in_feat` / `--hidden_dim` / `--out_dim` | 64 / 128 / 64 | 特征、隐藏、输出维度 |
-| `--learning_rate` | 0.001 | 学习率 |
+| `--learning_rate` | 0.001 | 初始学习率 |
+| `--lr_scheduler` | `none` | 学习率调度器：`none` / `plateau`(ReduceLROnPlateau，按 val_mae 降 LR) |
+| `--lr_patience` | 5 | plateau：val_mae 连续多少轮不降就降 LR |
+| `--lr_factor` | 0.5 | plateau：每次降 LR 的乘数 |
+| `--min_lr` | 1e-6 | plateau：LR 下限 |
 | `--num_epoch` | 20 | 最大训练轮数 |
 | `--batch_size` | 16 | mini-batch 大小（每次 GNN 前向/反向/优化器步的样本数）；`1` = 旧逐样本行为 |
 | `--distance_samples` | 3000 | `(s,t)` 对数量上限；`<=0` 表示用全部唯一可达对（大图会自动设保护上限） |

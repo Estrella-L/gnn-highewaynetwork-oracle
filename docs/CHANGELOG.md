@@ -12,10 +12,48 @@
 
 ---
 
+## [v0.10.0] - 2026-07-10 — 新增 LR scheduler + 训练日志目录 + 超参数消融文档
+
+### 动机
+超参数消融实验（LR / dropout / scheduler / ε）需要学习率调度支持；同时需要一个统一存放
+不同参数/版本训练日志的地方，以及一份消融实验蓝图文档。
+
+### 改动
+**`main.py`**
+- 新增 `--lr_scheduler {none,plateau}` + `--lr_patience` / `--lr_factor` / `--min_lr`：
+  plateau 用 `torch.optim.lr_scheduler.ReduceLROnPlateau`，按 `val_mae` 触发降 LR。
+- 每轮日志追加 `lr=...`；降 LR 时打印 `lr reduced: a -> b`。
+
+**目录**：新增顶层 `logs/`（训练日志归档，手动 `tee` 保存，跨参数/版本对比）；
+首个 Baseline 日志已归档其中。
+
+**文档**：新增 `docs/训练文档2.md`（超参数消融实验蓝图：Baseline + Exp-1~5，含可执行命令与结果表模板）。
+
+### 接口/参数变化
+- `main.py` 新增 `--lr_scheduler / --lr_patience / --lr_factor / --min_lr`（默认 `none`，行为不变）。
+
+### 兼容性
+- 默认 `--lr_scheduler none`，不启用时训练行为与之前完全一致；模型结构与 checkpoint 不变。
+
+### 验证
+- `main.py` `ast` 解析通过。scheduler 仅在 `plateau` 时创建，`step(val_mae)` 在每轮 val 后调用。
+
+### 已知局限 / 后续 TODO
+- Exp-4/5（ε 稀疏化 / 测试集重构）仍需先实现 WSPD spanner（见 Roadmap / `项目说明.md` §9.1）。
+- 数据泄漏检查脚本（8:1:1 节点/边重叠）尚未实现。
+
+---
+
 ## 可提升工作（Roadmap，未实现）
 
 按优先级记录尚未落地、但有价值的改进方向：
 
+- **高速网络用 WSPD spanner 稀疏化（可选）**：当前 `build_highway_edges` 的盒内
+  transit 边是**全连接**（盒内高速点两两相连），边数 `O(K²/盒数)`，大图上爆炸——EP_low
+  （高速点 4856）盒内 transit 边约 **70 万条**，是每轮 ~570s 的主因。应改为 EAR-Oracle 的
+  **WSPD（Well-Separated Pair Decomposition）spanner**，用参数 **ε（近似精度）** 控制边数：
+  产出 (1+ε)-spanner，边数降到 `O(K/ε²)`（大图少 30~50 倍），ε 即"精度—边数/速度"旋钮。
+  过渡方案可先做 `--transit_k` 的 k-近邻稀疏化验证收益。详细实现拆解见 `项目说明.md` 第 9 节。
 - **按距离分层采样监督**：当前 `build_distance_samples` 对节点对**均匀随机抽样**，导致距离标签集中在
   中等距离、极近/极远样本稀少；而评估指标 `relative_error` 对小距离最敏感。可加一个可选开关：
   把可达距离分档（如按分位数），每档抽相近数量，使各距离段训练更均衡。默认保留现有均匀采样以兼容。
@@ -24,7 +62,8 @@
 - **多种子 / 跨图评估**：固定配置多种子重复报均值±方差；多张地形交叉验证（当前单种子单次）。
 - **对称化输出**：强制 `d̃(s,t)=d̃(t,s)`（对称读出），并报告对称性违反度（README Q5）。
 - **分区/高速可视化**：把分区盒子 + 高速点画成 PNG，便于审查与论文配图（当前仅 CSV 审查文件）。
-- **Steiner 点 / WSPD spanner / Snell 加权测地距离**：贴近 EAR-Oracle 的更精确监督（依赖几何，较重）。
+- **Steiner 点 / Snell 加权测地距离**：贴近 EAR-Oracle 的更精确**监督信号**（依赖几何，较重）。
+  （注：WSPD spanner 属高速网络稀疏化，已单列为上面的高优先级项，不在此监督精度条目内。）
 
 ---
 

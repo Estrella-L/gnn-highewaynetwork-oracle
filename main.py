@@ -31,7 +31,12 @@ def build_parser():
     parser.add_argument("--out_dim", type=int, default=64, help="output embedding dimension")
     parser.add_argument("--dropout_ratio", type=float, default=0.2, help="dropout ratio")
 
-    parser.add_argument("--learning_rate", type=float, default=0.001, help="learning rate")
+    parser.add_argument("--learning_rate", type=float, default=0.001, help="learning rate (初始学习率)")
+    parser.add_argument("--lr_scheduler", type=str, default="none", choices=["none", "plateau"],
+                        help="学习率调度器；plateau=ReduceLROnPlateau(按 val_mae 触发降 LR)")
+    parser.add_argument("--lr_patience", type=int, default=5, help="plateau: val_mae 连续多少轮不降就降 LR")
+    parser.add_argument("--lr_factor", type=float, default=0.5, help="plateau: 每次降 LR 的乘数(如 0.5)")
+    parser.add_argument("--min_lr", type=float, default=1e-6, help="plateau: LR 下限")
     parser.add_argument("--num_epoch", type=int, default=20, help="max training epochs")
     parser.add_argument("--batch_size", type=int, default=16, help="mini-batch size (samples per GNN forward/step); 1 = 旧逐样本行为")
     parser.add_argument("--train_percent", type=float, default=0.8, help="train split ratio")
@@ -235,6 +240,19 @@ if __name__ == "__main__":
         lr=args.learning_rate,
         weight_decay=5e-4,
     )
+    scheduler = None
+    if args.lr_scheduler == "plateau":
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            distance_optimizer,
+            mode="min",
+            factor=args.lr_factor,
+            patience=args.lr_patience,
+            min_lr=args.min_lr,
+        )
+        print(
+            f"[distance] lr_scheduler=plateau (factor={args.lr_factor}, "
+            f"patience={args.lr_patience}, min_lr={args.min_lr})"
+        )
     criterion = build_loss(args.loss_type)
 
     best_val_mae = float("inf")
@@ -264,12 +282,20 @@ if __name__ == "__main__":
             optimizer=None,
         )
         epoch_seconds = time.time() - _t_epoch_start
+        cur_lr = distance_optimizer.param_groups[0]["lr"]
         print(
             f"[distance] epoch={epoch:03d} "
             f"train_mae={train_metrics['mae']:.6f} val_mae={val_metrics['mae']:.6f} "
             f"train_rmse={train_metrics['rmse']:.6f} val_rmse={val_metrics['rmse']:.6f} "
-            f"time={epoch_seconds:.2f}s"
+            f"lr={cur_lr:.2e} time={epoch_seconds:.2f}s"
         )
+
+        # 学习率调度：按 val_mae 触发降 LR（下一轮生效）
+        if scheduler is not None:
+            scheduler.step(val_metrics["mae"])
+            new_lr = distance_optimizer.param_groups[0]["lr"]
+            if new_lr < cur_lr:
+                print(f"[distance] lr reduced: {cur_lr:.2e} -> {new_lr:.2e}")
 
         if val_metrics["mae"] < best_val_mae:
             best_val_mae = val_metrics["mae"]
