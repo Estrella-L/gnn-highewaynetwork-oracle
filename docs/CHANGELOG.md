@@ -12,6 +12,33 @@
 
 ---
 
+## [v0.12.0] - 2026-07-10 — 8:1:1 划分验证（导出 train/val 点对 + check_split.py）
+
+### 动机
+实验计划第 5 步"8:1:1 节点/边重叠"需要验证 train/val/test 划分的比例与**无对级泄漏**。
+此前 `main.py` 只导出 test 点对，无法核对三集的重叠。
+
+### 改动
+**`main.py`**：切分后**同时导出 train/val/test 三份**点对 CSV
+（`<run>_{train,val,test}_pairs.csv`），test 文件名不变（`baseline.py` 仍兼容）。
+
+**新增 `check_split.py`**（纯 Python）：读三份 CSV，报告
+① 划分比例（是否 ≈ 8:1:1）；② **对级泄漏**（同一 (s,t) 跨集出现，必须为 0）；
+③ 集合内重复对自检；④ 节点重叠（单图直推式下高重叠属正常，非泄漏）。
+
+### 接口/参数变化
+- `main.py` 新增产物 `<run>_train_pairs.csv`、`<run>_val_pairs.csv`（test 不变）。
+- 新增脚本 `check_split.py`（`--run_prefix` 或分别 `--train/--val/--test`）。
+
+### 兼容性
+- 不改训练逻辑与模型；仅多导出两份 CSV。旧 run（只导了 test）需重训或重跑采样才能全量校验。
+
+### 验证
+- `main.py` / `check_split.py` `ast` 解析通过。
+- 本地合成 CSV 冒烟：正确报出划分比例、并检出故意植入的 1 处对级泄漏（train∩test=1）。
+
+---
+
 ## [v0.11.0] - 2026-07-10 — 新增点对跨分区/同分区比例分析脚本
 
 ### 动机

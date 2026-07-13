@@ -215,13 +215,19 @@ if __name__ == "__main__":
         f"val={len(val_samples)}, test={len(test_samples)}"
     )
 
-    # 导出 TEST 查询点对 + 真实距离（用于审计/对齐基线，消除跨环境复现 test 集的隐患）
-    test_pairs_path = os.path.join(result_save_path, save_name + "_test_pairs.csv")
-    with open(test_pairs_path, "w", encoding="utf-8") as f:
-        f.write("s,t,true_distance\n")
-        for smp in test_samples:
-            f.write(f"{int(smp['s'])},{int(smp['t'])},{float(smp['distance'])}\n")
-    print(f"[distance] wrote test pairs: {test_pairs_path} ({len(test_samples)} pairs)")
+    # 导出 train/val/test 查询点对 + 真实距离（用于审计、对齐基线、8:1:1 划分与泄漏检查）
+    def _dump_pairs(split_name, samples):
+        path = os.path.join(result_save_path, f"{save_name}_{split_name}_pairs.csv")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("s,t,true_distance\n")
+            for smp in samples:
+                f.write(f"{int(smp['s'])},{int(smp['t'])},{float(smp['distance'])}\n")
+        print(f"[distance] wrote {split_name} pairs: {path} ({len(samples)} pairs)")
+        return path
+
+    _dump_pairs("train", train_samples)
+    _dump_pairs("val", val_samples)
+    test_pairs_path = _dump_pairs("test", test_samples)  # baseline.py 用它对齐 test 集
 
     distance_model = DistanceRegressionNet(
         node_feat_dim=args.in_feat,

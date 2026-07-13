@@ -40,6 +40,7 @@ d(s, t) ≈ d(s → 入口s) + d_highway(入口s → 入口t) + d(入口t → t)
 ├── generate_terrain.py    # 生成规则网格地形 .off（带起伏，适配距离分解算法；仅需 numpy）
 ├── baseline.py            # 非学习基线（常数/直线距离），读 test 点对文件与模型对比
 ├── analyze_pairs.py       # 分析采样点对的跨分区/同分区比例（读分区表+test点对，纯Python）
+├── check_split.py         # 8:1:1 划分验证：比例/对级泄漏/节点边重叠（读三份pairs CSV，纯Python）
 ├── build_highway.py       # .off → 全局图 + 真正的四叉树分区 + 高速骨干（对齐 EAR-Oracle）
 ├── preprocess.py          # 样本采样、特征构造、highway 上下文与距离预计算
 ├── gnn.py                 # InnerGNN / InterGNN / DistancePredictor
