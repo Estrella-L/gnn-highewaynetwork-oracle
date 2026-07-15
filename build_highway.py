@@ -279,20 +279,45 @@ def build_pipeline_inputs(
         boundary = set(range(len(graph_info[0])))
     boundary_sorted = sorted(boundary)
 
-    dist_from_boundary = {b: _dijkstra(adj, b) for b in boundary_sorted}
-    edge_w = build_highway_edges(adj, boundary, leaf_of, dist_from_boundary)
+    # 内存优化：用 float32 numpy 存距离（省 ~8x），并**流式**跑边界 Dijkstra
+    # （每个高速点算完立刻填列 + 就地生成盒内 transit 边后丢弃，峰值从 K×N 降到 1×N）。
+    import numpy as np
 
-    # access_dist[node][local] = 节点 node 到第 local 个高速入口的图最短路
     n_full = len(graph_info[0])
     K = len(boundary_sorted)
     g2l = {g: i for i, g in enumerate(boundary_sorted)}
-    access_dist = [[float("inf")] * K for _ in range(n_full)]
-    for local, g in enumerate(boundary_sorted):
-        dl = dist_from_boundary[g]
-        for node in range(n_full):
-            access_dist[node][local] = dl[node]
 
-    # 高速图内部 local 邻接 + 两两最短路
+    # 高速节点按叶子盒分组
+    cell_members = defaultdict(list)
+    for u in boundary_sorted:
+        cell_members[leaf_of[u]].append(u)
+
+    edge_w = {}
+
+    def _add_edge(u, v, w):
+        if u == v:
+            return
+        key = (u, v)
+        if key not in edge_w or w < edge_w[key]:
+            edge_w[key] = w
+
+    # (1) 原始跨界边：两端都是高速节点的原图边
+    for u in boundary_sorted:
+        for v, w in adj[u]:
+            if v in boundary:
+                _add_edge(u, v, w)
+                _add_edge(v, u, w)
+
+    # (2) 流式：每个高速点一次全图 Dijkstra → 填 access_dist 列 + 盒内 transit 边，随即丢弃
+    access_dist = np.full((n_full, K), np.inf, dtype=np.float32)
+    for local, g in enumerate(boundary_sorted):
+        dl = _dijkstra(adj, g)  # 长度 N，用完即弃
+        access_dist[:, local] = np.asarray(dl, dtype=np.float32)
+        for b in cell_members[leaf_of[g]]:
+            if b != g and dl[b] != float("inf"):
+                _add_edge(g, b, dl[b])
+
+    # 高速图内部 local 邻接 + 两两最短路（float32 存储）
     local_u, local_v = [], []
     hadj = [[] for _ in range(K)]
     for (u, v), w in edge_w.items():
@@ -301,7 +326,9 @@ def build_pipeline_inputs(
             local_u.append(lu)
             local_v.append(lv)
             hadj[lu].append((lv, w))
-    highway_pair_dist = [_dijkstra(hadj, s) for s in range(K)]
+    highway_pair_dist = np.full((K, K), np.inf, dtype=np.float32)
+    for s in range(K):
+        highway_pair_dist[s, :] = np.asarray(_dijkstra(hadj, s), dtype=np.float32)
 
     # 张量化与特征（需要 torch，延迟导入，便于在无 torch 环境下单测纯图部分）
     from preprocess import build_highway_context

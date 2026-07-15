@@ -93,6 +93,44 @@
 
 ---
 
+## [v0.13.0] - 2026-07-10 — 预处理内存优化（修复大图 depth=3 OOM）
+
+### 动机
+EP_low（|V|=164238）在 `--max_depth 3` 下预处理阶段被系统 OOM killer 杀死（CPU RAM 爆，非 GPU）。
+根因：`build_pipeline_inputs` 里两个稠密距离结构 `dist_from_boundary`（字典推导同时持有 K 份长度 N
+的数组）与 `access_dist`（N×K，且是前者的转置、完全冗余），均用 Python float list 存储（每个数 ~32B）。
+K（高速节点数）随分区变细快速增长：depth=2 K≈4856 峰值 ~51GB（勉强能跑），depth=3 K 翻几倍 →
+峰值 ~130GB → OOM。
+
+### 改动
+**`build_highway.py:build_pipeline_inputs`**
+- **流式化边界 Dijkstra**：不再用字典推导一次性持有 K 份全长距离；改为每个高速点算一次即
+  (1) 填 `access_dist` 对应列、(2) 就地生成该盒 transit 边，随即丢弃 → 峰值从 O(K×N) 降到 O(N)。
+- **float32 numpy 存储**：`access_dist` 与 `highway_pair_dist` 从 Python list-of-list 改为
+  `np.float32` 数组（每数 4B，省约 8×）。
+- 效果（depth=3 估算）：峰值从 ~130GB 降到 ~9GB（约 14×）。
+
+### 接口/参数变化
+- 无 CLI 变化。`access_dist` / `highway_pair_dist` 由嵌套 list 变为 numpy float32 数组（内部表示）。
+
+### 兼容性
+- 语义等价（距离值不变，仅 float32 舍入，对 nearest-k 选择与 log1p 距离特征无实质影响）。
+- 消费端（`_nearest_k_local_by_access` 排序、距离特征算术、`highway_pair_dist[i][j]` 索引、
+  `== inf` 比较）经本地 numpy 兼容性测试全部通过。
+- **缓存需重算**：内部表示变了，旧 `.pt` 缓存不应复用（用 `--no_cache` 或删 `outputs/cache/` 重算）。
+
+### 验证
+- `build_highway.py` `ast` 解析通过；numpy float32 消费逻辑本地单测通过。
+- ⚠️ 未在真实大图上端到端跑（本地无 torch/大图）。**强烈建议先用 depth=2 重训一次**，
+  确认 test 指标与旧结果（rel_err≈20.01%）一致（等价性验证），再上 depth=3。
+
+### 已知局限 / 后续 TODO
+- 若 depth=3 的 access_dist（~8GB）仍偏大，可进一步"只存每节点最近 k 个高速入口"（[N,k] 而非 [N,K]）
+  —— 需改 nearest-k 的存取方式，是下一步更大的内存优化。
+- transit 边仍是盒内全连接 O(K²/盒)，大图上 edge_w 也占内存 + InterGNN 变重 → 见 WSPD spanner（Roadmap）。
+
+---
+
 ## 可提升工作（Roadmap，未实现）
 
 按优先级记录尚未落地、但有价值的改进方向：
