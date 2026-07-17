@@ -118,28 +118,58 @@ def _dijkstra_single_source(adj, src):
     return dist
 
 
-def build_distance_samples(graph_info, num_samples=None, weighted=True, seed=42, undirected=True):
+def _load_samples_csv(path):
+    """读取缓存的采样 CSV(s,t,distance) → sample dict 列表。"""
+    samples = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            parts = line.strip().split(",")
+            try:
+                s = int(parts[0]); t = int(parts[1]); d = float(parts[2])
+            except (ValueError, IndexError):
+                continue  # 表头
+            samples.append({"s": s, "t": t, "distance": d})
+    return samples
+
+
+def _save_samples_csv(path, samples):
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("s,t,distance\n")
+        for smp in samples:
+            f.write(f"{int(smp['s'])},{int(smp['t'])},{float(smp['distance'])}\n")
+
+
+def build_distance_samples(graph_info, num_samples=None, weighted=True, seed=42, undirected=True,
+                           cache_path=None):
     """
     构造节点对最短路监督样本（唯一、无重复、无泄漏），并对大图高效。
 
     做法：
       1. 先确定要用的**唯一**节点对集合：num_samples 给定且小于全部对数时，**无放回**随机抽样
          num_samples 个唯一对；否则枚举全部对（仅适合小图）。
-      2. 按源点分组，每个不同源点只跑**一次** Dijkstra，读出该源到其目标的距离。
-         这样 Dijkstra 次数 = 不同源点数 ≤ num_samples，避免对大网格做全 APSP。
+      2. 按源点分组，每个不同源点只跑**一次** Dijkstra（有 scipy 走 C 分块，否则回退 Python），
+         读出该源到其目标的距离。Dijkstra 次数 = 不同源点数，避免全 APSP。
 
     Args:
         num_samples (int | None): 采样上限；None 或 <=0 时尝试全部对（大图会自动设上限保护）。
         undirected (bool): True 时只取 s < t 的无向对（无向网格距离对称）。
+        cache_path (str | None): 给定则：命中直接读、未命中算完写盘（同图同参数第二次起跳过全部 Dijkstra）。
 
     Returns:
         list[dict]: [{"s": int, "t": int, "distance": float}, ...]（每对唯一、无跨集泄漏）
     """
+    if cache_path and os.path.exists(cache_path):
+        samples = _load_samples_csv(cache_path)
+        print(f"[distance] loaded cached samples: {cache_path} ({len(samples)} pairs) [跳过采样 Dijkstra]")
+        return samples
+
+    from build_highway import iter_source_distances  # 惰性导入，避免循环依赖
+
     random.seed(seed)
     n = len(graph_info[0])
     if n < 2:
         return []
-    adj = _build_weighted_adj_list(graph_info, weighted=weighted)
 
     total_pairs = n * (n - 1) // 2 if undirected else n * (n - 1)
     cap = num_samples if (num_samples is not None and num_samples > 0) else None
@@ -173,18 +203,23 @@ def build_distance_samples(graph_info, num_samples=None, weighted=True, seed=42,
     for s, t in pair_list:
         by_src[s].append(t)
 
+    # 每个不同源点一次 Dijkstra（scipy C 分块 / Python 回退），读出到各目标的距离
+    eu, ev, ew = graph_info[3][0], graph_info[3][1], graph_info[4]
     samples = []
-    for s, targets in by_src.items():
-        dist = _dijkstra_single_source(adj, s)
-        for t in targets:
-            if dist[t] != float("inf"):
-                samples.append({"s": s, "t": t, "distance": float(dist[t])})
+    for s, dist in iter_source_distances(n, eu, ev, ew, list(by_src.keys()), weighted=weighted):
+        for t in by_src[s]:
+            d = dist[t]
+            if d != float("inf"):
+                samples.append({"s": s, "t": t, "distance": float(d)})
 
     print(
         f"[distance] sampled {len(samples)} unique reachable pairs "
         f"(requested cap={cap}, total possible={total_pairs}, "
         f"dijkstra_runs={len(by_src)}, undirected={undirected})"
     )
+    if cache_path:
+        _save_samples_csv(cache_path, samples)
+        print(f"[distance] cached samples -> {cache_path}")
     return samples
 
 

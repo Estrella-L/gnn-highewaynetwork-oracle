@@ -130,6 +130,53 @@ def _dijkstra(adj, src):
     return dist
 
 
+def _try_import_scipy():
+    """惰性探测 scipy；不可用则返回 (None, None)，调用方回退纯 Python Dijkstra。"""
+    try:
+        import scipy.sparse as sp
+        from scipy.sparse.csgraph import dijkstra as sp_dijkstra
+        return sp, sp_dijkstra
+    except Exception:
+        return None, None
+
+
+def iter_source_distances(n, edge_u, edge_v, edge_w, sources, weighted=True, chunk=256):
+    """
+    依次产出 (source, dist)：dist 为长度 n 的距离序列（scipy 下是 np.ndarray，回退下是 list）。
+
+    - 有 scipy：用**分块**的 C 版多源 Dijkstra（快 1~2 个数量级）；每块只算 [chunk, n]，
+      内存峰值 O(chunk×n)，不会退回 K×N 稠密矩阵。
+    - 无 scipy：回退纯 Python heapq，逐源计算（结果逐位一致）。
+
+    两分支都给**精确最短路**，数值等价（无向图，directed=False）。
+    """
+    import numpy as np
+
+    srcs = list(sources)
+    sp, sp_dijkstra = _try_import_scipy()
+    if sp is not None:
+        w = np.asarray(edge_w, dtype=np.float64) if weighted else np.ones(len(edge_u), dtype=np.float64)
+        w = np.maximum(1e-9, w)
+        csr = sp.csr_matrix(
+            (w, (np.asarray(edge_u, dtype=np.int64), np.asarray(edge_v, dtype=np.int64))),
+            shape=(n, n),
+        )
+        for i in range(0, len(srcs), chunk):
+            batch = srcs[i:i + chunk]
+            dmat = sp_dijkstra(csr, directed=False, indices=batch)  # [len(batch), n] float64
+            for j, s in enumerate(batch):
+                yield s, dmat[j]
+    else:
+        adj = [[] for _ in range(n)]
+        for idx in range(len(edge_u)):
+            u, v = edge_u[idx], edge_v[idx]
+            if 0 <= u < n and 0 <= v < n:
+                ww = float(edge_w[idx]) if weighted else 1.0
+                adj[u].append((v, max(1e-9, ww)))
+        for s in srcs:
+            yield s, _dijkstra(adj, s)
+
+
 # ---------------------------------------------------------------------------
 # 真正的递归四叉树（对应 EAR-Oracle 的 Quad::quadTree）
 # ---------------------------------------------------------------------------
@@ -309,26 +356,27 @@ def build_pipeline_inputs(
                 _add_edge(v, u, w)
 
     # (2) 流式：每个高速点一次全图 Dijkstra → 填 access_dist 列 + 盒内 transit 边，随即丢弃
+    #     底层用 iter_source_distances（有 scipy 走 C 分块，否则回退 Python），保持 O(chunk×N) 内存。
+    eu_g, ev_g, ew_g = graph_info[3][0], graph_info[3][1], graph_info[4]
     access_dist = np.full((n_full, K), np.inf, dtype=np.float32)
-    for local, g in enumerate(boundary_sorted):
-        dl = _dijkstra(adj, g)  # 长度 N，用完即弃
+    for g, dl in iter_source_distances(n_full, eu_g, ev_g, ew_g, boundary_sorted, weighted=weighted):
+        local = g2l[g]
         access_dist[:, local] = np.asarray(dl, dtype=np.float32)
         for b in cell_members[leaf_of[g]]:
-            if b != g and dl[b] != float("inf"):
-                _add_edge(g, b, dl[b])
+            db = dl[b]
+            if b != g and db != float("inf"):
+                _add_edge(g, b, float(db))
 
-    # 高速图内部 local 邻接 + 两两最短路（float32 存储）
-    local_u, local_v = [], []
-    hadj = [[] for _ in range(K)]
+    # 高速图内部 local 邻接（收集边+权）+ 两两最短路（float32 存储）
+    local_u, local_v, local_w = [], [], []
     for (u, v), w in edge_w.items():
         if u in g2l and v in g2l:
-            lu, lv = g2l[u], g2l[v]
-            local_u.append(lu)
-            local_v.append(lv)
-            hadj[lu].append((lv, w))
+            local_u.append(g2l[u])
+            local_v.append(g2l[v])
+            local_w.append(w)
     highway_pair_dist = np.full((K, K), np.inf, dtype=np.float32)
-    for s in range(K):
-        highway_pair_dist[s, :] = np.asarray(_dijkstra(hadj, s), dtype=np.float32)
+    for s, dl in iter_source_distances(K, local_u, local_v, local_w, range(K), weighted=weighted):
+        highway_pair_dist[s, :] = np.asarray(dl, dtype=np.float32)
 
     # 张量化与特征（需要 torch，延迟导入，便于在无 torch 环境下单测纯图部分）
     from preprocess import build_highway_context

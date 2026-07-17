@@ -12,7 +12,7 @@ from preprocess import (
     build_synthetic_partition_inputs,
     precompute_nearest_k,
 )
-from build_highway import build_pipeline_inputs_cached
+from build_highway import build_pipeline_inputs_cached, _file_fingerprint
 from model import DistanceRegressionNet, compute_distance_metrics
 
 
@@ -202,12 +202,20 @@ if __name__ == "__main__":
         f"highway_nodes={len(highway_context['highway_global_ids'])}"
     )
 
+    # 采样结果缓存路径（同图同参数第二次起直接读，跳过全部采样 Dijkstra）
+    samples_cache_path = None
+    if cache_dir is not None:
+        _fp = _file_fingerprint(off_path)
+        samples_cache_path = os.path.join(
+            cache_dir, f"{base_name}_samples_n{args.distance_samples}_seed42_{_fp}.csv"
+        )
     distance_samples = build_distance_samples(
         graph_info=data_graph_info,
         num_samples=(None if args.distance_samples <= 0 else args.distance_samples),
         weighted=True,
         seed=42,
         undirected=True,
+        cache_path=samples_cache_path,
     )
     train_samples, val_samples, test_samples = split_distance_dataset(
         sample_list=distance_samples,

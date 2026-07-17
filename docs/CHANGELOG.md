@@ -93,6 +93,47 @@
 
 ---
 
+## [v0.15.0] - 2026-07-10 — 预处理加速：scipy C 版 Dijkstra + 采样结果缓存
+
+### 动机
+预处理/启动阶段有大量纯 Python `heapq` Dijkstra：边界预处理 K 次、高速两两 K 次、
+**采样 build_distance_samples 每次训练都跑 ~4 万次全图 Dijkstra（EP_low dijkstra_runs=41263，且不缓存）**。
+纯 Python 在 16 万点图上很慢。
+
+### 改动
+**`build_highway.py`**
+- 新增 `_try_import_scipy()` + `iter_source_distances(n, eu, ev, ew, sources, chunk=256)`：
+  有 scipy 走 **C 版多源 Dijkstra（分块，内存 O(chunk×N)，不退回 K×N）**，无 scipy 回退纯 Python heapq。
+- `build_pipeline_inputs` 的边界流式（①）与高速两两（②）改用该生成器。
+
+**`preprocess.py`**
+- `build_distance_samples` 采样 Dijkstra（③）改用 `iter_source_distances`；
+- 新增 `cache_path` 参数：命中直接读 CSV、未命中算完写盘 → **同图同参数第二次起完全跳过采样 Dijkstra**。
+
+**`main.py`**：构造采样缓存路径（`<base>_samples_n<N>_seed42_<off指纹>.csv`，存 `outputs/cache/`）并传入。
+
+**`requirements.txt`**：新增 `scipy`。
+
+### 接口/参数变化
+- `build_distance_samples` 新增可选 `cache_path`；`main.py` 自动传入（`--no_cache` 时禁用）。
+- 新增 scipy 依赖（未安装时自动回退纯 Python，不硬依赖）。
+
+### 兼容性
+- **数值等价**：scipy 与 Python 都是精确最短路；采样距离标签不变。假设图无重复有序边（`build_mesh_graph`
+  用 neighbors 集合，天然满足）——否则 `csr_matrix` 会对重复项求和。
+- 采样缓存 CSV 落 `outputs/cache/`（已被 `.gitignore` 忽略）。
+
+### 验证
+- 三文件 `ast` 解析通过。
+- 本地实测（scipy 可用）：`iter_source_distances`(scipy) vs `_dijkstra`(Python) 在 200 点随机加权图上
+  **最大绝对误差 0.000e+00**（逐点一致）。
+- ⚠️ 端到端需云端确认：首次会写采样缓存；第二次同参数应打印 `loaded cached samples ... [跳过采样 Dijkstra]`。
+
+### 已知局限 / 后续 TODO
+- 若图存在重复有序边/平行边，scipy CSR 求和语义与 Python min 松弛不同（当前主线不会出现）。
+
+---
+
 ## [v0.14.0] - 2026-07-10 — 训练加速：预计算每节点最近 k 个高速入口（nearest-k）
 
 ### 动机
