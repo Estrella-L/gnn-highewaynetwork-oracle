@@ -5,6 +5,7 @@ import random
 import heapq
 import os
 import torch
+import numpy as np
 from copy import deepcopy
 from collections import defaultdict
 
@@ -294,6 +295,32 @@ def _nearest_k_local_by_access(access_row, k):
     return picked
 
 
+def precompute_nearest_k(access_dist, k_max=16):
+    """
+    一次性对**所有节点**预计算最近的 k_max 个高速入口（local 索引，按距离近→远排好）。
+
+    训练/推理时每个样本只需查表 + O(k) 过滤，替代原来每样本每轮的 O(K·logK) 全排序。
+    存 k_max（≥ 任何合理的 highway_k）与 highway_k 解耦；运行时按需切片 [:k]。
+
+    Args:
+        access_dist (np.ndarray | list): [N, K] 每个节点到各高速入口的图最短路（float32）。
+        k_max (int): 每个节点预存的最近入口数上限。
+
+    Returns:
+        np.ndarray[int32]: [N, kk] 最近入口的 local 索引（近→远），kk = min(k_max, K)。
+    """
+    arr = np.asarray(access_dist, dtype=np.float32)
+    n, K = arr.shape
+    kk = min(max(1, k_max), K)
+    if kk >= K:
+        part = np.tile(np.arange(K), (n, 1))
+    else:
+        part = np.argpartition(arr, kk - 1, axis=1)[:, :kk]  # 每行最近 kk 个(未排序)
+    rows = np.arange(n)[:, None]
+    order = np.argsort(arr[rows, part], axis=1)              # 在这 kk 个里按距离排序
+    return part[rows, order].astype(np.int32)                # [N, kk] 近→远
+
+
 def build_highway_context(
     graph_info,
     coords,
@@ -443,8 +470,18 @@ def build_synthetic_partition_inputs(
     )
 
     # 按真实图最短路选最近的 k 个高速入口（local 索引）
-    s_local = _nearest_k_local_by_access(access_dist[s], k_highway)
-    t_local = _nearest_k_local_by_access(access_dist[t], k_highway)
+    # 优先用预计算表（precompute_nearest_k）O(k) 查表；无表则回退旧的 O(K·logK) 排序（如 infer_distance）。
+    nearest_k = external_highway_context.get("nearest_k_local")
+    if nearest_k is not None:
+        def _pick(node):
+            row = access_dist[node]
+            cand = [int(j) for j in nearest_k[node] if row[j] != float("inf")][: max(1, k_highway)]
+            return cand if cand else [int(nearest_k[node][0])]
+        s_local = _pick(s)
+        t_local = _pick(t)
+    else:
+        s_local = _nearest_k_local_by_access(access_dist[s], k_highway)
+        t_local = _nearest_k_local_by_access(access_dist[t], k_highway)
     s_connect_idx = torch.tensor(s_local, dtype=torch.long, device=device)
     t_connect_idx = torch.tensor(t_local, dtype=torch.long, device=device)
 

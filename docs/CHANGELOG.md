@@ -93,6 +93,38 @@
 
 ---
 
+## [v0.14.0] - 2026-07-10 — 训练加速：预计算每节点最近 k 个高速入口（nearest-k）
+
+### 动机
+`build_synthetic_partition_inputs` 每样本每轮都调 `_nearest_k_local_by_access`（对 K 个入口做
+O(K·logK) 全排序）选最近 k 个高速入口；但每节点的最近 k 是**固定的、跨 epoch 不变**。
+EP_low（K≈4856、5万样本×2端点×100轮）→ 上百亿次重复排序，纯浪费。
+
+### 改动
+**`preprocess.py`**
+- 新增 `precompute_nearest_k(access_dist, k_max=16)`：用 numpy `argpartition`(O(K)) 一次性对全部节点
+  算最近 k_max 个入口（近→远），返回 `[N, kk]` int32（约 10MB，可忽略）。k_max 与 highway_k 解耦。
+- `build_synthetic_partition_inputs`：优先查 `context["nearest_k_local"]` 表 + O(k) 过滤不可达；
+  无表则回退旧的 O(K·logK) 排序（`infer_distance.py` 单次查询走回退，无需改）。
+
+**`main.py`**：预处理后一次性 `highway_context["nearest_k_local"] = precompute_nearest_k(...)`
+（不进缓存、每次启动算一次，几秒）。
+
+### 接口/参数变化
+- 无 CLI 变化；`context` 新增内部键 `nearest_k_local`（不入缓存）。
+
+### 兼容性
+- **数值等价**：本地随机数据（含 inf 不可达）500 节点验证——最近 k 集合与最近入口(entry)
+  与旧排序**0 处不一致**（并列仅可能影响集合内顺序，不影响 InterGNN 连边与 entry）。
+- 模型结构/checkpoint 不变；`infer_distance.py` 走回退路径，行为不变。
+
+### 验证
+- `preprocess.py` / `main.py` `ast` 解析通过；nearest-k 等价性本地单测通过。
+- ⚠️ 未在真实大图端到端跑；建议云端 depth=2、少样本、`--num_epoch 1` 跑改前/改后各一次，
+  确认 `test_*` 指标一致（等价性）、`time=` 下降（加速）。
+
+---
+
 ## [v0.13.0] - 2026-07-10 — 预处理内存优化（修复大图 depth=3 OOM）
 
 ### 动机

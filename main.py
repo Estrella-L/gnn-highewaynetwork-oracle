@@ -10,6 +10,7 @@ from preprocess import (
     build_distance_samples,
     split_distance_dataset,
     build_synthetic_partition_inputs,
+    precompute_nearest_k,
 )
 from build_highway import build_pipeline_inputs_cached
 from model import DistanceRegressionNet, compute_distance_metrics
@@ -189,8 +190,12 @@ if __name__ == "__main__":
         device=args.device,
         cache_dir=cache_dir,
     )
+    # 预计算每节点最近 k 个高速入口（一次性，替代每样本每轮的 O(K·logK) 排序）
+    highway_context["nearest_k_local"] = precompute_nearest_k(
+        highway_context["access_dist"], k_max=max(16, args.highway_k)
+    )
     preprocess_seconds = time.time() - _t_prep_start
-    print(f"[distance] preprocess(分区+高速/缓存) done in {preprocess_seconds:.2f}s")
+    print(f"[distance] preprocess(分区+高速/缓存+nearest_k) done in {preprocess_seconds:.2f}s")
     print(
         f"[distance] off={off_path} |V|={len(data_graph_info[0])} "
         f"leaves={num_leaves}(occupied={highway_context['num_leaves_occupied']}) "
