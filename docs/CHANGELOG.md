@@ -12,84 +12,26 @@
 
 ---
 
-## [v0.12.0] - 2026-07-10 — 8:1:1 划分验证（导出 train/val 点对 + check_split.py）
+## 可提升工作（Roadmap，未实现）
 
-### 动机
-实验计划第 5 步"8:1:1 节点/边重叠"需要验证 train/val/test 划分的比例与**无对级泄漏**。
-此前 `main.py` 只导出 test 点对，无法核对三集的重叠。
+按优先级记录尚未落地、但有价值的改进方向：
 
-### 改动
-**`main.py`**：切分后**同时导出 train/val/test 三份**点对 CSV
-（`<run>_{train,val,test}_pairs.csv`），test 文件名不变（`baseline.py` 仍兼容）。
-
-**新增 `check_split.py`**（纯 Python）：读三份 CSV，报告
-① 划分比例（是否 ≈ 8:1:1）；② **对级泄漏**（同一 (s,t) 跨集出现，必须为 0）；
-③ 集合内重复对自检；④ 节点重叠（单图直推式下高重叠属正常，非泄漏）。
-
-### 接口/参数变化
-- `main.py` 新增产物 `<run>_train_pairs.csv`、`<run>_val_pairs.csv`（test 不变）。
-- 新增脚本 `check_split.py`（`--run_prefix` 或分别 `--train/--val/--test`）。
-
-### 兼容性
-- 不改训练逻辑与模型；仅多导出两份 CSV。旧 run（只导了 test）需重训或重跑采样才能全量校验。
-
-### 验证
-- `main.py` / `check_split.py` `ast` 解析通过。
-- 本地合成 CSV 冒烟：正确报出划分比例、并检出故意植入的 1 处对级泄漏（train∩test=1）。
-
----
-
-## [v0.11.0] - 2026-07-10 — 新增点对跨分区/同分区比例分析脚本
-
-### 动机
-需要用**实测**代替估算，确认采样的 `(s,t)` 点对里跨分区/同分区各占多少
-（此前对"跨分区占比≈94%"只是均匀假设下的估算，真实地形叶子可能不均衡）。
-
-### 改动
-**新增 `analyze_pairs.py`**（纯 Python，无需 torch）：
-- 读 `outputs/cache/<key>_partition.csv`（每点 leaf_id）→ 计算叶子大小分布、`Σpᵢ²`、
-  全图所有对中同分区的**精确**比例 `Σ C(nᵢ,2)/C(N,2)`；
-- 可选读 `<run>_test_pairs.csv` → 统计**实际采样**点对中同分区/跨分区的实测比例。
-
-### 验证
-- `ast` 解析通过；本地 900 点规则网格实测：16 叶（49~64），同分区 6.20%，跨分区 93.80%
-  （均匀图下与理论 1/16 吻合）。真实地形（如 EP_low）需在云端用其 partition/test_pairs CSV 实测。
-
-### 已知局限 / 后续 TODO
-- 均匀网格 intra≈6% 已证；真实地形因顶点分布不均，intra 可能更高，需实测确认。
-- 如需按分区控制采样，可加 `--pair_mode {any,cross,intra}`（见 Roadmap 的分层采样相关项）。
-
----
-
-## [v0.10.0] - 2026-07-10 — 新增 LR scheduler + 训练日志目录 + 超参数消融文档
-
-### 动机
-超参数消融实验（LR / dropout / scheduler / ε）需要学习率调度支持；同时需要一个统一存放
-不同参数/版本训练日志的地方，以及一份消融实验蓝图文档。
-
-### 改动
-**`main.py`**
-- 新增 `--lr_scheduler {none,plateau}` + `--lr_patience` / `--lr_factor` / `--min_lr`：
-  plateau 用 `torch.optim.lr_scheduler.ReduceLROnPlateau`，按 `val_mae` 触发降 LR。
-- 每轮日志追加 `lr=...`；降 LR 时打印 `lr reduced: a -> b`。
-
-**目录**：新增顶层 `logs/`（训练日志归档，手动 `tee` 保存，跨参数/版本对比）；
-首个 Baseline 日志已归档其中。
-
-**文档**：新增 `docs/训练文档2.md`（超参数消融实验蓝图：Baseline + Exp-1~5，含可执行命令与结果表模板）。
-
-### 接口/参数变化
-- `main.py` 新增 `--lr_scheduler / --lr_patience / --lr_factor / --min_lr`（默认 `none`，行为不变）。
-
-### 兼容性
-- 默认 `--lr_scheduler none`，不启用时训练行为与之前完全一致；模型结构与 checkpoint 不变。
-
-### 验证
-- `main.py` `ast` 解析通过。scheduler 仅在 `plateau` 时创建，`step(val_mae)` 在每轮 val 后调用。
-
-### 已知局限 / 后续 TODO
-- Exp-4/5（ε 稀疏化 / 测试集重构）仍需先实现 WSPD spanner（见 Roadmap / `项目说明.md` §9.1）。
-- 数据泄漏检查脚本（8:1:1 节点/边重叠）尚未实现。
+- **高速网络用 WSPD spanner 稀疏化（可选）**：当前 `build_highway_edges` 的盒内
+  transit 边是**全连接**（盒内高速点两两相连），边数 `O(K²/盒数)`，大图上爆炸——EP_low
+  （高速点 4856）盒内 transit 边约 **70 万条**，是每轮 ~570s 的主因。应改为 EAR-Oracle 的
+  **WSPD（Well-Separated Pair Decomposition）spanner**，用参数 **ε（近似精度）** 控制边数：
+  产出 (1+ε)-spanner，边数降到 `O(K/ε²)`（大图少 30~50 倍），ε 即"精度—边数/速度"旋钮。
+  过渡方案可先做 `--transit_k` 的 k-近邻稀疏化验证收益。详细实现拆解见 `项目说明.md` 第 9 节。
+- **按距离分层采样监督**：当前 `build_distance_samples` 对节点对**均匀随机抽样**，导致距离标签集中在
+  中等距离、极近/极远样本稀少；而评估指标 `relative_error` 对小距离最敏感。可加一个可选开关：
+  把可达距离分档（如按分位数），每档抽相近数量，使各距离段训练更均衡。默认保留现有均匀采样以兼容。
+- **highway 分解强基线**：`baseline.py` 补 `access(s)+highway(入口s,入口t)+access(t)` 这条非学习上界，
+  正式回应"GNN 相对分解本身有多少增益"（README Q4）。
+- **多种子 / 跨图评估**：固定配置多种子重复报均值±方差；多张地形交叉验证（当前单种子单次）。
+- **对称化输出**：强制 `d̃(s,t)=d̃(t,s)`（对称读出），并报告对称性违反度（README Q5）。
+- **分区/高速可视化**：把分区盒子 + 高速点画成 PNG，便于审查与论文配图（当前仅 CSV 审查文件）。
+- **Steiner 点 / Snell 加权测地距离**：贴近 EAR-Oracle 的更精确**监督信号**（依赖几何，较重）。
+  （注：WSPD spanner 属高速网络稀疏化，已单列为上面的高优先级项，不在此监督精度条目内。）
 
 ---
 
@@ -259,26 +201,84 @@ K（高速节点数）随分区变细快速增长：depth=2 K≈4856 峰值 ~51G
 
 ---
 
-## 可提升工作（Roadmap，未实现）
+## [v0.12.0] - 2026-07-10 — 8:1:1 划分验证（导出 train/val 点对 + check_split.py）
 
-按优先级记录尚未落地、但有价值的改进方向：
+### 动机
+实验计划第 5 步"8:1:1 节点/边重叠"需要验证 train/val/test 划分的比例与**无对级泄漏**。
+此前 `main.py` 只导出 test 点对，无法核对三集的重叠。
 
-- **高速网络用 WSPD spanner 稀疏化（可选）**：当前 `build_highway_edges` 的盒内
-  transit 边是**全连接**（盒内高速点两两相连），边数 `O(K²/盒数)`，大图上爆炸——EP_low
-  （高速点 4856）盒内 transit 边约 **70 万条**，是每轮 ~570s 的主因。应改为 EAR-Oracle 的
-  **WSPD（Well-Separated Pair Decomposition）spanner**，用参数 **ε（近似精度）** 控制边数：
-  产出 (1+ε)-spanner，边数降到 `O(K/ε²)`（大图少 30~50 倍），ε 即"精度—边数/速度"旋钮。
-  过渡方案可先做 `--transit_k` 的 k-近邻稀疏化验证收益。详细实现拆解见 `项目说明.md` 第 9 节。
-- **按距离分层采样监督**：当前 `build_distance_samples` 对节点对**均匀随机抽样**，导致距离标签集中在
-  中等距离、极近/极远样本稀少；而评估指标 `relative_error` 对小距离最敏感。可加一个可选开关：
-  把可达距离分档（如按分位数），每档抽相近数量，使各距离段训练更均衡。默认保留现有均匀采样以兼容。
-- **highway 分解强基线**：`baseline.py` 补 `access(s)+highway(入口s,入口t)+access(t)` 这条非学习上界，
-  正式回应"GNN 相对分解本身有多少增益"（README Q4）。
-- **多种子 / 跨图评估**：固定配置多种子重复报均值±方差；多张地形交叉验证（当前单种子单次）。
-- **对称化输出**：强制 `d̃(s,t)=d̃(t,s)`（对称读出），并报告对称性违反度（README Q5）。
-- **分区/高速可视化**：把分区盒子 + 高速点画成 PNG，便于审查与论文配图（当前仅 CSV 审查文件）。
-- **Steiner 点 / Snell 加权测地距离**：贴近 EAR-Oracle 的更精确**监督信号**（依赖几何，较重）。
-  （注：WSPD spanner 属高速网络稀疏化，已单列为上面的高优先级项，不在此监督精度条目内。）
+### 改动
+**`main.py`**：切分后**同时导出 train/val/test 三份**点对 CSV
+（`<run>_{train,val,test}_pairs.csv`），test 文件名不变（`baseline.py` 仍兼容）。
+
+**新增 `check_split.py`**（纯 Python）：读三份 CSV，报告
+① 划分比例（是否 ≈ 8:1:1）；② **对级泄漏**（同一 (s,t) 跨集出现，必须为 0）；
+③ 集合内重复对自检；④ 节点重叠（单图直推式下高重叠属正常，非泄漏）。
+
+### 接口/参数变化
+- `main.py` 新增产物 `<run>_train_pairs.csv`、`<run>_val_pairs.csv`（test 不变）。
+- 新增脚本 `check_split.py`（`--run_prefix` 或分别 `--train/--val/--test`）。
+
+### 兼容性
+- 不改训练逻辑与模型；仅多导出两份 CSV。旧 run（只导了 test）需重训或重跑采样才能全量校验。
+
+### 验证
+- `main.py` / `check_split.py` `ast` 解析通过。
+- 本地合成 CSV 冒烟：正确报出划分比例、并检出故意植入的 1 处对级泄漏（train∩test=1）。
+
+---
+
+## [v0.11.0] - 2026-07-10 — 新增点对跨分区/同分区比例分析脚本
+
+### 动机
+需要用**实测**代替估算，确认采样的 `(s,t)` 点对里跨分区/同分区各占多少
+（此前对"跨分区占比≈94%"只是均匀假设下的估算，真实地形叶子可能不均衡）。
+
+### 改动
+**新增 `analyze_pairs.py`**（纯 Python，无需 torch）：
+- 读 `outputs/cache/<key>_partition.csv`（每点 leaf_id）→ 计算叶子大小分布、`Σpᵢ²`、
+  全图所有对中同分区的**精确**比例 `Σ C(nᵢ,2)/C(N,2)`；
+- 可选读 `<run>_test_pairs.csv` → 统计**实际采样**点对中同分区/跨分区的实测比例。
+
+### 验证
+- `ast` 解析通过；本地 900 点规则网格实测：16 叶（49~64），同分区 6.20%，跨分区 93.80%
+  （均匀图下与理论 1/16 吻合）。真实地形（如 EP_low）需在云端用其 partition/test_pairs CSV 实测。
+
+### 已知局限 / 后续 TODO
+- 均匀网格 intra≈6% 已证；真实地形因顶点分布不均，intra 可能更高，需实测确认。
+- 如需按分区控制采样，可加 `--pair_mode {any,cross,intra}`（见 Roadmap 的分层采样相关项）。
+
+---
+
+## [v0.10.0] - 2026-07-10 — 新增 LR scheduler + 训练日志目录 + 超参数消融文档
+
+### 动机
+超参数消融实验（LR / dropout / scheduler / ε）需要学习率调度支持；同时需要一个统一存放
+不同参数/版本训练日志的地方，以及一份消融实验蓝图文档。
+
+### 改动
+**`main.py`**
+- 新增 `--lr_scheduler {none,plateau}` + `--lr_patience` / `--lr_factor` / `--min_lr`：
+  plateau 用 `torch.optim.lr_scheduler.ReduceLROnPlateau`，按 `val_mae` 触发降 LR。
+- 每轮日志追加 `lr=...`；降 LR 时打印 `lr reduced: a -> b`。
+
+**目录**：新增顶层 `logs/`（训练日志归档，手动 `tee` 保存，跨参数/版本对比）；
+首个 Baseline 日志已归档其中。
+
+**文档**：新增 `docs/训练文档2.md`（超参数消融实验蓝图：Baseline + Exp-1~5，含可执行命令与结果表模板）。
+
+### 接口/参数变化
+- `main.py` 新增 `--lr_scheduler / --lr_patience / --lr_factor / --min_lr`（默认 `none`，行为不变）。
+
+### 兼容性
+- 默认 `--lr_scheduler none`，不启用时训练行为与之前完全一致；模型结构与 checkpoint 不变。
+
+### 验证
+- `main.py` `ast` 解析通过。scheduler 仅在 `plateau` 时创建，`step(val_mae)` 在每轮 val 后调用。
+
+### 已知局限 / 后续 TODO
+- Exp-4/5（ε 稀疏化 / 测试集重构）仍需先实现 WSPD spanner（见 Roadmap / `项目说明.md` §9.1）。
+- 数据泄漏检查脚本（8:1:1 节点/边重叠）尚未实现。
 
 ---
 
@@ -767,8 +767,6 @@ python infer_distance.py --model_path saved_models/<ckpt>.pt \
 
 ---
 
-## 条目模板（复制到本节最上方使用）
-```
 ## [vX.Y.Z] - YYYY-MM-DD — 简述
 ### 动机
 ### 改动
@@ -777,3 +775,7 @@ python infer_distance.py --model_path saved_models/<ckpt>.pt \
 ### 验证
 ### 已知局限 / 后续 TODO
 ```
+
+## 条目模板（复制到本节最上方使用）
+```
+
