@@ -31,6 +31,8 @@ def build_parser():
     parser.add_argument("--hidden_dim", type=int, default=128, help="hidden dimension")
     parser.add_argument("--out_dim", type=int, default=64, help="output embedding dimension")
     parser.add_argument("--dropout_ratio", type=float, default=0.2, help="dropout ratio")
+    parser.add_argument("--num_inner_layers", type=int, default=2, help="InnerGNN 层数（v1.0 起支持深层，配 residual/LN）")
+    parser.add_argument("--num_inter_layers", type=int, default=4, help="InterGNN 层数（推荐 4~6，修复高速图欠传播）")
 
     parser.add_argument("--learning_rate", type=float, default=0.001, help="learning rate (初始学习率)")
     parser.add_argument("--lr_scheduler", type=str, default="none", choices=["none", "plateau"],
@@ -250,6 +252,8 @@ if __name__ == "__main__":
         inner_out_dim=args.out_dim,
         inter_out_dim=args.out_dim,
         fusion_hidden_dim=args.hidden_dim,
+        num_inner_layers=args.num_inner_layers,
+        num_inter_layers=args.num_inter_layers,
         dropout=args.dropout_ratio,
         use_highway_distance_feature=not args.disable_highway_distance_feature,
         highway_distance_feat_dim=4,

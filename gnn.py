@@ -5,17 +5,38 @@ import torch_geometric.nn as geo_nn
 
 
 class InnerGNN(nn.Module):
+    """
+    Inner-GNN（局部段）：v1.0.0 起改为 pre-norm + residual + LayerNorm 深度块
+    （DeepGCNs / GCNII 风格），支持任意层数 num_layers ≥ 2 稳定训练。
+
+    结构：
+        x → input_proj → [LN → ReLU → Dropout → SAGEConv → +residual] × L → output_proj
+    等宽实现：所有卷积统一 hidden_dim → hidden_dim，首尾用 Linear 投影解决维度对齐。
+    """
+
     def __init__(self, input_dim, hidden_dim, output_dim, num_layers=2, dropout=0.1):
         super().__init__()
         if num_layers < 2:
             raise ValueError("num_layers must be >= 2 for InnerGNN.")
         self.dropout = dropout
-        self.convs = nn.ModuleList()
-        self.convs.append(geo_nn.SAGEConv(input_dim, hidden_dim))
-        for _ in range(num_layers - 2):
-            self.convs.append(geo_nn.SAGEConv(hidden_dim, hidden_dim))
-        self.convs.append(geo_nn.SAGEConv(hidden_dim, output_dim))
+        self.input_proj = nn.Linear(input_dim, hidden_dim)
+        self.output_proj = nn.Linear(hidden_dim, output_dim)
+        self.convs = nn.ModuleList(
+            [geo_nn.SAGEConv(hidden_dim, hidden_dim) for _ in range(num_layers)]
+        )
+        self.norms = nn.ModuleList([nn.LayerNorm(hidden_dim) for _ in range(num_layers)])
         self.act = nn.ReLU()
+
+    def _residual_stack(self, h, edge_index):
+        """pre-norm residual 主体循环，forward 与 forward_batch 共用。"""
+        for i, conv in enumerate(self.convs):
+            h_res = h
+            h_pre = self.norms[i](h)
+            h_pre = self.act(h_pre)
+            h_pre = nn.functional.dropout(h_pre, p=self.dropout, training=self.training)
+            h_conv = conv(h_pre, edge_index)
+            h = h_conv + h_res
+        return h
 
     def forward(self, x, edge_index, query_idx):
         """
@@ -29,12 +50,9 @@ class InnerGNN(nn.Module):
                 - node_emb: [num_nodes, output_dim] 子图全部节点嵌入
                 - query_emb: [B, output_dim] 或 [1, output_dim] 查询节点嵌入
         """
-        h = x
-        for layer_idx, conv in enumerate(self.convs):
-            h = conv(h, edge_index)
-            if layer_idx != len(self.convs) - 1:
-                h = self.act(h)
-                h = nn.functional.dropout(h, p=self.dropout, training=self.training)
+        h = self.input_proj(x)
+        h = self._residual_stack(h, edge_index)
+        h = self.output_proj(h)
 
         if isinstance(query_idx, int):
             query_idx = torch.tensor([query_idx], dtype=torch.long, device=h.device)
@@ -66,18 +84,20 @@ class InnerGNN(nn.Module):
             qi = q if isinstance(q, int) else int(torch.as_tensor(q).reshape(-1)[0].item())
             qidx.append(offset + qi)
             offset += x.size(0)
-        h = torch.cat(xs, dim=0)
+        h = self.input_proj(torch.cat(xs, dim=0))
         edge_index = torch.cat(es, dim=1)
-        for layer_idx, conv in enumerate(self.convs):
-            h = conv(h, edge_index)
-            if layer_idx != len(self.convs) - 1:
-                h = self.act(h)
-                h = nn.functional.dropout(h, p=self.dropout, training=self.training)
+        h = self._residual_stack(h, edge_index)
+        h = self.output_proj(h)
         query = torch.tensor(qidx, dtype=torch.long, device=h.device)
         return h[query]
 
 
 class InterGNN(nn.Module):
+    """
+    Inter-GNN（高速段）：v1.0.0 起同样改为 pre-norm + residual 深度块，支持 4~6 层以上稳定训练。
+    这是主要修复目标——高速图直径远>2，原 2 层欠传播 (under-reaching)。
+    """
+
     def __init__(self, highway_in_dim, hidden_dim, output_dim, global_feat_dim, num_layers=2, dropout=0.1):
         super().__init__()
         if num_layers < 2:
@@ -88,17 +108,29 @@ class InterGNN(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden_dim, highway_in_dim),
         )
-        self.convs = nn.ModuleList()
-        self.convs.append(geo_nn.SAGEConv(highway_in_dim, hidden_dim))
-        for _ in range(num_layers - 2):
-            self.convs.append(geo_nn.SAGEConv(hidden_dim, hidden_dim))
-        self.convs.append(geo_nn.SAGEConv(hidden_dim, output_dim))
+        self.input_proj = nn.Linear(highway_in_dim, hidden_dim)
+        self.output_proj = nn.Linear(hidden_dim, output_dim)
+        self.convs = nn.ModuleList(
+            [geo_nn.SAGEConv(hidden_dim, hidden_dim) for _ in range(num_layers)]
+        )
+        self.norms = nn.ModuleList([nn.LayerNorm(hidden_dim) for _ in range(num_layers)])
         self.act = nn.ReLU()
         self.readout = nn.Sequential(
             nn.Linear(2 * output_dim, output_dim),
             nn.ReLU(),
             nn.Linear(output_dim, output_dim),
         )
+
+    def _residual_stack(self, h, edge_index):
+        """pre-norm residual 主体循环，forward 与 forward_batch 共用。"""
+        for i, conv in enumerate(self.convs):
+            h_res = h
+            h_pre = self.norms[i](h)
+            h_pre = self.act(h_pre)
+            h_pre = nn.functional.dropout(h_pre, p=self.dropout, training=self.training)
+            h_conv = conv(h_pre, edge_index)
+            h = h_conv + h_res
+        return h
 
     @staticmethod
     def _build_virtual_edges(s_virtual_idx, t_virtual_idx, s_connect_idx, t_connect_idx, device):
@@ -157,12 +189,9 @@ class InterGNN(nn.Module):
         )
         edge_index_aug = torch.cat([edge_index_highway.to(device), virtual_edges], dim=1)
 
-        h = x_aug
-        for layer_idx, conv in enumerate(self.convs):
-            h = conv(h, edge_index_aug)
-            if layer_idx != len(self.convs) - 1:
-                h = self.act(h)
-                h = nn.functional.dropout(h, p=self.dropout, training=self.training)
+        h = self.input_proj(x_aug)
+        h = self._residual_stack(h, edge_index_aug)
+        h = self.output_proj(h)
 
         s_virtual_emb = h[s_virtual_idx : s_virtual_idx + 1]
         t_virtual_emb = h[t_virtual_idx : t_virtual_idx + 1]
@@ -211,13 +240,10 @@ class InterGNN(nn.Module):
             ], dim=1))
             offset += K + 2
 
-        h = torch.cat(x_parts, dim=0)
+        h = self.input_proj(torch.cat(x_parts, dim=0))
         edge_all = torch.cat(edge_parts, dim=1)
-        for layer_idx, conv in enumerate(self.convs):
-            h = conv(h, edge_all)
-            if layer_idx != len(self.convs) - 1:
-                h = self.act(h)
-                h = nn.functional.dropout(h, p=self.dropout, training=self.training)
+        h = self._residual_stack(h, edge_all)
+        h = self.output_proj(h)
         s_emb = h[torch.tensor(s_idx_list, dtype=torch.long, device=device)]
         t_emb = h[torch.tensor(t_idx_list, dtype=torch.long, device=device)]
         return torch.cat([s_emb, t_emb], dim=-1)  # [B, 2*output_dim]

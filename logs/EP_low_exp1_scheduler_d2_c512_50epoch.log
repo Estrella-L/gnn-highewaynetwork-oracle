@@ -1,0 +1,65 @@
+nohup: ignoring input
+Namespace(task='distance', off_file='dataset/EP_low/EP_low.off', file_folder='.', max_depth=2, capacity=512, uniform=False, in_feat=64, hidden_dim=128, out_dim=64, dropout_ratio=0.2, learning_rate=0.001, lr_scheduler='plateau', lr_patience=5, lr_factor=0.5, min_lr=1e-06, num_epoch=50, batch_size=16, train_percent=0.8, early_stop_patience=10, distance_samples=50000, highway_k=3, inner_mode='partition', loss_type='log_l1', disable_highway_distance_feature=False, device='cuda', cache_dir='outputs/cache', no_cache=False)
+[cache] 命中，直接加载高速上下文: /root/autodl-tmp/gnn-highewaynetwork-oracle/outputs/cache/EP_low_d2_c512_ada_f64_16f4cacf.pt（跳过分区+Dijkstra 预处理）
+[distance] preprocess(分区+高速/缓存) done in 84.76s
+[distance] off=/root/autodl-tmp/gnn-highewaynetwork-oracle/./dataset/EP_low/EP_low.off |V|=164238 leaves=16(occupied=16) highway_nodes=4856
+[distance] sampled 50000 unique reachable pairs (requested cap=50000, total possible=13486978203, dijkstra_runs=41263, undirected=True)
+[distance] samples: train=40000, val=5000, test=5000
+[distance] wrote train pairs: /root/autodl-tmp/gnn-highewaynetwork-oracle/outputs/results/EP_low_distance_2026-07-13_17-58-02_train_pairs.csv (40000 pairs)
+[distance] wrote val pairs: /root/autodl-tmp/gnn-highewaynetwork-oracle/outputs/results/EP_low_distance_2026-07-13_17-58-02_val_pairs.csv (5000 pairs)
+[distance] wrote test pairs: /root/autodl-tmp/gnn-highewaynetwork-oracle/outputs/results/EP_low_distance_2026-07-13_17-58-02_test_pairs.csv (5000 pairs)
+[distance] lr_scheduler=plateau (factor=0.5, patience=5, min_lr=1e-06)
+训练进度:   0%|          | 0/50 [00:00<?, ?epoch/s][distance] epoch=000 train_mae=2953.167236 val_mae=2687.009766 train_rmse=3636.566406 val_rmse=3283.379883 lr=1.00e-03 time=577.11s
+训练进度:   2%|▏         | 1/50 [09:37<7:51:18, 577.11s/epoch][distance] epoch=001 train_mae=2603.520752 val_mae=2560.750732 train_rmse=3264.108643 val_rmse=3255.798340 lr=1.00e-03 time=570.42s
+训练进度:   4%|▍         | 2/50 [19:07<7:38:32, 573.18s/epoch][distance] epoch=002 train_mae=2576.936768 val_mae=2543.597900 train_rmse=3259.575195 val_rmse=3226.242432 lr=1.00e-03 time=573.49s
+训练进度:   6%|▌         | 3/50 [28:41<7:29:06, 573.32s/epoch][distance] epoch=003 train_mae=2567.775146 val_mae=2538.034668 train_rmse=3253.963379 val_rmse=3256.802979 lr=1.00e-03 time=571.37s
+训练进度:   8%|▊         | 4/50 [38:12<7:18:57, 572.55s/epoch][distance] epoch=004 train_mae=2555.336426 val_mae=2524.176270 train_rmse=3248.713867 val_rmse=3200.420654 lr=1.00e-03 time=569.36s
+训练进度:  10%|█         | 5/50 [47:41<7:08:33, 571.40s/epoch][distance] epoch=005 train_mae=2552.015869 val_mae=2519.643066 train_rmse=3243.377686 val_rmse=3177.398682 lr=1.00e-03 time=571.71s
+训练进度:  12%|█▏        | 6/50 [57:13<6:59:06, 571.51s/epoch][distance] epoch=006 train_mae=2539.582031 val_mae=2512.391113 train_rmse=3231.341553 val_rmse=3161.074219 lr=1.00e-03 time=572.44s
+训练进度:  14%|█▍        | 7/50 [1:06:45<6:49:47, 571.81s/epoch][distance] epoch=007 train_mae=2527.085205 val_mae=2507.562256 train_rmse=3216.297119 val_rmse=3131.487305 lr=1.00e-03 time=571.40s
+训练进度:  16%|█▌        | 8/50 [1:16:17<6:40:10, 571.68s/epoch][distance] epoch=008 train_mae=2519.908203 val_mae=2489.141846 train_rmse=3204.225098 val_rmse=3108.423584 lr=1.00e-03 time=572.80s
+训练进度:  18%|█▊        | 9/50 [1:25:50<6:30:53, 572.03s/epoch][distance] epoch=009 train_mae=2496.959473 val_mae=2471.941162 train_rmse=3175.798584 val_rmse=3128.778564 lr=1.00e-03 time=572.86s
+训练进度:  20%|██        | 10/50 [1:35:22<6:21:31, 572.29s/epoch][distance] epoch=010 train_mae=2481.468262 val_mae=2451.574951 train_rmse=3155.335693 val_rmse=3080.386963 lr=1.00e-03 time=582.50s
+训练进度:  22%|██▏       | 11/50 [1:45:05<6:14:01, 575.41s/epoch][distance] epoch=011 train_mae=2455.753174 val_mae=2416.039062 train_rmse=3111.964600 val_rmse=3041.777344 lr=1.00e-03 time=571.51s
+训练进度:  24%|██▍       | 12/50 [1:54:36<6:03:40, 574.22s/epoch][distance] epoch=012 train_mae=2425.322021 val_mae=2401.220703 train_rmse=3069.383301 val_rmse=2988.391602 lr=1.00e-03 time=572.03s
+训练进度:  26%|██▌       | 13/50 [2:04:09<5:53:41, 573.56s/epoch][distance] epoch=013 train_mae=2403.549072 val_mae=2372.576416 train_rmse=3030.959717 val_rmse=2964.778320 lr=1.00e-03 time=575.24s
+训练进度:  28%|██▊       | 14/50 [2:13:44<5:44:26, 574.07s/epoch][distance] epoch=014 train_mae=2393.687256 val_mae=2368.616455 train_rmse=3012.182129 val_rmse=2967.612305 lr=1.00e-03 time=570.98s
+训练进度:  30%|███       | 15/50 [2:23:15<5:34:19, 573.14s/epoch][distance] epoch=015 train_mae=2381.019043 val_mae=2355.244629 train_rmse=2992.750732 val_rmse=2928.451904 lr=1.00e-03 time=576.01s
+训练进度:  32%|███▏      | 16/50 [2:32:51<5:25:16, 574.00s/epoch][distance] epoch=016 train_mae=2363.905518 val_mae=2333.624023 train_rmse=2969.614258 val_rmse=2897.056885 lr=1.00e-03 time=569.39s
+训练进度:  34%|███▍      | 17/50 [2:42:20<5:14:56, 572.62s/epoch][distance] epoch=017 train_mae=2335.583984 val_mae=2286.190674 train_rmse=2926.824463 val_rmse=2856.020996 lr=1.00e-03 time=570.73s
+训练进度:  36%|███▌      | 18/50 [2:51:51<5:05:05, 572.05s/epoch][distance] epoch=018 train_mae=2295.335449 val_mae=2263.707520 train_rmse=2865.619873 val_rmse=2781.553223 lr=1.00e-03 time=571.05s
+训练进度:  38%|███▊      | 19/50 [3:01:22<4:55:24, 571.75s/epoch][distance] epoch=019 train_mae=2252.858398 val_mae=2227.561523 train_rmse=2806.860107 val_rmse=2721.652344 lr=1.00e-03 time=569.72s
+训练进度:  40%|████      | 20/50 [3:10:52<4:45:34, 571.14s/epoch][distance] epoch=020 train_mae=2156.273926 val_mae=2068.288574 train_rmse=2675.456787 val_rmse=2538.864258 lr=1.00e-03 time=570.02s
+训练进度:  42%|████▏     | 21/50 [3:20:22<4:35:53, 570.81s/epoch][distance] epoch=021 train_mae=2041.195190 val_mae=1912.669556 train_rmse=2524.962646 val_rmse=2357.803955 lr=1.00e-03 time=570.80s
+训练进度:  44%|████▍     | 22/50 [3:29:52<4:26:22, 570.80s/epoch][distance] epoch=022 train_mae=1973.927490 val_mae=1827.768311 train_rmse=2448.573730 val_rmse=2276.235352 lr=1.00e-03 time=569.89s
+训练进度:  46%|████▌     | 23/50 [3:39:22<4:16:44, 570.53s/epoch][distance] epoch=023 train_mae=1806.768188 val_mae=1633.220581 train_rmse=2266.817627 val_rmse=2074.447998 lr=1.00e-03 time=566.35s
+训练进度:  48%|████▊     | 24/50 [3:48:49<4:06:41, 569.28s/epoch][distance] epoch=024 train_mae=1721.105591 val_mae=1567.252930 train_rmse=2172.978516 val_rmse=1992.066162 lr=1.00e-03 time=569.58s
+训练进度:  50%|█████     | 25/50 [3:58:18<3:57:14, 569.37s/epoch][distance] epoch=025 train_mae=1668.302490 val_mae=1721.348999 train_rmse=2116.139648 val_rmse=2087.588623 lr=1.00e-03 time=568.20s
+训练进度:  52%|█████▏    | 26/50 [4:07:46<3:47:36, 569.02s/epoch][distance] epoch=026 train_mae=1657.737061 val_mae=1618.044556 train_rmse=2110.245117 val_rmse=1977.634155 lr=1.00e-03 time=569.07s
+训练进度:  54%|█████▍    | 27/50 [4:17:16<3:38:07, 569.03s/epoch][distance] epoch=027 train_mae=1655.688354 val_mae=1825.539917 train_rmse=2103.474121 val_rmse=2194.554688 lr=1.00e-03 time=570.66s
+训练进度:  56%|█████▌    | 28/50 [4:26:46<3:28:49, 569.52s/epoch][distance] epoch=028 train_mae=1617.676758 val_mae=1452.203125 train_rmse=2063.091064 val_rmse=1851.124878 lr=1.00e-03 time=568.24s
+训练进度:  58%|█████▊    | 29/50 [4:36:14<3:19:11, 569.14s/epoch][distance] epoch=029 train_mae=1605.305420 val_mae=1472.885132 train_rmse=2046.727173 val_rmse=1844.083252 lr=1.00e-03 time=582.46s
+训练进度:  60%|██████    | 30/50 [4:45:57<3:11:02, 573.13s/epoch][distance] epoch=030 train_mae=1600.917969 val_mae=1500.262573 train_rmse=2042.044556 val_rmse=1854.453735 lr=1.00e-03 time=569.63s
+训练进度:  62%|██████▏   | 31/50 [4:55:27<3:01:09, 572.08s/epoch][distance] epoch=031 train_mae=1591.509888 val_mae=1543.973755 train_rmse=2033.591309 val_rmse=1897.114624 lr=1.00e-03 time=566.91s
+训练进度:  64%|██████▍   | 32/50 [5:04:53<2:51:09, 570.53s/epoch][distance] epoch=032 train_mae=1565.919312 val_mae=1618.015747 train_rmse=2005.791992 val_rmse=1967.641235 lr=1.00e-03 time=567.43s
+训练进度:  66%|██████▌   | 33/50 [5:14:21<2:41:23, 569.60s/epoch][distance] epoch=033 train_mae=1567.823730 val_mae=1540.599243 train_rmse=2006.767700 val_rmse=1895.552734 lr=1.00e-03 time=567.44s
+训练进度:  68%|██████▊   | 34/50 [5:23:48<2:31:43, 568.95s/epoch][distance] epoch=034 train_mae=1550.166382 val_mae=1537.397095 train_rmse=1989.286743 val_rmse=1877.092773 lr=1.00e-03 time=566.89s
+[distance] lr reduced: 1.00e-03 -> 5.00e-04
+训练进度:  70%|███████   | 35/50 [5:33:15<2:22:05, 568.34s/epoch][distance] epoch=035 train_mae=1502.369141 val_mae=1349.562134 train_rmse=1934.775635 val_rmse=1740.165649 lr=5.00e-04 time=566.95s
+训练进度:  72%|███████▏  | 36/50 [5:42:42<2:12:30, 567.92s/epoch][distance] epoch=036 train_mae=1496.773193 val_mae=1339.429932 train_rmse=1926.403198 val_rmse=1720.788574 lr=5.00e-04 time=567.47s
+训练进度:  74%|███████▍  | 37/50 [5:52:10<2:03:01, 567.79s/epoch][distance] epoch=037 train_mae=1486.969116 val_mae=1345.085327 train_rmse=1912.756226 val_rmse=1727.305420 lr=5.00e-04 time=569.69s
+训练进度:  76%|███████▌  | 38/50 [6:01:39<1:53:40, 568.36s/epoch][distance] epoch=038 train_mae=1476.378906 val_mae=1328.671509 train_rmse=1902.036011 val_rmse=1711.086426 lr=5.00e-04 time=570.10s
+训练进度:  78%|███████▊  | 39/50 [6:11:09<1:44:17, 568.88s/epoch][distance] epoch=039 train_mae=1459.866821 val_mae=1313.159424 train_rmse=1884.843750 val_rmse=1719.054810 lr=5.00e-04 time=567.23s
+训练进度:  80%|████████  | 40/50 [6:20:37<1:34:43, 568.38s/epoch][distance] epoch=040 train_mae=1452.880493 val_mae=1319.256104 train_rmse=1873.285889 val_rmse=1733.737305 lr=5.00e-04 time=569.45s
+训练进度:  82%|████████▏ | 41/50 [6:30:06<1:25:18, 568.70s/epoch][distance] epoch=041 train_mae=1447.146484 val_mae=1296.850342 train_rmse=1866.375610 val_rmse=1682.358154 lr=5.00e-04 time=570.24s
+训练进度:  84%|████████▍ | 42/50 [6:39:36<1:15:53, 569.16s/epoch][distance] epoch=042 train_mae=1443.876221 val_mae=1362.552612 train_rmse=1864.285400 val_rmse=1699.106934 lr=5.00e-04 time=569.57s
+训练进度:  86%|████████▌ | 43/50 [6:49:06<1:06:24, 569.28s/epoch][distance] epoch=043 train_mae=1434.044067 val_mae=1307.445923 train_rmse=1856.955322 val_rmse=1720.290649 lr=5.00e-04 time=570.11s
+训练进度:  88%|████████▊ | 44/50 [6:58:36<56:57, 569.53s/epoch]  [distance] epoch=044 train_mae=1429.819580 val_mae=1315.202026 train_rmse=1855.211426 val_rmse=1741.775269 lr=5.00e-04 time=569.06s
+训练进度:  90%|█████████ | 45/50 [7:08:05<47:26, 569.39s/epoch][distance] epoch=045 train_mae=1420.179077 val_mae=1336.067017 train_rmse=1839.939941 val_rmse=1672.541260 lr=5.00e-04 time=568.44s
+训练进度:  92%|█████████▏| 46/50 [7:17:34<37:56, 569.11s/epoch][distance] epoch=046 train_mae=1414.670776 val_mae=1318.463257 train_rmse=1834.197632 val_rmse=1660.531860 lr=5.00e-04 time=568.81s
+训练进度:  94%|█████████▍| 47/50 [7:27:02<28:27, 569.02s/epoch][distance] epoch=047 train_mae=1416.099976 val_mae=1276.576904 train_rmse=1832.272095 val_rmse=1653.472778 lr=5.00e-04 time=568.82s
+训练进度:  96%|█████████▌| 48/50 [7:36:31<18:57, 568.96s/epoch][distance] epoch=048 train_mae=1417.692139 val_mae=1304.594727 train_rmse=1837.650391 val_rmse=1740.987915 lr=5.00e-04 time=569.42s
+训练进度:  98%|█████████▊| 49/50 [7:46:01<09:29, 569.10s/epoch][distance] epoch=049 train_mae=1416.787598 val_mae=1274.005127 train_rmse=1834.046143 val_rmse=1660.016602 lr=5.00e-04 time=570.14s
+训练进度: 100%|██████████| 50/50 [7:55:31<00:00, 569.41s/epoch]训练进度: 100%|██████████| 50/50 [7:55:31<00:00, 570.62s/epoch]
+[distance] test_mae=1306.658325, test_rmse=1712.206787, test_relative_error=0.256202
+[distance] timing: preprocess=84.76s, train=28531.23s, best_epoch=49

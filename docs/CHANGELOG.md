@@ -93,6 +93,61 @@
 
 ---
 
+## [v1.0.0] - 2026-07-16 — 网络架构 v1：加深 InterGNN + Pre-norm Residual/LayerNorm
+
+**里程碑版本**：三段式网络架构进入 v1 世代——从"2 层裸堆叠 SAGEConv"升级为
+"任意层数 Pre-norm Residual + LayerNorm" 深度块，主要解决高速图上的欠传播（under-reaching）问题。
+架构详情与其它待做项见 `docs/待做.md`。
+
+### 动机（A1 + A2 合并实施）
+- **A1 InterGNN 欠传播**：2 层 SAGEConv 感受野=2 跳，但高速图有 4800~11000 个节点、
+  图直径远大于 2，s 与 t 的虚拟节点间**信息传不到**。Exp-5 rel_err=0.119 且 best_ep=115
+  仍未 plateau，说明模型还没被"表达能力"限制，扩感受野应有空间。
+- **A2 深化的稳定性前提**：裸堆叠深层 GNN 会遇到梯度消失和 over-smoothing。DeepGCNs/GCNII/
+  GraphGPS 都以 residual + norm 作为深化标配，必须同时上。
+
+### 改动
+**`gnn.py:InnerGNN` / `gnn.py:InterGNN`**
+- 结构从 `input_dim → hidden → ... → output_dim` 的非等宽 SAGEConv 序列，改为**等宽**
+  `hidden_dim → hidden_dim` 卷积序列 + 首尾 `Linear` 投影处理维度变换。
+- 每层前加 `nn.LayerNorm(hidden_dim)`，块结构 = `LN → ReLU → Dropout → SAGEConv → +residual`
+  （**pre-norm residual**）。
+- `forward` 与 `forward_batch` 共用 `_residual_stack(...)` 私有方法，避免重复实现。
+- 每层都有残差（首层前已通过 `input_proj` 对齐到 hidden_dim，可直接相加）。
+
+**`main.py`**
+- 新增 CLI 参数 `--num_inner_layers`（默认 2）、`--num_inter_layers`（默认 4）；构造模型时透传。
+
+**`infer_distance.py`**
+- 新增同名参数（默认必须与训练一致，否则 state_dict 加载失败）。
+
+**`docs/待做.md`**（新增）
+- 完整记录 A1/A2/A3-lite/A3-full/B1 五项改进的动机、涉及文件、思路、收益预估与依赖顺序。
+- A1/A2 本轮标记为 🚧 → 完成后应更新为 ✅。
+
+### 接口/参数变化
+- `main.py` / `infer_distance.py` 新增 `--num_inner_layers` / `--num_inter_layers`。
+- `InnerGNN.__init__` / `InterGNN.__init__` 内部结构变化，但**构造签名未变**（仍是 `num_layers` 关键字）。
+
+### 兼容性
+- **旧 checkpoint 不兼容**：state_dict 结构变化（新增 `input_proj / output_proj / norms`），
+  已有 v0.x 训练权重无法直接加载，需重训。
+- **旧缓存兼容**：`outputs/cache/*.pt`（highway 上下文）和 `*_samples.csv`（采样）都不受影响。
+- **infer_distance 需与训练同参数**：`--num_inner_layers` / `--num_inter_layers` 必须与训练一致。
+
+### 验证
+- 三文件 `ast` 解析通过；`_residual_stack` 逻辑在 forward 与 forward_batch 共用，保持行为一致。
+- ⚠️ 本地无 torch 端到端跑不了；**建议云端先小规模冒烟**（`sample_terrain.off + --num_inter_layers 4
+  + 少样本 + 1 轮`）确认模型可训、`test_*` 有正常数值再上大配置。
+- **等价性**：与 v0.15.0 结构不等价（模型结构变了）；这是**架构升级**，需靠端到端实验 rel_err
+  是否下降来验证收益（对照 Exp-5：depth=3 / lr=0.001 / dropout=0.1 / 120 轮 / rel_err=0.119）。
+
+### 已知局限 / 后续 TODO
+- A3-lite（节点特征加 z）、A3-full（边权注入 GINEConv）、B1（对称化输出）见 `docs/待做.md`。
+- 加深后每轮训练时间约 +30%，显存约 +15%；大 batch 需谨慎。
+
+---
+
 ## [v0.15.0] - 2026-07-10 — 预处理加速：scipy C 版 Dijkstra + 采样结果缓存
 
 ### 动机

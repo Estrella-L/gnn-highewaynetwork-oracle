@@ -26,6 +26,8 @@ def build_parser():
     parser.add_argument("--hidden_dim", type=int, default=128, help="hidden dimension")
     parser.add_argument("--out_dim", type=int, default=64, help="output embedding dimension")
     parser.add_argument("--dropout_ratio", type=float, default=0.2, help="dropout ratio")
+    parser.add_argument("--num_inner_layers", type=int, default=2, help="InnerGNN 层数（须与训练一致）")
+    parser.add_argument("--num_inter_layers", type=int, default=4, help="InterGNN 层数（须与训练一致）")
     parser.add_argument("--highway_k", type=int, default=3, help="number of nearest highway nodes for s/t connections")
     parser.add_argument(
         "--inner_mode",
@@ -80,6 +82,8 @@ def main():
         inner_out_dim=args.out_dim,
         inter_out_dim=args.out_dim,
         fusion_hidden_dim=args.hidden_dim,
+        num_inner_layers=args.num_inner_layers,
+        num_inter_layers=args.num_inter_layers,
         dropout=args.dropout_ratio,
         use_highway_distance_feature=not args.disable_highway_distance_feature,
         highway_distance_feat_dim=4,

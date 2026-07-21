@@ -1,0 +1,63 @@
+nohup: ignoring input
+Namespace(task='distance', off_file='dataset/EP_low/EP_low.off', file_folder='.', max_depth=2, capacity=512, uniform=False, in_feat=64, hidden_dim=128, out_dim=64, dropout_ratio=0.1, learning_rate=0.0005, lr_scheduler='plateau', lr_patience=5, lr_factor=0.5, min_lr=1e-06, num_epoch=50, batch_size=16, train_percent=0.8, early_stop_patience=10, distance_samples=50000, highway_k=3, inner_mode='partition', loss_type='log_l1', disable_highway_distance_feature=False, device='cuda', cache_dir='outputs/cache', no_cache=False)
+[cache] 命中，直接加载高速上下文: /root/autodl-tmp/gnn-highewaynetwork-oracle/outputs/cache/EP_low_d2_c512_ada_f64_16f4cacf.pt（跳过分区+Dijkstra 预处理）
+[distance] preprocess(分区+高速/缓存) done in 86.33s
+[distance] off=/root/autodl-tmp/gnn-highewaynetwork-oracle/./dataset/EP_low/EP_low.off |V|=164238 leaves=16(occupied=16) highway_nodes=4856
+[distance] sampled 50000 unique reachable pairs (requested cap=50000, total possible=13486978203, dijkstra_runs=41263, undirected=True)
+[distance] samples: train=40000, val=5000, test=5000
+[distance] wrote train pairs: /root/autodl-tmp/gnn-highewaynetwork-oracle/outputs/results/EP_low_distance_2026-07-14_16-07-37_train_pairs.csv (40000 pairs)
+[distance] wrote val pairs: /root/autodl-tmp/gnn-highewaynetwork-oracle/outputs/results/EP_low_distance_2026-07-14_16-07-37_val_pairs.csv (5000 pairs)
+[distance] wrote test pairs: /root/autodl-tmp/gnn-highewaynetwork-oracle/outputs/results/EP_low_distance_2026-07-14_16-07-37_test_pairs.csv (5000 pairs)
+[distance] lr_scheduler=plateau (factor=0.5, patience=5, min_lr=1e-06)
+[distance] epoch=000 train_mae=3065.144531 val_mae=2849.937256 train_rmse=3798.521240 val_rmse=3459.155762 lr=5.00e-04 time=575.17s
+[distance] epoch=001 train_mae=2789.243408 val_mae=2640.623047 train_rmse=3411.289551 val_rmse=3254.217041 lr=5.00e-04 time=573.61s
+[distance] epoch=002 train_mae=2596.462891 val_mae=2562.082275 train_rmse=3243.347900 val_rmse=3195.085205 lr=5.00e-04 time=573.04s
+[distance] epoch=003 train_mae=2567.083984 val_mae=2551.419434 train_rmse=3229.943604 val_rmse=3222.840576 lr=5.00e-04 time=573.60s
+[distance] epoch=004 train_mae=2557.862793 val_mae=2544.730713 train_rmse=3227.420410 val_rmse=3204.147461 lr=5.00e-04 time=574.48s
+[distance] epoch=005 train_mae=2553.373047 val_mae=2542.650635 train_rmse=3225.906738 val_rmse=3184.721924 lr=5.00e-04 time=574.79s
+[distance] epoch=006 train_mae=2547.937256 val_mae=2536.728271 train_rmse=3223.501709 val_rmse=3224.587891 lr=5.00e-04 time=574.27s
+[distance] epoch=007 train_mae=2542.084229 val_mae=2531.451904 train_rmse=3218.921631 val_rmse=3206.591553 lr=5.00e-04 time=574.13s
+[distance] epoch=008 train_mae=2535.942383 val_mae=2527.667236 train_rmse=3213.992188 val_rmse=3178.077637 lr=5.00e-04 time=574.59s
+[distance] epoch=009 train_mae=2531.394287 val_mae=2521.797607 train_rmse=3209.357178 val_rmse=3204.876221 lr=5.00e-04 time=574.25s
+[distance] epoch=010 train_mae=2527.211914 val_mae=2519.673828 train_rmse=3208.700439 val_rmse=3164.231445 lr=5.00e-04 time=585.73s
+[distance] epoch=011 train_mae=2521.900635 val_mae=2514.259033 train_rmse=3202.737793 val_rmse=3169.335693 lr=5.00e-04 time=571.06s
+[distance] epoch=012 train_mae=2518.214111 val_mae=2507.191895 train_rmse=3197.902344 val_rmse=3155.463623 lr=5.00e-04 time=570.26s
+[distance] epoch=013 train_mae=2511.206299 val_mae=2502.081055 train_rmse=3192.955322 val_rmse=3168.708008 lr=5.00e-04 time=570.94s
+[distance] epoch=014 train_mae=2507.408203 val_mae=2496.987305 train_rmse=3187.125000 val_rmse=3139.266602 lr=5.00e-04 time=574.28s
+[distance] epoch=015 train_mae=2498.243652 val_mae=2488.036621 train_rmse=3175.000977 val_rmse=3153.454834 lr=5.00e-04 time=574.29s
+[distance] epoch=016 train_mae=2491.617432 val_mae=2480.301758 train_rmse=3165.037354 val_rmse=3137.365967 lr=5.00e-04 time=574.53s
+[distance] epoch=017 train_mae=2484.569580 val_mae=2472.500244 train_rmse=3156.793701 val_rmse=3131.547363 lr=5.00e-04 time=573.80s
+[distance] epoch=018 train_mae=2473.162842 val_mae=2463.312256 train_rmse=3145.142822 val_rmse=3116.802490 lr=5.00e-04 time=571.06s
+[distance] epoch=019 train_mae=2465.864258 val_mae=2457.404297 train_rmse=3131.963867 val_rmse=3076.787842 lr=5.00e-04 time=570.90s
+[distance] epoch=020 train_mae=2458.048340 val_mae=2441.085205 train_rmse=3119.051514 val_rmse=3084.499268 lr=5.00e-04 time=593.13s
+[distance] epoch=021 train_mae=2442.084229 val_mae=2425.573242 train_rmse=3098.310547 val_rmse=3083.934082 lr=5.00e-04 time=583.27s
+[distance] epoch=022 train_mae=2426.905273 val_mae=2413.440186 train_rmse=3076.698730 val_rmse=3015.581787 lr=5.00e-04 time=575.57s
+[distance] epoch=023 train_mae=2410.495361 val_mae=2409.323975 train_rmse=3049.826660 val_rmse=2988.041748 lr=5.00e-04 time=573.75s
+[distance] epoch=024 train_mae=2396.607178 val_mae=2390.524170 train_rmse=3032.251709 val_rmse=2978.241943 lr=5.00e-04 time=577.00s
+[distance] epoch=025 train_mae=2386.882812 val_mae=2377.893066 train_rmse=3015.206543 val_rmse=2974.662354 lr=5.00e-04 time=577.13s
+[distance] epoch=026 train_mae=2382.182617 val_mae=2381.113037 train_rmse=3005.742188 val_rmse=2955.519531 lr=5.00e-04 time=576.03s
+[distance] epoch=027 train_mae=2374.919434 val_mae=2373.500244 train_rmse=2998.324219 val_rmse=2947.665771 lr=5.00e-04 time=579.89s
+[distance] epoch=028 train_mae=2371.379395 val_mae=2378.296387 train_rmse=2988.901855 val_rmse=2936.425293 lr=5.00e-04 time=575.11s
+[distance] epoch=029 train_mae=2366.405029 val_mae=2359.219238 train_rmse=2982.126953 val_rmse=2939.780029 lr=5.00e-04 time=574.50s
+[distance] epoch=030 train_mae=2356.906006 val_mae=2356.542725 train_rmse=2969.669189 val_rmse=2919.272949 lr=5.00e-04 time=589.18s
+[distance] epoch=031 train_mae=2342.346436 val_mae=2327.324707 train_rmse=2944.922119 val_rmse=2886.792480 lr=5.00e-04 time=576.58s
+[distance] epoch=032 train_mae=2311.778076 val_mae=2290.494629 train_rmse=2903.614746 val_rmse=2832.931152 lr=5.00e-04 time=577.45s
+[distance] epoch=033 train_mae=2269.187256 val_mae=2236.058350 train_rmse=2843.918457 val_rmse=2763.016357 lr=5.00e-04 time=575.52s
+[distance] epoch=034 train_mae=2224.196777 val_mae=2206.679932 train_rmse=2775.606445 val_rmse=2708.780029 lr=5.00e-04 time=577.83s
+[distance] epoch=035 train_mae=2174.114258 val_mae=2141.808350 train_rmse=2701.768311 val_rmse=2623.343262 lr=5.00e-04 time=576.19s
+[distance] epoch=036 train_mae=2110.833984 val_mae=2055.132324 train_rmse=2614.202637 val_rmse=2516.636230 lr=5.00e-04 time=575.64s
+[distance] epoch=037 train_mae=2012.484131 val_mae=1910.951538 train_rmse=2485.411133 val_rmse=2355.103027 lr=5.00e-04 time=574.93s
+[distance] epoch=038 train_mae=1888.435547 val_mae=1817.191528 train_rmse=2343.587891 val_rmse=2286.878418 lr=5.00e-04 time=575.50s
+[distance] epoch=039 train_mae=1788.117188 val_mae=1670.381348 train_rmse=2239.656982 val_rmse=2116.678223 lr=5.00e-04 time=577.25s
+[distance] epoch=040 train_mae=1708.838013 val_mae=1567.071777 train_rmse=2155.080078 val_rmse=1979.609741 lr=5.00e-04 time=577.42s
+[distance] epoch=041 train_mae=1666.600098 val_mae=1501.958008 train_rmse=2113.989746 val_rmse=1924.071533 lr=5.00e-04 time=576.59s
+[distance] epoch=042 train_mae=1624.893066 val_mae=1504.558716 train_rmse=2069.578125 val_rmse=1891.967529 lr=5.00e-04 time=574.16s
+[distance] epoch=043 train_mae=1618.123657 val_mae=1472.848755 train_rmse=2058.190918 val_rmse=1868.563110 lr=5.00e-04 time=574.17s
+[distance] epoch=044 train_mae=1597.508911 val_mae=1489.670166 train_rmse=2042.663696 val_rmse=1950.634521 lr=5.00e-04 time=572.63s
+[distance] epoch=045 train_mae=1577.071289 val_mae=1419.421387 train_rmse=2019.936890 val_rmse=1831.023682 lr=5.00e-04 time=574.83s
+[distance] epoch=046 train_mae=1564.645508 val_mae=1389.271729 train_rmse=2003.235107 val_rmse=1772.768799 lr=5.00e-04 time=576.03s
+[distance] epoch=047 train_mae=1543.044678 val_mae=1377.437744 train_rmse=1975.840820 val_rmse=1779.265747 lr=5.00e-04 time=574.39s
+[distance] epoch=048 train_mae=1529.661011 val_mae=1391.343628 train_rmse=1964.617554 val_rmse=1814.175537 lr=5.00e-04 time=574.08s
+[distance] epoch=049 train_mae=1509.845215 val_mae=1393.204956 train_rmse=1942.446045 val_rmse=1823.446411 lr=5.00e-04 time=573.81s
+[distance] test_mae=1433.955566, test_rmse=1879.948975, test_relative_error=0.269648
+[distance] timing: preprocess=86.33s, train=28788.35s, best_epoch=47
