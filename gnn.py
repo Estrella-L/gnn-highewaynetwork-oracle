@@ -6,11 +6,13 @@ import torch_geometric.nn as geo_nn
 
 class InnerGNN(nn.Module):
     """
-    Inner-GNN（局部段）：v1.0.0 起改为 pre-norm + residual + LayerNorm 深度块
-    （DeepGCNs / GCNII 风格），支持任意层数 num_layers ≥ 2 稳定训练。
+    Inner-GNN（局部段）：v1.0.1 起改为 pre-norm + residual + **GraphNorm** 深度块。
+
+    v1.0.0 用 LayerNorm 抹掉了每个节点自己的位置信息（x_norm/y_norm），导致 Exp-6 训不动。
+    v1.0.1 换成 GraphNorm——图内跨节点归一化，保留节点间的相对位置差异，位置信号完整。
 
     结构：
-        x → input_proj → [LN → ReLU → Dropout → SAGEConv → +residual] × L → output_proj
+        x → input_proj → [GraphNorm(batch) → ReLU → Dropout → SAGEConv → +residual] × L → output_proj
     等宽实现：所有卷积统一 hidden_dim → hidden_dim，首尾用 Linear 投影解决维度对齐。
     """
 
@@ -24,14 +26,15 @@ class InnerGNN(nn.Module):
         self.convs = nn.ModuleList(
             [geo_nn.SAGEConv(hidden_dim, hidden_dim) for _ in range(num_layers)]
         )
-        self.norms = nn.ModuleList([nn.LayerNorm(hidden_dim) for _ in range(num_layers)])
+        # GraphNorm：图内跨节点归一化 + 每维一个可学习均值缩放 α（比 BN 稳、比 LN 保位置）。
+        self.norms = nn.ModuleList([geo_nn.GraphNorm(hidden_dim) for _ in range(num_layers)])
         self.act = nn.ReLU()
 
-    def _residual_stack(self, h, edge_index):
-        """pre-norm residual 主体循环，forward 与 forward_batch 共用。"""
+    def _residual_stack(self, h, edge_index, batch):
+        """pre-norm residual 主体循环，forward 与 forward_batch 共用。batch 必须显式传入。"""
         for i, conv in enumerate(self.convs):
             h_res = h
-            h_pre = self.norms[i](h)
+            h_pre = self.norms[i](h, batch)  # GraphNorm 需要 batch 索引区分不同图
             h_pre = self.act(h_pre)
             h_pre = nn.functional.dropout(h_pre, p=self.dropout, training=self.training)
             h_conv = conv(h_pre, edge_index)
@@ -51,7 +54,9 @@ class InnerGNN(nn.Module):
                 - query_emb: [B, output_dim] 或 [1, output_dim] 查询节点嵌入
         """
         h = self.input_proj(x)
-        h = self._residual_stack(h, edge_index)
+        # 单样本 forward：整张（一个盒子）子图属于同一张图，batch 全为 0
+        batch = torch.zeros(h.size(0), dtype=torch.long, device=h.device)
+        h = self._residual_stack(h, edge_index, batch)
         h = self.output_proj(h)
 
         if isinstance(query_idx, int):
@@ -67,6 +72,10 @@ class InnerGNN(nn.Module):
         """
         批量编码多个子图：合并成一张不连通大图做一次消息传递，返回各自查询点嵌入。
 
+        关键：GraphNorm 需要 batch 索引区分不同盒子。
+        节点顺序：sample0 的 N0 个节点 → sample1 的 N1 个 → ...
+        对应 batch：[0]*N0 + [1]*N1 + ...
+
         Args:
             x_list (list[Tensor]): 每个样本的子图节点特征 [Ni, in_dim]。
             edge_index_list (list[LongTensor]): 每个样本的子图边 [2, Ei]。
@@ -76,17 +85,20 @@ class InnerGNN(nn.Module):
             Tensor: [B, output_dim] 各样本查询点嵌入。
         """
         device = x_list[0].device
-        xs, es, qidx = [], [], []
+        xs, es, qidx, batches = [], [], [], []
         offset = 0
-        for x, e, q in zip(x_list, edge_index_list, query_idx_list):
+        for i, (x, e, q) in enumerate(zip(x_list, edge_index_list, query_idx_list)):
             xs.append(x)
             es.append(e.to(device) + offset)
             qi = q if isinstance(q, int) else int(torch.as_tensor(q).reshape(-1)[0].item())
             qidx.append(offset + qi)
+            # 该盒子子图的 N_i 个节点，全部归属图 i
+            batches.append(torch.full((x.size(0),), i, dtype=torch.long, device=device))
             offset += x.size(0)
         h = self.input_proj(torch.cat(xs, dim=0))
         edge_index = torch.cat(es, dim=1)
-        h = self._residual_stack(h, edge_index)
+        batch = torch.cat(batches, dim=0)  # [sum(N_i)]，节点 → 图 id
+        h = self._residual_stack(h, edge_index, batch)
         h = self.output_proj(h)
         query = torch.tensor(qidx, dtype=torch.long, device=h.device)
         return h[query]
@@ -94,8 +106,11 @@ class InnerGNN(nn.Module):
 
 class InterGNN(nn.Module):
     """
-    Inter-GNN（高速段）：v1.0.0 起同样改为 pre-norm + residual 深度块，支持 4~6 层以上稳定训练。
-    这是主要修复目标——高速图直径远>2，原 2 层欠传播 (under-reaching)。
+    Inter-GNN（高速段）：v1.0.1 起改为 pre-norm + residual + **GraphNorm** 深度块。
+
+    v1.0.0 用 LayerNorm 抹掉了每个虚拟节点自己的位置信号（`global_encoder` 编码后的 x/y），
+    导致 Exp-6 rel_err 从 0.119 崩到 0.824。v1.0.1 换成 GraphNorm——图内跨节点归一化，
+    保留节点间相对位置差异，位置信号完整。这里"图"指一份 (K 个高速点 + s 虚拟 + t 虚拟)。
     """
 
     def __init__(self, highway_in_dim, hidden_dim, output_dim, global_feat_dim, num_layers=2, dropout=0.1):
@@ -113,7 +128,8 @@ class InterGNN(nn.Module):
         self.convs = nn.ModuleList(
             [geo_nn.SAGEConv(hidden_dim, hidden_dim) for _ in range(num_layers)]
         )
-        self.norms = nn.ModuleList([nn.LayerNorm(hidden_dim) for _ in range(num_layers)])
+        # GraphNorm：图内跨节点归一化 + 每维可学习均值缩放 α，保留跨节点位置差异。
+        self.norms = nn.ModuleList([geo_nn.GraphNorm(hidden_dim) for _ in range(num_layers)])
         self.act = nn.ReLU()
         self.readout = nn.Sequential(
             nn.Linear(2 * output_dim, output_dim),
@@ -121,11 +137,11 @@ class InterGNN(nn.Module):
             nn.Linear(output_dim, output_dim),
         )
 
-    def _residual_stack(self, h, edge_index):
-        """pre-norm residual 主体循环，forward 与 forward_batch 共用。"""
+    def _residual_stack(self, h, edge_index, batch):
+        """pre-norm residual 主体循环，forward 与 forward_batch 共用。batch 必须显式传入。"""
         for i, conv in enumerate(self.convs):
             h_res = h
-            h_pre = self.norms[i](h)
+            h_pre = self.norms[i](h, batch)  # GraphNorm 需要 batch 索引区分不同"高速图+s/t"实例
             h_pre = self.act(h_pre)
             h_pre = nn.functional.dropout(h_pre, p=self.dropout, training=self.training)
             h_conv = conv(h_pre, edge_index)
@@ -190,7 +206,9 @@ class InterGNN(nn.Module):
         edge_index_aug = torch.cat([edge_index_highway.to(device), virtual_edges], dim=1)
 
         h = self.input_proj(x_aug)
-        h = self._residual_stack(h, edge_index_aug)
+        # 单样本 forward：整张"高速图 + s/t 两虚拟节点"属于同一张图，batch 全为 0
+        batch = torch.zeros(h.size(0), dtype=torch.long, device=h.device)
+        h = self._residual_stack(h, edge_index_aug, batch)
         h = self.output_proj(h)
 
         s_virtual_emb = h[s_virtual_idx : s_virtual_idx + 1]
@@ -242,7 +260,10 @@ class InterGNN(nn.Module):
 
         h = self.input_proj(torch.cat(x_parts, dim=0))
         edge_all = torch.cat(edge_parts, dim=1)
-        h = self._residual_stack(h, edge_all)
+        # 节点顺序：sample0 的 K+2 节点（x_highway, s_virt, t_virt）→ sample1 的 K+2 节点 → ...
+        # 与 x_parts 拼接顺序完全一致；每份 K+2 节点属于同一张图 b。
+        batch = torch.arange(B, dtype=torch.long, device=device).repeat_interleave(K + 2)
+        h = self._residual_stack(h, edge_all, batch)
         h = self.output_proj(h)
         s_emb = h[torch.tensor(s_idx_list, dtype=torch.long, device=device)]
         t_emb = h[torch.tensor(t_idx_list, dtype=torch.long, device=device)]

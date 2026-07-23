@@ -35,6 +35,65 @@
 
 ---
 
+## [v1.0.1] - 2026-07-16 — 关键修复：LayerNorm 换 GraphNorm（Exp-6 位置信息被抹平的 bug）
+
+### 动机
+v1.0.0 上线后跑 Exp-6（`--num_inter_layers 4`，其它与 Exp-5 严格单变量对照），效果**急剧崩坏**：
+
+| 实验 | 架构 | val rel_err | test rel_err | best_epoch |
+|---|---|---|---|---|
+| Exp-5 (v0.15) | 2 层裸堆叠 | 0.114 | **0.119** | 115 |
+| Exp-6 (v1.0.0) | 4 层 pre-norm + **LayerNorm** | 0.75+ | **0.824** | 早停 ≈ 20 |
+
+单变量定位到 v1.0.0 引入的 `LayerNorm(hidden_dim)`：**LN 沿每个节点自己的特征列做归一化**，
+把 `FeatureBuilder.node_row` 里塞进的 `x_norm / y_norm`（节点位置）和 `InterGNN.global_encoder`
+产出的 s/t 虚拟节点特征**逐节点抹到零均值单位方差**——所有节点在归一化后位置特征分布相同，
+GNN 消息传递失去空间几何锚点，模型只能靠 `highway_dist_feat` 4 维分解距离做粗预测，
+比 v0.15 的 2 层 SAGE 还差。
+
+### 改动
+**`gnn.py:InnerGNN` / `gnn.py:InterGNN`**
+- `self.norms` 从 `nn.ModuleList([nn.LayerNorm(hidden_dim) ...])` 改为
+  `nn.ModuleList([geo_nn.GraphNorm(hidden_dim) ...])`。**GraphNorm 语义：图内跨节点归一化 + 每维
+  一个可学习均值缩放 α**，保留节点间的相对位置差异，位置信号完整（也保留部分均值信号）。
+- `_residual_stack` 签名新增 `batch` 参数，`self.norms[i](h)` → `self.norms[i](h, batch)`。
+  GraphNorm 必须靠 batch 索引区分不同图，否则会把不同样本的节点混在一起归一化。
+- `forward` 内构造 `batch = torch.zeros(N, dtype=torch.long, device=device)` 表示"单张图"
+  （InnerGNN 一个盒子子图 / InterGNN 一份 K+2 节点的高速+s/t 复合图）。
+- `forward_batch` 内按拼接顺序构造 batch：
+  - InnerGNN：`torch.cat([full((N_i,), i) for i ...])`，各盒子子图 N_i 节点分别归为图 i。
+  - InterGNN：`torch.arange(B).repeat_interleave(K + 2)`——`x_parts` 拼接顺序是
+    `[x_highway (K), s_virt (1), t_virt (1)] × B`，正好每 K+2 个节点属于同一张图 b。
+
+### 接口/参数变化
+- **CLI/训练脚本 0 改动**。`num_inner_layers` / `num_inter_layers` 语义与 v1.0.0 一致。
+- `InnerGNN` / `InterGNN` 构造签名未变。
+
+### 兼容性
+- **v1.0.0 checkpoint 不兼容**：`state_dict` 里 `norms.*.weight / .bias` 键名/形状变了
+  （`LayerNorm` → `GraphNorm`：GraphNorm 多一个可学习 `mean_scale` 参数），需重训。
+- **v0.15 及以前的 checkpoint 也不兼容**（本来就因为 v1.0.0 结构升级已经不兼容）。
+- **旧缓存兼容**：`outputs/cache/*.pt` 只保存 highway 上下文，与模型结构解耦。
+
+### 验证
+- `python -c "import ast; ast.parse(open('gnn.py', encoding='utf-8').read())"` → parse OK。
+- **batch 索引正确性人工审查**：
+  - `InnerGNN.forward_batch`：`xs`/`batches` 循环体同步 append，节点顺序与 batch id 严格对齐；
+    `offset` 累加即 `sum(N_i)`，query 用 `offset + qi` 定位子图局部索引到全局。
+  - `InterGNN.forward_batch`：`x_parts` 循环体 extend `[x_highway, s_virt[b:b+1], t_virt[b:b+1]]`
+    共 K+2 个节点，与 `torch.arange(B).repeat_interleave(K+2)` 严格一一对应；边构造同一循环内 offset
+    同步累加，`s_vidx = offset + K`、`t_vidx = offset + K + 1` 与批内位置吻合。
+- ⚠️ 本地无 torch/PyG 端到端跑不了；**必须云端跑一次 Exp-6 对照实验**：与 v1.0.0 完全同参数
+  （`--num_inter_layers 4 / 120 轮 / lr=0.001 / dropout=0.1 / depth=3`），观察 rel_err 是否回到
+  Exp-5 (0.119) 水平以下。若仍崩，说明 GraphNorm 未生效或有别的问题，需回滚到"3.**去掉 norms**"
+  的 baseline 再逐层排查。
+
+### 已知局限 / 后续 TODO
+- GraphNorm 需要 PyG ≥ 2.0；旧环境请升级或临时把 `self.norms` 换成 `nn.Identity()` 走 A2 无 norm 变体。
+- Exp-6 v1.0.1 若通过，再推进 A3-lite（节点特征加 z）。
+
+---
+
 ## [v1.0.0] - 2026-07-16 — 网络架构 v1：加深 InterGNN + Pre-norm Residual/LayerNorm
 
 **里程碑版本**：三段式网络架构进入 v1 世代——从"2 层裸堆叠 SAGEConv"升级为
