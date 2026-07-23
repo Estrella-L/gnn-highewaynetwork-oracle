@@ -35,6 +35,65 @@
 
 ---
 
+## [v1.0.2] - 2026-07-16 — 简化：归一化改为可选开关（`--norm_type`，默认 `none`）
+
+### 动机
+v1.0.1 修完 LN→GN 之后重新审视架构：**4 层规模下 GraphNorm 是"理论收益弱、调试成本高"的组件**。
+
+- 4 层感受野 = 4 跳，远小于高速图直径（√K ≈ 70~140），但 `highway_dist_feat` 已经把跨区骨架显式喂给
+  Fusion MLP，InterGNN 的职责只是"局部修正"，4 层已足够。
+- DeepGCNs / GCNII 用 norm 的场景是 6~10 层深模型；4 层堆叠 SAGE 通常不需要归一化，梯度问题不显著。
+- residual 几乎是 free lunch（一个加法、零参数），保留合理；GraphNorm 的 batch 索引构造增加了
+  forward/forward_batch 的一层复杂度，已经付出过一次调试成本（v1.0.0 → v1.0.1）。
+
+结论：把 GraphNorm 降级为**可选开关**，默认关闭，需要加深到 6+ 层再打开。
+
+### 改动
+**`gnn.py`**
+- 新增模块级函数 `_make_norm(norm_type, hidden_dim)`：
+  - `'none'` → `nn.Identity()`
+  - `'graphnorm'` → `geo_nn.GraphNorm(hidden_dim)`
+- `InnerGNN.__init__` / `InterGNN.__init__` 新增关键字参数 `norm_type="none"`，缓存到 `self.norm_uses_batch`
+  （仅 GraphNorm 需要 batch 索引）。
+- `_residual_stack` 内按 `self.norm_uses_batch` 分支：True → `norms[i](h, batch)`，False → `norms[i](h)`。
+- `DistancePredictor.__init__` 新增 `norm_type="none"`，透传到两个 GNN。
+
+**`model.py`**：`DistanceRegressionNet.__init__` 新增 `norm_type="none"`，透传到 backbone。
+
+**`main.py`**
+- 新增 CLI 参数 `--norm_type {none,graphnorm}`，默认 `none`。
+- 构造模型时透传 `norm_type=args.norm_type`。
+
+**`infer_distance.py`**：同名参数，默认 `none`；**推理必须与训练一致**（state_dict 结构由 norm_type 决定）。
+
+### 接口/参数变化
+- `main.py` / `infer_distance.py` 新增 `--norm_type`（默认 `none`，与 v1.0.0/v1.0.1 的 GraphNorm 行为
+  不再等价——需显式 `--norm_type graphnorm` 才能对齐）。
+- `InnerGNN` / `InterGNN` / `DistancePredictor` / `DistanceRegressionNet` 新增 `norm_type` 关键字，
+  默认值改变了模型结构。
+
+### 兼容性
+- **v1.0.1 checkpoint 不兼容默认配置**：v1.0.1 训出来的权重带 GraphNorm 参数，需 `--norm_type graphnorm`
+  才能加载；v1.0.0 checkpoint 本来就不能加载（LN 与 GN state_dict 结构不同）。
+- **数值等价**：`--norm_type graphnorm` 与 v1.0.1 完全等价（同一段代码）。
+- **旧缓存兼容**：`outputs/cache/*.pt` 不受影响。
+
+### 验证
+- `gnn.py / model.py / main.py / infer_distance.py` 四文件 `ast.parse` 通过。
+- 单元逻辑审查：`Identity(h)` 与 `Identity(h, batch)` 的差别通过 `self.norm_uses_batch` 分支避开，
+  不存在类型错误路径。
+- ⚠️ 云端建议做 **两组单变量对照实验**：
+  1. Exp-6c（推荐）：`--num_inter_layers 4 --norm_type none`——只有"层数从 2 → 4 + 残差"两处变化，
+     与 Exp-5（2 层裸堆叠）单变量对照最干净。
+  2. Exp-6d（可选）：`--num_inter_layers 4 --norm_type graphnorm`——若 6c 已收敛，可跳过；否则测归一
+     化是否有额外收益。
+
+### 已知局限 / 后续 TODO
+- 当 Exp-6c/6d 结果出来后，若 `--norm_type none` 已足够，可考虑把 GraphNorm 分支彻底删掉
+  （目前保留作为加深到 6+ 层的备选）。
+
+---
+
 ## [v1.0.1] - 2026-07-16 — 关键修复：LayerNorm 换 GraphNorm（Exp-6 位置信息被抹平的 bug）
 
 ### 动机
