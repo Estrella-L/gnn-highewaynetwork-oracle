@@ -92,7 +92,9 @@ def main():
         highway_distance_feat_dim=4,
     ).to(args.device)
 
-    state_dict = torch.load(args.model_path, map_location=args.device)
+    # weights_only=True 是 state_dict 的推荐加载方式（仅接受张量/基础类型，拒绝任意对象）
+    # 未来 PyTorch 版本会自动切到 True，显式写明可消除 FutureWarning 并保证跨版本一致
+    state_dict = torch.load(args.model_path, map_location=args.device, weights_only=True)
     model.load_state_dict(state_dict)
     model.eval()
 
