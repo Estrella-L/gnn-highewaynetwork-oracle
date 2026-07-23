@@ -476,7 +476,9 @@ def build_pipeline_inputs_cached(
     cache_pt = os.path.join(cache_dir, key + ".pt")
 
     if os.path.exists(cache_pt):
-        data = torch.load(cache_pt, map_location="cpu")
+        # weights_only=False 显式声明：cache 里存了自定义类 FeatureBuilder 实例，
+        # PyTorch ≥ 2.6 默认 weights_only=True 会拒绝加载，显式关掉以兼容未来版本。
+        data = torch.load(cache_pt, map_location="cpu", weights_only=False)
         print(f"[cache] 命中，直接加载高速上下文: {cache_pt}（跳过分区+Dijkstra 预处理）")
         return data["graph_info"], data["coords"], data["leaf_of"], data["num_leaves"], data["context"]
 
