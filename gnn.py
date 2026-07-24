@@ -1,59 +1,29 @@
 # GNN 模块：三段式 DistancePredictor（Inner 本地段 / Inter 高速段 / Fusion 融合段）。
+# v1.0.3：回滚到 v0.15 的极简结构（无 residual / 无 norm / 无 input_proj/output_proj），
+# 仅通过 CLI `--num_inter_layers` 加深 InterGNN 到 3 层，单变量对照验证"加一层是否有收益"。
 import torch
 import torch.nn as nn
 import torch_geometric.nn as geo_nn
 
 
-def _make_norm(norm_type, hidden_dim):
-    """按 norm_type 构造归一化层。'none' 返回 Identity（不做归一化，只留 residual）。"""
-    if norm_type == "none":
-        return nn.Identity()
-    if norm_type == "graphnorm":
-        return geo_nn.GraphNorm(hidden_dim)
-    raise ValueError(f"Unknown norm_type: {norm_type!r} (expected 'none' or 'graphnorm')")
-
-
 class InnerGNN(nn.Module):
     """
-    Inner-GNN（局部段）：v1.0.1 起改为 pre-norm + residual 深度块，v1.0.2 起归一化通过 norm_type 开关配置。
-
-    - `norm_type='none'`（v1.0.2 默认）：只保留 residual，不做归一化。4 层规模下推荐。
-    - `norm_type='graphnorm'`：加 PyG GraphNorm（图内跨节点归一化 + 可学习 α）；准备加深到 6+ 层时用。
-    - 已弃用：`nn.LayerNorm`——v1.0.0 用过，会把 x_norm/y_norm 逐节点抹平导致 Exp-6 崩坏（rel_err 0.824）。
-
-    结构：
-        x → input_proj → [Norm(batch)? → ReLU → Dropout → SAGEConv → +residual] × L → output_proj
-    等宽实现：所有卷积统一 hidden_dim → hidden_dim，首尾用 Linear 投影解决维度对齐。
+    Inner-GNN（局部段）：多层 SAGEConv 非等宽堆叠，post-activation。
+    结构：input_dim → hidden → ... → hidden → output_dim
+    中间层激活 conv → ReLU → dropout；末层只做 conv，输出直接作为节点嵌入。
     """
 
-    def __init__(self, input_dim, hidden_dim, output_dim, num_layers=2, dropout=0.1, norm_type="none"):
+    def __init__(self, input_dim, hidden_dim, output_dim, num_layers=2, dropout=0.1):
         super().__init__()
         if num_layers < 2:
             raise ValueError("num_layers must be >= 2 for InnerGNN.")
         self.dropout = dropout
-        self.norm_type = norm_type
-        self.norm_uses_batch = norm_type == "graphnorm"  # GraphNorm 要 batch；Identity 不要
-        self.input_proj = nn.Linear(input_dim, hidden_dim)
-        self.output_proj = nn.Linear(hidden_dim, output_dim)
-        self.convs = nn.ModuleList(
-            [geo_nn.SAGEConv(hidden_dim, hidden_dim) for _ in range(num_layers)]
-        )
-        self.norms = nn.ModuleList([_make_norm(norm_type, hidden_dim) for _ in range(num_layers)])
+        self.convs = nn.ModuleList()
+        self.convs.append(geo_nn.SAGEConv(input_dim, hidden_dim))
+        for _ in range(num_layers - 2):
+            self.convs.append(geo_nn.SAGEConv(hidden_dim, hidden_dim))
+        self.convs.append(geo_nn.SAGEConv(hidden_dim, output_dim))
         self.act = nn.ReLU()
-
-    def _residual_stack(self, h, edge_index, batch):
-        """pre-norm residual 主体循环，forward 与 forward_batch 共用。batch 在 norm_type='none' 时被忽略。"""
-        for i, conv in enumerate(self.convs):
-            h_res = h
-            if self.norm_uses_batch:
-                h_pre = self.norms[i](h, batch)
-            else:
-                h_pre = self.norms[i](h)  # Identity，忽略 batch
-            h_pre = self.act(h_pre)
-            h_pre = nn.functional.dropout(h_pre, p=self.dropout, training=self.training)
-            h_conv = conv(h_pre, edge_index)
-            h = h_conv + h_res
-        return h
 
     def forward(self, x, edge_index, query_idx):
         """
@@ -67,11 +37,12 @@ class InnerGNN(nn.Module):
                 - node_emb: [num_nodes, output_dim] 子图全部节点嵌入
                 - query_emb: [B, output_dim] 或 [1, output_dim] 查询节点嵌入
         """
-        h = self.input_proj(x)
-        # 单样本 forward：整张（一个盒子）子图属于同一张图，batch 全为 0
-        batch = torch.zeros(h.size(0), dtype=torch.long, device=h.device)
-        h = self._residual_stack(h, edge_index, batch)
-        h = self.output_proj(h)
+        h = x
+        for layer_idx, conv in enumerate(self.convs):
+            h = conv(h, edge_index)
+            if layer_idx != len(self.convs) - 1:
+                h = self.act(h)
+                h = nn.functional.dropout(h, p=self.dropout, training=self.training)
 
         if isinstance(query_idx, int):
             query_idx = torch.tensor([query_idx], dtype=torch.long, device=h.device)
@@ -86,10 +57,6 @@ class InnerGNN(nn.Module):
         """
         批量编码多个子图：合并成一张不连通大图做一次消息传递，返回各自查询点嵌入。
 
-        关键：GraphNorm 需要 batch 索引区分不同盒子。
-        节点顺序：sample0 的 N0 个节点 → sample1 的 N1 个 → ...
-        对应 batch：[0]*N0 + [1]*N1 + ...
-
         Args:
             x_list (list[Tensor]): 每个样本的子图节点特征 [Ni, in_dim]。
             edge_index_list (list[LongTensor]): 每个样本的子图边 [2, Ei]。
@@ -99,72 +66,53 @@ class InnerGNN(nn.Module):
             Tensor: [B, output_dim] 各样本查询点嵌入。
         """
         device = x_list[0].device
-        xs, es, qidx, batches = [], [], [], []
+        xs, es, qidx = [], [], []
         offset = 0
-        for i, (x, e, q) in enumerate(zip(x_list, edge_index_list, query_idx_list)):
+        for x, e, q in zip(x_list, edge_index_list, query_idx_list):
             xs.append(x)
             es.append(e.to(device) + offset)
             qi = q if isinstance(q, int) else int(torch.as_tensor(q).reshape(-1)[0].item())
             qidx.append(offset + qi)
-            # 该盒子子图的 N_i 个节点，全部归属图 i
-            batches.append(torch.full((x.size(0),), i, dtype=torch.long, device=device))
             offset += x.size(0)
-        h = self.input_proj(torch.cat(xs, dim=0))
+        h = torch.cat(xs, dim=0)
         edge_index = torch.cat(es, dim=1)
-        batch = torch.cat(batches, dim=0)  # [sum(N_i)]，节点 → 图 id
-        h = self._residual_stack(h, edge_index, batch)
-        h = self.output_proj(h)
+        for layer_idx, conv in enumerate(self.convs):
+            h = conv(h, edge_index)
+            if layer_idx != len(self.convs) - 1:
+                h = self.act(h)
+                h = nn.functional.dropout(h, p=self.dropout, training=self.training)
         query = torch.tensor(qidx, dtype=torch.long, device=h.device)
         return h[query]
 
 
 class InterGNN(nn.Module):
     """
-    Inter-GNN（高速段）：v1.0.1 起改为 pre-norm + residual 深度块，v1.0.2 起归一化通过 norm_type 开关配置。
-
-    - `norm_type='none'`（v1.0.2 默认）：只留 residual，不做归一化。4 层规模下推荐。
-    - `norm_type='graphnorm'`：加 PyG GraphNorm，"图"指一份 (K 个高速点 + s 虚拟 + t 虚拟)；6+ 层时启用。
-    - 已弃用：`nn.LayerNorm`——v1.0.0 用过，抹掉 global_encoder 编码后的 x/y，Exp-6 rel_err 从 0.119 崩到 0.824。
+    Inter-GNN（高速段）：多层 SAGEConv 非等宽堆叠，post-activation。
+    结构：highway_in_dim → hidden → ... → hidden → output_dim
+    v1.0.3 默认层数 3（对 Exp-5 的 2 层加一层）。
     """
 
-    def __init__(self, highway_in_dim, hidden_dim, output_dim, global_feat_dim, num_layers=2, dropout=0.1, norm_type="none"):
+    def __init__(self, highway_in_dim, hidden_dim, output_dim, global_feat_dim, num_layers=2, dropout=0.1):
         super().__init__()
         if num_layers < 2:
             raise ValueError("num_layers must be >= 2 for InterGNN.")
         self.dropout = dropout
-        self.norm_type = norm_type
-        self.norm_uses_batch = norm_type == "graphnorm"
         self.global_encoder = nn.Sequential(
             nn.Linear(global_feat_dim, hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, highway_in_dim),
         )
-        self.input_proj = nn.Linear(highway_in_dim, hidden_dim)
-        self.output_proj = nn.Linear(hidden_dim, output_dim)
-        self.convs = nn.ModuleList(
-            [geo_nn.SAGEConv(hidden_dim, hidden_dim) for _ in range(num_layers)]
-        )
-        self.norms = nn.ModuleList([_make_norm(norm_type, hidden_dim) for _ in range(num_layers)])
+        self.convs = nn.ModuleList()
+        self.convs.append(geo_nn.SAGEConv(highway_in_dim, hidden_dim))
+        for _ in range(num_layers - 2):
+            self.convs.append(geo_nn.SAGEConv(hidden_dim, hidden_dim))
+        self.convs.append(geo_nn.SAGEConv(hidden_dim, output_dim))
         self.act = nn.ReLU()
         self.readout = nn.Sequential(
             nn.Linear(2 * output_dim, output_dim),
             nn.ReLU(),
             nn.Linear(output_dim, output_dim),
         )
-
-    def _residual_stack(self, h, edge_index, batch):
-        """pre-norm residual 主体循环，forward 与 forward_batch 共用。batch 在 norm_type='none' 时被忽略。"""
-        for i, conv in enumerate(self.convs):
-            h_res = h
-            if self.norm_uses_batch:
-                h_pre = self.norms[i](h, batch)
-            else:
-                h_pre = self.norms[i](h)  # Identity，忽略 batch
-            h_pre = self.act(h_pre)
-            h_pre = nn.functional.dropout(h_pre, p=self.dropout, training=self.training)
-            h_conv = conv(h_pre, edge_index)
-            h = h_conv + h_res
-        return h
 
     @staticmethod
     def _build_virtual_edges(s_virtual_idx, t_virtual_idx, s_connect_idx, t_connect_idx, device):
@@ -201,7 +149,7 @@ class InterGNN(nn.Module):
         Returns:
             tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
                 - node_emb: [num_highway_nodes + 2, output_dim]
-                - pair_emb: [1, output_dim] 经过 readout 的跨分区嵌入 h_st_inter
+                - pair_emb: [1, output_dim] 经过 readout 的跨分区嵌入 h_st_inter（当前未被 DistancePredictor 使用）
                 - st_virtual_emb: [1, 2*output_dim] s/t 虚拟节点拼接嵌入
         """
         device = x_highway.device
@@ -223,11 +171,12 @@ class InterGNN(nn.Module):
         )
         edge_index_aug = torch.cat([edge_index_highway.to(device), virtual_edges], dim=1)
 
-        h = self.input_proj(x_aug)
-        # 单样本 forward：整张"高速图 + s/t 两虚拟节点"属于同一张图，batch 全为 0
-        batch = torch.zeros(h.size(0), dtype=torch.long, device=h.device)
-        h = self._residual_stack(h, edge_index_aug, batch)
-        h = self.output_proj(h)
+        h = x_aug
+        for layer_idx, conv in enumerate(self.convs):
+            h = conv(h, edge_index_aug)
+            if layer_idx != len(self.convs) - 1:
+                h = self.act(h)
+                h = nn.functional.dropout(h, p=self.dropout, training=self.training)
 
         s_virtual_emb = h[s_virtual_idx : s_virtual_idx + 1]
         t_virtual_emb = h[t_virtual_idx : t_virtual_idx + 1]
@@ -276,13 +225,13 @@ class InterGNN(nn.Module):
             ], dim=1))
             offset += K + 2
 
-        h = self.input_proj(torch.cat(x_parts, dim=0))
+        h = torch.cat(x_parts, dim=0)
         edge_all = torch.cat(edge_parts, dim=1)
-        # 节点顺序：sample0 的 K+2 节点（x_highway, s_virt, t_virt）→ sample1 的 K+2 节点 → ...
-        # 与 x_parts 拼接顺序完全一致；每份 K+2 节点属于同一张图 b。
-        batch = torch.arange(B, dtype=torch.long, device=device).repeat_interleave(K + 2)
-        h = self._residual_stack(h, edge_all, batch)
-        h = self.output_proj(h)
+        for layer_idx, conv in enumerate(self.convs):
+            h = conv(h, edge_all)
+            if layer_idx != len(self.convs) - 1:
+                h = self.act(h)
+                h = nn.functional.dropout(h, p=self.dropout, training=self.training)
         s_emb = h[torch.tensor(s_idx_list, dtype=torch.long, device=device)]
         t_emb = h[torch.tensor(t_idx_list, dtype=torch.long, device=device)]
         return torch.cat([s_emb, t_emb], dim=-1)  # [B, 2*output_dim]
@@ -301,7 +250,6 @@ class DistancePredictor(nn.Module):
         num_inner_layers=2,
         num_inter_layers=2,
         dropout=0.1,
-        norm_type="none",
         use_highway_distance_feature=True,
         highway_distance_feat_dim=4,
     ):
@@ -312,7 +260,6 @@ class DistancePredictor(nn.Module):
             output_dim=inner_out_dim,
             num_layers=num_inner_layers,
             dropout=dropout,
-            norm_type=norm_type,
         )
         self.inter_gnn = InterGNN(
             highway_in_dim=highway_feat_dim,
@@ -321,12 +268,11 @@ class DistancePredictor(nn.Module):
             global_feat_dim=global_feat_dim,
             num_layers=num_inter_layers,
             dropout=dropout,
-            norm_type=norm_type,
         )
         self.use_highway_distance_feature = use_highway_distance_feature
         self.highway_distance_feat_dim = highway_distance_feat_dim if use_highway_distance_feature else 0
         # 融合输入为 4 块嵌入：[h_s_inner | h_t_inner | h_s_inter | h_t_inter]
-        # （h_s_inter/h_t_inter 由 InterGNN 的两个虚拟节点给出，对应论文图中的绿/棕两块）
+        # （h_s_inter/h_t_inter 由 InterGNN 的两个虚拟节点给出）
         # 可选再拼接 highway 分解距离特征。
         fusion_in_dim = 2 * inner_out_dim + 2 * inter_out_dim + self.highway_distance_feat_dim
         self.fusion_mlp = nn.Sequential(
@@ -471,6 +417,8 @@ if __name__ == "__main__":
         hidden_dim=64,
         inner_out_dim=64,
         inter_out_dim=64,
+        num_inner_layers=2,
+        num_inter_layers=3,  # v1.0.3 默认
         use_highway_distance_feature=True,
         highway_distance_feat_dim=4,
     )

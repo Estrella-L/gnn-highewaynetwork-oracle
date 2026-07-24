@@ -21,7 +21,6 @@ class DistanceRegressionNet(nn.Module):
         num_inner_layers=2,
         num_inter_layers=2,
         dropout=0.1,
-        norm_type="none",
         use_highway_distance_feature=True,
         highway_distance_feat_dim=4,
     ):
@@ -37,7 +36,6 @@ class DistanceRegressionNet(nn.Module):
             num_inner_layers=num_inner_layers,
             num_inter_layers=num_inter_layers,
             dropout=dropout,
-            norm_type=norm_type,
             use_highway_distance_feature=use_highway_distance_feature,
             highway_distance_feat_dim=highway_distance_feat_dim,
         )

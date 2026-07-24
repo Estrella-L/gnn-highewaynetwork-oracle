@@ -35,6 +35,65 @@
 
 ---
 
+## [v1.0.3] - 2026-07-24 — 回滚 v0.15 极简结构 + 只加 InterGNN 一层（干净的单变量对照）
+
+### 动机
+**v1.0.0 / v1.0.1 / v1.0.2 三个版本都训不动**——Exp-6（LN）、Exp-6c（无 norm）、Exp-6d（GraphNorm）
+三次实验的 val_mae 都卡在 ~2500 的"输出常量"平台。对比 Exp-4/Exp-5（v0.15 极简结构）能训到 ~900，
+说明**问题不在归一化，而在 v1.0.0 引入的架构改动组合**（input_proj + output_proj + 残差 + pre-activation
++ 加深到 4 层，一次上了 5 处）。
+
+诊断：pre-activation residual + 未归一化的组合 → **残差 shortcut 主导 SAGE 卷积**，
+SAGE 权重梯度被压下去、模型陷入"用线性 shortcut 输出均值"的局部最优。
+
+**教训**：违反了单变量对照原则——v1.0.0 打包了 5+ 处改动，崩坏后无法精确定位。这次纠正。
+
+### 改动
+**`gnn.py`**：**完全回滚到 v0.15.0 的结构**，删除 v1.0.x 引入的所有新组件：
+- 删掉 `_make_norm` / `input_proj` / `output_proj` / `norms` / `norm_type` / `norm_uses_batch`
+- 删掉 `_residual_stack` 私有方法与 pre-activation 循环
+- `InnerGNN` / `InterGNN` 恢复 v0.15 的 post-activation 循环：
+  `h = conv(h); if not last: h = ReLU(h); h = dropout(h)`
+- SAGE 层结构恢复非等宽链：`SAGEConv(input, hidden)` + `SAGEConv(hidden, hidden) × (L-2)` +
+  `SAGEConv(hidden, output)`
+
+**`main.py`**：
+- 删掉 `--norm_type` CLI（v0.15 极简结构不需要）
+- `--num_inter_layers` 默认从 4 改为 **3**（v0.15 是 2，本次加一层做对照）
+- `--num_inner_layers` 保留但默认仍是 2（不动 Inner）
+- 构造模型时不再传 `norm_type`
+
+**`infer_distance.py`**：同步删掉 `--norm_type`，`--num_inter_layers` 默认 3。
+
+**`model.py`**：`DistanceRegressionNet.__init__` 删掉 `norm_type` 参数。
+
+### 接口/参数变化
+- **删除**：`--norm_type` CLI；`InnerGNN` / `InterGNN` / `DistancePredictor` / `DistanceRegressionNet`
+  的 `norm_type` 关键字参数。
+- **默认值变化**：`--num_inter_layers` 从 4 → 3（v0.15 原是 2）。
+- **CLI 单变量对照**：Exp-5（`--num_inter_layers 2`，v0.15）→ Exp-7（`--num_inter_layers 3`，v1.0.3）
+  仅一处不同。
+
+### 兼容性
+- **v1.0.0/1/2 checkpoint 全部作废**：state_dict 结构变了，v1.0.x 的 `norms.*` / `input_proj` /
+  `output_proj` 键都不存在了。
+- **v0.15 及以前的 checkpoint 兼容**：结构与 v0.15 逐字节等价（除非 `--num_inter_layers` 与训练时不同）。
+- **数据缓存兼容**：`outputs/cache/*.pt` 与模型结构解耦，可复用。
+
+### 验证
+- `gnn.py / model.py / main.py / infer_distance.py` 四文件 `ast.parse` 通过。
+- **等价性**：设 `--num_inter_layers 2` 时，与 v0.15 结构逐字节等价（可通过 diff 验证）。
+- **单变量对照**：Exp-7（v1.0.3 默认 3 层）vs Exp-5（v0.15 默认 2 层）→ 唯一变量是 InterGNN 深度。
+- ⚠️ 云端建议先跑 50 轮观察曲线趋势。判据：epoch 20-30 应突破 val_mae ~2500 平台并加速下降到 ~1500 以下；
+  若仍卡 2500 → InterGNN 加深无益，转向 A3-full（边权注入）或 A3-lite（加 z）。
+
+### 已知局限 / 后续 TODO
+- Exp-7 若显示"加深无益"，需要接受"当前结构 InterGNN 2 层是甜点区"，深度扩展方向作废
+- v1.0.0~v1.0.2 的 pre-norm residual 想法**并非全错**——需要 6+ 层深模型 + 合适的 norm 才成立。
+  本项目主线放弃此方向，如有兴趣可另开分支尝试。
+
+---
+
 ## [v1.0.2] - 2026-07-16 — 简化：归一化改为可选开关（`--norm_type`，默认 `none`）
 
 ### 动机
