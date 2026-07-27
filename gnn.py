@@ -1,18 +1,10 @@
 # GNN 模块：三段式 DistancePredictor（Inner 本地段 / Inter 高速段 / Fusion 融合段）。
-# v1.0.3：回滚到 v0.15 的极简结构（无 residual / 无 norm / 无 input_proj/output_proj），
-# 仅通过 CLI `--num_inter_layers` 加深 InterGNN 到 3 层，单变量对照验证"加一层是否有收益"。
 import torch
 import torch.nn as nn
 import torch_geometric.nn as geo_nn
 
 
 class InnerGNN(nn.Module):
-    """
-    Inner-GNN（局部段）：多层 SAGEConv 非等宽堆叠，post-activation。
-    结构：input_dim → hidden → ... → hidden → output_dim
-    中间层激活 conv → ReLU → dropout；末层只做 conv，输出直接作为节点嵌入。
-    """
-
     def __init__(self, input_dim, hidden_dim, output_dim, num_layers=2, dropout=0.1):
         super().__init__()
         if num_layers < 2:
@@ -86,12 +78,6 @@ class InnerGNN(nn.Module):
 
 
 class InterGNN(nn.Module):
-    """
-    Inter-GNN（高速段）：多层 SAGEConv 非等宽堆叠，post-activation。
-    结构：highway_in_dim → hidden → ... → hidden → output_dim
-    v1.0.3 默认层数 3（对 Exp-5 的 2 层加一层）。
-    """
-
     def __init__(self, highway_in_dim, hidden_dim, output_dim, global_feat_dim, num_layers=2, dropout=0.1):
         super().__init__()
         if num_layers < 2:
@@ -149,7 +135,7 @@ class InterGNN(nn.Module):
         Returns:
             tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
                 - node_emb: [num_highway_nodes + 2, output_dim]
-                - pair_emb: [1, output_dim] 经过 readout 的跨分区嵌入 h_st_inter（当前未被 DistancePredictor 使用）
+                - pair_emb: [1, output_dim] 经过 readout 的跨分区嵌入 h_st_inter
                 - st_virtual_emb: [1, 2*output_dim] s/t 虚拟节点拼接嵌入
         """
         device = x_highway.device
@@ -272,7 +258,7 @@ class DistancePredictor(nn.Module):
         self.use_highway_distance_feature = use_highway_distance_feature
         self.highway_distance_feat_dim = highway_distance_feat_dim if use_highway_distance_feature else 0
         # 融合输入为 4 块嵌入：[h_s_inner | h_t_inner | h_s_inter | h_t_inter]
-        # （h_s_inter/h_t_inter 由 InterGNN 的两个虚拟节点给出）
+        # （h_s_inter/h_t_inter 由 InterGNN 的两个虚拟节点给出，对应论文图中的绿/棕两块）
         # 可选再拼接 highway 分解距离特征。
         fusion_in_dim = 2 * inner_out_dim + 2 * inter_out_dim + self.highway_distance_feat_dim
         self.fusion_mlp = nn.Sequential(
@@ -417,8 +403,6 @@ if __name__ == "__main__":
         hidden_dim=64,
         inner_out_dim=64,
         inter_out_dim=64,
-        num_inner_layers=2,
-        num_inter_layers=3,  # v1.0.3 默认
         use_highway_distance_feature=True,
         highway_distance_feat_dim=4,
     )

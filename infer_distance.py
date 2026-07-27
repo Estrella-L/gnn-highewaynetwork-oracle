@@ -26,8 +26,6 @@ def build_parser():
     parser.add_argument("--hidden_dim", type=int, default=128, help="hidden dimension")
     parser.add_argument("--out_dim", type=int, default=64, help="output embedding dimension")
     parser.add_argument("--dropout_ratio", type=float, default=0.2, help="dropout ratio")
-    parser.add_argument("--num_inner_layers", type=int, default=2, help="InnerGNN 层数（须与训练一致）")
-    parser.add_argument("--num_inter_layers", type=int, default=3, help="InterGNN 层数（须与训练一致；v1.0.3 默认 3）")
     parser.add_argument("--highway_k", type=int, default=3, help="number of nearest highway nodes for s/t connections")
     parser.add_argument(
         "--inner_mode",
@@ -82,16 +80,12 @@ def main():
         inner_out_dim=args.out_dim,
         inter_out_dim=args.out_dim,
         fusion_hidden_dim=args.hidden_dim,
-        num_inner_layers=args.num_inner_layers,
-        num_inter_layers=args.num_inter_layers,
         dropout=args.dropout_ratio,
         use_highway_distance_feature=not args.disable_highway_distance_feature,
         highway_distance_feat_dim=4,
     ).to(args.device)
 
-    # weights_only=True 是 state_dict 的推荐加载方式（仅接受张量/基础类型，拒绝任意对象）
-    # 未来 PyTorch 版本会自动切到 True，显式写明可消除 FutureWarning 并保证跨版本一致
-    state_dict = torch.load(args.model_path, map_location=args.device, weights_only=True)
+    state_dict = torch.load(args.model_path, map_location=args.device)
     model.load_state_dict(state_dict)
     model.eval()
 

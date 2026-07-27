@@ -12,258 +12,84 @@
 
 ---
 
-## 可提升工作（Roadmap，未实现）
-
-按优先级记录尚未落地、但有价值的改进方向：
-
-- **高速网络用 WSPD spanner 稀疏化（可选）**：当前 `build_highway_edges` 的盒内
-  transit 边是**全连接**（盒内高速点两两相连），边数 `O(K²/盒数)`，大图上爆炸——EP_low
-  （高速点 4856）盒内 transit 边约 **70 万条**，是每轮 ~570s 的主因。应改为 EAR-Oracle 的
-  **WSPD（Well-Separated Pair Decomposition）spanner**，用参数 **ε（近似精度）** 控制边数：
-  产出 (1+ε)-spanner，边数降到 `O(K/ε²)`（大图少 30~50 倍），ε 即"精度—边数/速度"旋钮。
-  过渡方案可先做 `--transit_k` 的 k-近邻稀疏化验证收益。详细实现拆解见 `项目说明.md` 第 9 节。
-- **按距离分层采样监督**：当前 `build_distance_samples` 对节点对**均匀随机抽样**，导致距离标签集中在
-  中等距离、极近/极远样本稀少；而评估指标 `relative_error` 对小距离最敏感。可加一个可选开关：
-  把可达距离分档（如按分位数），每档抽相近数量，使各距离段训练更均衡。默认保留现有均匀采样以兼容。
-- **highway 分解强基线**：`baseline.py` 补 `access(s)+highway(入口s,入口t)+access(t)` 这条非学习上界，
-  正式回应"GNN 相对分解本身有多少增益"（README Q4）。
-- **多种子 / 跨图评估**：固定配置多种子重复报均值±方差；多张地形交叉验证（当前单种子单次）。
-- **对称化输出**：强制 `d̃(s,t)=d̃(t,s)`（对称读出），并报告对称性违反度（README Q5）。
-- **分区/高速可视化**：把分区盒子 + 高速点画成 PNG，便于审查与论文配图（当前仅 CSV 审查文件）。
-- **Steiner 点 / Snell 加权测地距离**：贴近 EAR-Oracle 的更精确**监督信号**（依赖几何，较重）。
-  （注：WSPD spanner 属高速网络稀疏化，已单列为上面的高优先级项，不在此监督精度条目内。）
-
----
-
-## [v1.0.3] - 2026-07-24 — 回滚 v0.15 极简结构 + 只加 InterGNN 一层（干净的单变量对照）
+## [v0.12.0] - 2026-07-10 — 8:1:1 划分验证（导出 train/val 点对 + check_split.py）
 
 ### 动机
-**v1.0.0 / v1.0.1 / v1.0.2 三个版本都训不动**——Exp-6（LN）、Exp-6c（无 norm）、Exp-6d（GraphNorm）
-三次实验的 val_mae 都卡在 ~2500 的"输出常量"平台。对比 Exp-4/Exp-5（v0.15 极简结构）能训到 ~900，
-说明**问题不在归一化，而在 v1.0.0 引入的架构改动组合**（input_proj + output_proj + 残差 + pre-activation
-+ 加深到 4 层，一次上了 5 处）。
-
-诊断：pre-activation residual + 未归一化的组合 → **残差 shortcut 主导 SAGE 卷积**，
-SAGE 权重梯度被压下去、模型陷入"用线性 shortcut 输出均值"的局部最优。
-
-**教训**：违反了单变量对照原则——v1.0.0 打包了 5+ 处改动，崩坏后无法精确定位。这次纠正。
+实验计划第 5 步"8:1:1 节点/边重叠"需要验证 train/val/test 划分的比例与**无对级泄漏**。
+此前 `main.py` 只导出 test 点对，无法核对三集的重叠。
 
 ### 改动
-**`gnn.py`**：**完全回滚到 v0.15.0 的结构**，删除 v1.0.x 引入的所有新组件：
-- 删掉 `_make_norm` / `input_proj` / `output_proj` / `norms` / `norm_type` / `norm_uses_batch`
-- 删掉 `_residual_stack` 私有方法与 pre-activation 循环
-- `InnerGNN` / `InterGNN` 恢复 v0.15 的 post-activation 循环：
-  `h = conv(h); if not last: h = ReLU(h); h = dropout(h)`
-- SAGE 层结构恢复非等宽链：`SAGEConv(input, hidden)` + `SAGEConv(hidden, hidden) × (L-2)` +
-  `SAGEConv(hidden, output)`
+**`main.py`**：切分后**同时导出 train/val/test 三份**点对 CSV
+（`<run>_{train,val,test}_pairs.csv`），test 文件名不变（`baseline.py` 仍兼容）。
 
-**`main.py`**：
-- 删掉 `--norm_type` CLI（v0.15 极简结构不需要）
-- `--num_inter_layers` 默认从 4 改为 **3**（v0.15 是 2，本次加一层做对照）
-- `--num_inner_layers` 保留但默认仍是 2（不动 Inner）
-- 构造模型时不再传 `norm_type`
-
-**`infer_distance.py`**：同步删掉 `--norm_type`，`--num_inter_layers` 默认 3。
-
-**`model.py`**：`DistanceRegressionNet.__init__` 删掉 `norm_type` 参数。
+**新增 `check_split.py`**（纯 Python）：读三份 CSV，报告
+① 划分比例（是否 ≈ 8:1:1）；② **对级泄漏**（同一 (s,t) 跨集出现，必须为 0）；
+③ 集合内重复对自检；④ 节点重叠（单图直推式下高重叠属正常，非泄漏）。
 
 ### 接口/参数变化
-- **删除**：`--norm_type` CLI；`InnerGNN` / `InterGNN` / `DistancePredictor` / `DistanceRegressionNet`
-  的 `norm_type` 关键字参数。
-- **默认值变化**：`--num_inter_layers` 从 4 → 3（v0.15 原是 2）。
-- **CLI 单变量对照**：Exp-5（`--num_inter_layers 2`，v0.15）→ Exp-7（`--num_inter_layers 3`，v1.0.3）
-  仅一处不同。
+- `main.py` 新增产物 `<run>_train_pairs.csv`、`<run>_val_pairs.csv`（test 不变）。
+- 新增脚本 `check_split.py`（`--run_prefix` 或分别 `--train/--val/--test`）。
 
 ### 兼容性
-- **v1.0.0/1/2 checkpoint 全部作废**：state_dict 结构变了，v1.0.x 的 `norms.*` / `input_proj` /
-  `output_proj` 键都不存在了。
-- **v0.15 及以前的 checkpoint 兼容**：结构与 v0.15 逐字节等价（除非 `--num_inter_layers` 与训练时不同）。
-- **数据缓存兼容**：`outputs/cache/*.pt` 与模型结构解耦，可复用。
+- 不改训练逻辑与模型；仅多导出两份 CSV。旧 run（只导了 test）需重训或重跑采样才能全量校验。
 
 ### 验证
-- `gnn.py / model.py / main.py / infer_distance.py` 四文件 `ast.parse` 通过。
-- **等价性**：设 `--num_inter_layers 2` 时，与 v0.15 结构逐字节等价（可通过 diff 验证）。
-- **单变量对照**：Exp-7（v1.0.3 默认 3 层）vs Exp-5（v0.15 默认 2 层）→ 唯一变量是 InterGNN 深度。
-- ⚠️ 云端建议先跑 50 轮观察曲线趋势。判据：epoch 20-30 应突破 val_mae ~2500 平台并加速下降到 ~1500 以下；
-  若仍卡 2500 → InterGNN 加深无益，转向 A3-full（边权注入）或 A3-lite（加 z）。
-
-### 已知局限 / 后续 TODO
-- Exp-7 若显示"加深无益"，需要接受"当前结构 InterGNN 2 层是甜点区"，深度扩展方向作废
-- v1.0.0~v1.0.2 的 pre-norm residual 想法**并非全错**——需要 6+ 层深模型 + 合适的 norm 才成立。
-  本项目主线放弃此方向，如有兴趣可另开分支尝试。
+- `main.py` / `check_split.py` `ast` 解析通过。
+- 本地合成 CSV 冒烟：正确报出划分比例、并检出故意植入的 1 处对级泄漏（train∩test=1）。
 
 ---
 
-## [v1.0.2] - 2026-07-16 — 简化：归一化改为可选开关（`--norm_type`，默认 `none`）
+## [v0.11.0] - 2026-07-10 — 新增点对跨分区/同分区比例分析脚本
 
 ### 动机
-v1.0.1 修完 LN→GN 之后重新审视架构：**4 层规模下 GraphNorm 是"理论收益弱、调试成本高"的组件**。
-
-- 4 层感受野 = 4 跳，远小于高速图直径（√K ≈ 70~140），但 `highway_dist_feat` 已经把跨区骨架显式喂给
-  Fusion MLP，InterGNN 的职责只是"局部修正"，4 层已足够。
-- DeepGCNs / GCNII 用 norm 的场景是 6~10 层深模型；4 层堆叠 SAGE 通常不需要归一化，梯度问题不显著。
-- residual 几乎是 free lunch（一个加法、零参数），保留合理；GraphNorm 的 batch 索引构造增加了
-  forward/forward_batch 的一层复杂度，已经付出过一次调试成本（v1.0.0 → v1.0.1）。
-
-结论：把 GraphNorm 降级为**可选开关**，默认关闭，需要加深到 6+ 层再打开。
+需要用**实测**代替估算，确认采样的 `(s,t)` 点对里跨分区/同分区各占多少
+（此前对"跨分区占比≈94%"只是均匀假设下的估算，真实地形叶子可能不均衡）。
 
 ### 改动
-**`gnn.py`**
-- 新增模块级函数 `_make_norm(norm_type, hidden_dim)`：
-  - `'none'` → `nn.Identity()`
-  - `'graphnorm'` → `geo_nn.GraphNorm(hidden_dim)`
-- `InnerGNN.__init__` / `InterGNN.__init__` 新增关键字参数 `norm_type="none"`，缓存到 `self.norm_uses_batch`
-  （仅 GraphNorm 需要 batch 索引）。
-- `_residual_stack` 内按 `self.norm_uses_batch` 分支：True → `norms[i](h, batch)`，False → `norms[i](h)`。
-- `DistancePredictor.__init__` 新增 `norm_type="none"`，透传到两个 GNN。
+**新增 `analyze_pairs.py`**（纯 Python，无需 torch）：
+- 读 `outputs/cache/<key>_partition.csv`（每点 leaf_id）→ 计算叶子大小分布、`Σpᵢ²`、
+  全图所有对中同分区的**精确**比例 `Σ C(nᵢ,2)/C(N,2)`；
+- 可选读 `<run>_test_pairs.csv` → 统计**实际采样**点对中同分区/跨分区的实测比例。
 
-**`model.py`**：`DistanceRegressionNet.__init__` 新增 `norm_type="none"`，透传到 backbone。
+### 验证
+- `ast` 解析通过；本地 900 点规则网格实测：16 叶（49~64），同分区 6.20%，跨分区 93.80%
+  （均匀图下与理论 1/16 吻合）。真实地形（如 EP_low）需在云端用其 partition/test_pairs CSV 实测。
 
+### 已知局限 / 后续 TODO
+- 均匀网格 intra≈6% 已证；真实地形因顶点分布不均，intra 可能更高，需实测确认。
+- 如需按分区控制采样，可加 `--pair_mode {any,cross,intra}`（见 Roadmap 的分层采样相关项）。
+
+---
+
+## [v0.10.0] - 2026-07-10 — 新增 LR scheduler + 训练日志目录 + 超参数消融文档
+
+### 动机
+超参数消融实验（LR / dropout / scheduler / ε）需要学习率调度支持；同时需要一个统一存放
+不同参数/版本训练日志的地方，以及一份消融实验蓝图文档。
+
+### 改动
 **`main.py`**
-- 新增 CLI 参数 `--norm_type {none,graphnorm}`，默认 `none`。
-- 构造模型时透传 `norm_type=args.norm_type`。
+- 新增 `--lr_scheduler {none,plateau}` + `--lr_patience` / `--lr_factor` / `--min_lr`：
+  plateau 用 `torch.optim.lr_scheduler.ReduceLROnPlateau`，按 `val_mae` 触发降 LR。
+- 每轮日志追加 `lr=...`；降 LR 时打印 `lr reduced: a -> b`。
 
-**`infer_distance.py`**：同名参数，默认 `none`；**推理必须与训练一致**（state_dict 结构由 norm_type 决定）。
+**目录**：新增顶层 `logs/`（训练日志归档，手动 `tee` 保存，跨参数/版本对比）；
+首个 Baseline 日志已归档其中。
 
-### 接口/参数变化
-- `main.py` / `infer_distance.py` 新增 `--norm_type`（默认 `none`，与 v1.0.0/v1.0.1 的 GraphNorm 行为
-  不再等价——需显式 `--norm_type graphnorm` 才能对齐）。
-- `InnerGNN` / `InterGNN` / `DistancePredictor` / `DistanceRegressionNet` 新增 `norm_type` 关键字，
-  默认值改变了模型结构。
-
-### 兼容性
-- **v1.0.1 checkpoint 不兼容默认配置**：v1.0.1 训出来的权重带 GraphNorm 参数，需 `--norm_type graphnorm`
-  才能加载；v1.0.0 checkpoint 本来就不能加载（LN 与 GN state_dict 结构不同）。
-- **数值等价**：`--norm_type graphnorm` 与 v1.0.1 完全等价（同一段代码）。
-- **旧缓存兼容**：`outputs/cache/*.pt` 不受影响。
-
-### 验证
-- `gnn.py / model.py / main.py / infer_distance.py` 四文件 `ast.parse` 通过。
-- 单元逻辑审查：`Identity(h)` 与 `Identity(h, batch)` 的差别通过 `self.norm_uses_batch` 分支避开，
-  不存在类型错误路径。
-- ⚠️ 云端建议做 **两组单变量对照实验**：
-  1. Exp-6c（推荐）：`--num_inter_layers 4 --norm_type none`——只有"层数从 2 → 4 + 残差"两处变化，
-     与 Exp-5（2 层裸堆叠）单变量对照最干净。
-  2. Exp-6d（可选）：`--num_inter_layers 4 --norm_type graphnorm`——若 6c 已收敛，可跳过；否则测归一
-     化是否有额外收益。
-
-### 已知局限 / 后续 TODO
-- 当 Exp-6c/6d 结果出来后，若 `--norm_type none` 已足够，可考虑把 GraphNorm 分支彻底删掉
-  （目前保留作为加深到 6+ 层的备选）。
-
----
-
-## [v1.0.1] - 2026-07-16 — 关键修复：LayerNorm 换 GraphNorm（Exp-6 位置信息被抹平的 bug）
-
-### 动机
-v1.0.0 上线后跑 Exp-6（`--num_inter_layers 4`，其它与 Exp-5 严格单变量对照），效果**急剧崩坏**：
-
-| 实验 | 架构 | val rel_err | test rel_err | best_epoch |
-|---|---|---|---|---|
-| Exp-5 (v0.15) | 2 层裸堆叠 | 0.114 | **0.119** | 115 |
-| Exp-6 (v1.0.0) | 4 层 pre-norm + **LayerNorm** | 0.75+ | **0.824** | 早停 ≈ 20 |
-
-单变量定位到 v1.0.0 引入的 `LayerNorm(hidden_dim)`：**LN 沿每个节点自己的特征列做归一化**，
-把 `FeatureBuilder.node_row` 里塞进的 `x_norm / y_norm`（节点位置）和 `InterGNN.global_encoder`
-产出的 s/t 虚拟节点特征**逐节点抹到零均值单位方差**——所有节点在归一化后位置特征分布相同，
-GNN 消息传递失去空间几何锚点，模型只能靠 `highway_dist_feat` 4 维分解距离做粗预测，
-比 v0.15 的 2 层 SAGE 还差。
-
-### 改动
-**`gnn.py:InnerGNN` / `gnn.py:InterGNN`**
-- `self.norms` 从 `nn.ModuleList([nn.LayerNorm(hidden_dim) ...])` 改为
-  `nn.ModuleList([geo_nn.GraphNorm(hidden_dim) ...])`。**GraphNorm 语义：图内跨节点归一化 + 每维
-  一个可学习均值缩放 α**，保留节点间的相对位置差异，位置信号完整（也保留部分均值信号）。
-- `_residual_stack` 签名新增 `batch` 参数，`self.norms[i](h)` → `self.norms[i](h, batch)`。
-  GraphNorm 必须靠 batch 索引区分不同图，否则会把不同样本的节点混在一起归一化。
-- `forward` 内构造 `batch = torch.zeros(N, dtype=torch.long, device=device)` 表示"单张图"
-  （InnerGNN 一个盒子子图 / InterGNN 一份 K+2 节点的高速+s/t 复合图）。
-- `forward_batch` 内按拼接顺序构造 batch：
-  - InnerGNN：`torch.cat([full((N_i,), i) for i ...])`，各盒子子图 N_i 节点分别归为图 i。
-  - InterGNN：`torch.arange(B).repeat_interleave(K + 2)`——`x_parts` 拼接顺序是
-    `[x_highway (K), s_virt (1), t_virt (1)] × B`，正好每 K+2 个节点属于同一张图 b。
+**文档**：新增 `docs/训练文档2.md`（超参数消融实验蓝图：Baseline + Exp-1~5，含可执行命令与结果表模板）。
 
 ### 接口/参数变化
-- **CLI/训练脚本 0 改动**。`num_inner_layers` / `num_inter_layers` 语义与 v1.0.0 一致。
-- `InnerGNN` / `InterGNN` 构造签名未变。
+- `main.py` 新增 `--lr_scheduler / --lr_patience / --lr_factor / --min_lr`（默认 `none`，行为不变）。
 
 ### 兼容性
-- **v1.0.0 checkpoint 不兼容**：`state_dict` 里 `norms.*.weight / .bias` 键名/形状变了
-  （`LayerNorm` → `GraphNorm`：GraphNorm 多一个可学习 `mean_scale` 参数），需重训。
-- **v0.15 及以前的 checkpoint 也不兼容**（本来就因为 v1.0.0 结构升级已经不兼容）。
-- **旧缓存兼容**：`outputs/cache/*.pt` 只保存 highway 上下文，与模型结构解耦。
+- 默认 `--lr_scheduler none`，不启用时训练行为与之前完全一致；模型结构与 checkpoint 不变。
 
 ### 验证
-- `python -c "import ast; ast.parse(open('gnn.py', encoding='utf-8').read())"` → parse OK。
-- **batch 索引正确性人工审查**：
-  - `InnerGNN.forward_batch`：`xs`/`batches` 循环体同步 append，节点顺序与 batch id 严格对齐；
-    `offset` 累加即 `sum(N_i)`，query 用 `offset + qi` 定位子图局部索引到全局。
-  - `InterGNN.forward_batch`：`x_parts` 循环体 extend `[x_highway, s_virt[b:b+1], t_virt[b:b+1]]`
-    共 K+2 个节点，与 `torch.arange(B).repeat_interleave(K+2)` 严格一一对应；边构造同一循环内 offset
-    同步累加，`s_vidx = offset + K`、`t_vidx = offset + K + 1` 与批内位置吻合。
-- ⚠️ 本地无 torch/PyG 端到端跑不了；**必须云端跑一次 Exp-6 对照实验**：与 v1.0.0 完全同参数
-  （`--num_inter_layers 4 / 120 轮 / lr=0.001 / dropout=0.1 / depth=3`），观察 rel_err 是否回到
-  Exp-5 (0.119) 水平以下。若仍崩，说明 GraphNorm 未生效或有别的问题，需回滚到"3.**去掉 norms**"
-  的 baseline 再逐层排查。
+- `main.py` `ast` 解析通过。scheduler 仅在 `plateau` 时创建，`step(val_mae)` 在每轮 val 后调用。
 
 ### 已知局限 / 后续 TODO
-- GraphNorm 需要 PyG ≥ 2.0；旧环境请升级或临时把 `self.norms` 换成 `nn.Identity()` 走 A2 无 norm 变体。
-- Exp-6 v1.0.1 若通过，再推进 A3-lite（节点特征加 z）。
-
----
-
-## [v1.0.0] - 2026-07-16 — 网络架构 v1：加深 InterGNN + Pre-norm Residual/LayerNorm
-
-**里程碑版本**：三段式网络架构进入 v1 世代——从"2 层裸堆叠 SAGEConv"升级为
-"任意层数 Pre-norm Residual + LayerNorm" 深度块，主要解决高速图上的欠传播（under-reaching）问题。
-架构详情与其它待做项见 `docs/待做.md`。
-
-### 动机（A1 + A2 合并实施）
-- **A1 InterGNN 欠传播**：2 层 SAGEConv 感受野=2 跳，但高速图有 4800~11000 个节点、
-  图直径远大于 2，s 与 t 的虚拟节点间**信息传不到**。Exp-5 rel_err=0.119 且 best_ep=115
-  仍未 plateau，说明模型还没被"表达能力"限制，扩感受野应有空间。
-- **A2 深化的稳定性前提**：裸堆叠深层 GNN 会遇到梯度消失和 over-smoothing。DeepGCNs/GCNII/
-  GraphGPS 都以 residual + norm 作为深化标配，必须同时上。
-
-### 改动
-**`gnn.py:InnerGNN` / `gnn.py:InterGNN`**
-- 结构从 `input_dim → hidden → ... → output_dim` 的非等宽 SAGEConv 序列，改为**等宽**
-  `hidden_dim → hidden_dim` 卷积序列 + 首尾 `Linear` 投影处理维度变换。
-- 每层前加 `nn.LayerNorm(hidden_dim)`，块结构 = `LN → ReLU → Dropout → SAGEConv → +residual`
-  （**pre-norm residual**）。
-- `forward` 与 `forward_batch` 共用 `_residual_stack(...)` 私有方法，避免重复实现。
-- 每层都有残差（首层前已通过 `input_proj` 对齐到 hidden_dim，可直接相加）。
-
-**`main.py`**
-- 新增 CLI 参数 `--num_inner_layers`（默认 2）、`--num_inter_layers`（默认 4）；构造模型时透传。
-
-**`infer_distance.py`**
-- 新增同名参数（默认必须与训练一致，否则 state_dict 加载失败）。
-
-**`docs/待做.md`**（新增）
-- 完整记录 A1/A2/A3-lite/A3-full/B1 五项改进的动机、涉及文件、思路、收益预估与依赖顺序。
-- A1/A2 本轮标记为 🚧 → 完成后应更新为 ✅。
-
-### 接口/参数变化
-- `main.py` / `infer_distance.py` 新增 `--num_inner_layers` / `--num_inter_layers`。
-- `InnerGNN.__init__` / `InterGNN.__init__` 内部结构变化，但**构造签名未变**（仍是 `num_layers` 关键字）。
-
-### 兼容性
-- **旧 checkpoint 不兼容**：state_dict 结构变化（新增 `input_proj / output_proj / norms`），
-  已有 v0.x 训练权重无法直接加载，需重训。
-- **旧缓存兼容**：`outputs/cache/*.pt`（highway 上下文）和 `*_samples.csv`（采样）都不受影响。
-- **infer_distance 需与训练同参数**：`--num_inner_layers` / `--num_inter_layers` 必须与训练一致。
-
-### 验证
-- 三文件 `ast` 解析通过；`_residual_stack` 逻辑在 forward 与 forward_batch 共用，保持行为一致。
-- ⚠️ 本地无 torch 端到端跑不了；**建议云端先小规模冒烟**（`sample_terrain.off + --num_inter_layers 4
-  + 少样本 + 1 轮`）确认模型可训、`test_*` 有正常数值再上大配置。
-- **等价性**：与 v0.15.0 结构不等价（模型结构变了）；这是**架构升级**，需靠端到端实验 rel_err
-  是否下降来验证收益（对照 Exp-5：depth=3 / lr=0.001 / dropout=0.1 / 120 轮 / rel_err=0.119）。
-
-### 已知局限 / 后续 TODO
-- A3-lite（节点特征加 z）、A3-full（边权注入 GINEConv）、B1（对称化输出）见 `docs/待做.md`。
-- 加深后每轮训练时间约 +30%，显存约 +15%；大 batch 需谨慎。
+- Exp-4/5（ε 稀疏化 / 测试集重构）仍需先实现 WSPD spanner（见 Roadmap / `项目说明.md` §9.1）。
+- 数据泄漏检查脚本（8:1:1 节点/边重叠）尚未实现。
 
 ---
 
@@ -378,84 +204,26 @@ K（高速节点数）随分区变细快速增长：depth=2 K≈4856 峰值 ~51G
 
 ---
 
-## [v0.12.0] - 2026-07-10 — 8:1:1 划分验证（导出 train/val 点对 + check_split.py）
+## 可提升工作（Roadmap，未实现）
 
-### 动机
-实验计划第 5 步"8:1:1 节点/边重叠"需要验证 train/val/test 划分的比例与**无对级泄漏**。
-此前 `main.py` 只导出 test 点对，无法核对三集的重叠。
+按优先级记录尚未落地、但有价值的改进方向：
 
-### 改动
-**`main.py`**：切分后**同时导出 train/val/test 三份**点对 CSV
-（`<run>_{train,val,test}_pairs.csv`），test 文件名不变（`baseline.py` 仍兼容）。
-
-**新增 `check_split.py`**（纯 Python）：读三份 CSV，报告
-① 划分比例（是否 ≈ 8:1:1）；② **对级泄漏**（同一 (s,t) 跨集出现，必须为 0）；
-③ 集合内重复对自检；④ 节点重叠（单图直推式下高重叠属正常，非泄漏）。
-
-### 接口/参数变化
-- `main.py` 新增产物 `<run>_train_pairs.csv`、`<run>_val_pairs.csv`（test 不变）。
-- 新增脚本 `check_split.py`（`--run_prefix` 或分别 `--train/--val/--test`）。
-
-### 兼容性
-- 不改训练逻辑与模型；仅多导出两份 CSV。旧 run（只导了 test）需重训或重跑采样才能全量校验。
-
-### 验证
-- `main.py` / `check_split.py` `ast` 解析通过。
-- 本地合成 CSV 冒烟：正确报出划分比例、并检出故意植入的 1 处对级泄漏（train∩test=1）。
-
----
-
-## [v0.11.0] - 2026-07-10 — 新增点对跨分区/同分区比例分析脚本
-
-### 动机
-需要用**实测**代替估算，确认采样的 `(s,t)` 点对里跨分区/同分区各占多少
-（此前对"跨分区占比≈94%"只是均匀假设下的估算，真实地形叶子可能不均衡）。
-
-### 改动
-**新增 `analyze_pairs.py`**（纯 Python，无需 torch）：
-- 读 `outputs/cache/<key>_partition.csv`（每点 leaf_id）→ 计算叶子大小分布、`Σpᵢ²`、
-  全图所有对中同分区的**精确**比例 `Σ C(nᵢ,2)/C(N,2)`；
-- 可选读 `<run>_test_pairs.csv` → 统计**实际采样**点对中同分区/跨分区的实测比例。
-
-### 验证
-- `ast` 解析通过；本地 900 点规则网格实测：16 叶（49~64），同分区 6.20%，跨分区 93.80%
-  （均匀图下与理论 1/16 吻合）。真实地形（如 EP_low）需在云端用其 partition/test_pairs CSV 实测。
-
-### 已知局限 / 后续 TODO
-- 均匀网格 intra≈6% 已证；真实地形因顶点分布不均，intra 可能更高，需实测确认。
-- 如需按分区控制采样，可加 `--pair_mode {any,cross,intra}`（见 Roadmap 的分层采样相关项）。
-
----
-
-## [v0.10.0] - 2026-07-10 — 新增 LR scheduler + 训练日志目录 + 超参数消融文档
-
-### 动机
-超参数消融实验（LR / dropout / scheduler / ε）需要学习率调度支持；同时需要一个统一存放
-不同参数/版本训练日志的地方，以及一份消融实验蓝图文档。
-
-### 改动
-**`main.py`**
-- 新增 `--lr_scheduler {none,plateau}` + `--lr_patience` / `--lr_factor` / `--min_lr`：
-  plateau 用 `torch.optim.lr_scheduler.ReduceLROnPlateau`，按 `val_mae` 触发降 LR。
-- 每轮日志追加 `lr=...`；降 LR 时打印 `lr reduced: a -> b`。
-
-**目录**：新增顶层 `logs/`（训练日志归档，手动 `tee` 保存，跨参数/版本对比）；
-首个 Baseline 日志已归档其中。
-
-**文档**：新增 `docs/训练文档2.md`（超参数消融实验蓝图：Baseline + Exp-1~5，含可执行命令与结果表模板）。
-
-### 接口/参数变化
-- `main.py` 新增 `--lr_scheduler / --lr_patience / --lr_factor / --min_lr`（默认 `none`，行为不变）。
-
-### 兼容性
-- 默认 `--lr_scheduler none`，不启用时训练行为与之前完全一致；模型结构与 checkpoint 不变。
-
-### 验证
-- `main.py` `ast` 解析通过。scheduler 仅在 `plateau` 时创建，`step(val_mae)` 在每轮 val 后调用。
-
-### 已知局限 / 后续 TODO
-- Exp-4/5（ε 稀疏化 / 测试集重构）仍需先实现 WSPD spanner（见 Roadmap / `项目说明.md` §9.1）。
-- 数据泄漏检查脚本（8:1:1 节点/边重叠）尚未实现。
+- **高速网络用 WSPD spanner 稀疏化（可选）**：当前 `build_highway_edges` 的盒内
+  transit 边是**全连接**（盒内高速点两两相连），边数 `O(K²/盒数)`，大图上爆炸——EP_low
+  （高速点 4856）盒内 transit 边约 **70 万条**，是每轮 ~570s 的主因。应改为 EAR-Oracle 的
+  **WSPD（Well-Separated Pair Decomposition）spanner**，用参数 **ε（近似精度）** 控制边数：
+  产出 (1+ε)-spanner，边数降到 `O(K/ε²)`（大图少 30~50 倍），ε 即"精度—边数/速度"旋钮。
+  过渡方案可先做 `--transit_k` 的 k-近邻稀疏化验证收益。详细实现拆解见 `项目说明.md` 第 9 节。
+- **按距离分层采样监督**：当前 `build_distance_samples` 对节点对**均匀随机抽样**，导致距离标签集中在
+  中等距离、极近/极远样本稀少；而评估指标 `relative_error` 对小距离最敏感。可加一个可选开关：
+  把可达距离分档（如按分位数），每档抽相近数量，使各距离段训练更均衡。默认保留现有均匀采样以兼容。
+- **highway 分解强基线**：`baseline.py` 补 `access(s)+highway(入口s,入口t)+access(t)` 这条非学习上界，
+  正式回应"GNN 相对分解本身有多少增益"（README Q4）。
+- **多种子 / 跨图评估**：固定配置多种子重复报均值±方差；多张地形交叉验证（当前单种子单次）。
+- **对称化输出**：强制 `d̃(s,t)=d̃(t,s)`（对称读出），并报告对称性违反度（README Q5）。
+- **分区/高速可视化**：把分区盒子 + 高速点画成 PNG，便于审查与论文配图（当前仅 CSV 审查文件）。
+- **Steiner 点 / Snell 加权测地距离**：贴近 EAR-Oracle 的更精确**监督信号**（依赖几何，较重）。
+  （注：WSPD spanner 属高速网络稀疏化，已单列为上面的高优先级项，不在此监督精度条目内。）
 
 ---
 
@@ -944,6 +712,8 @@ python infer_distance.py --model_path saved_models/<ckpt>.pt \
 
 ---
 
+## 条目模板（复制到本节最上方使用）
+```
 ## [vX.Y.Z] - YYYY-MM-DD — 简述
 ### 动机
 ### 改动
@@ -952,7 +722,3 @@ python infer_distance.py --model_path saved_models/<ckpt>.pt \
 ### 验证
 ### 已知局限 / 后续 TODO
 ```
-
-## 条目模板（复制到本节最上方使用）
-```
-
