@@ -1,0 +1,8 @@
+outputs/
+logs/
+__pycache__/
+*.pyc
+scripts_local/_plot*.py
+scripts_local/quick_ep_high.py
+.DS_Store
+._*
