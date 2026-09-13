@@ -468,16 +468,28 @@ EP_high（1,392,236 顶点）结果：15 万对标签，test MRE 由 2.86%（旧
 **输出参数化比网络结构更关键**；GeGnn 保留官方宽度 256 / 4 层
 （为适配 24GB 显存做了数学等价的分块 + 梯度检查点）。
 
-### 4. 仓库目录按主题分类
+### 4. 分支结构（重要）
+
+| 分支 | 内容 |
+|---|---|
+| **main（本分支）** | **核心代码 + 误差最小的成功实验**：真实欧氏曲面测地距离标签（flip-out 精确算法）+ 最优配置（残差幅度 ±1.0，test MRE **0.03220**） |
+| **ablation** | 解剖式消融：M0 / A1 / A2 / A3 / A4 四个配置与 2x2 因子设计（在 main 基础上加 ablation/） |
+| **baselines** | 三篇论文方法的忠实实现与对比：GeGnn / NeuroGF / LiteGE（在 main 基础上加 baselines/） |
+
+main 目录：
 
 | 目录 | 内容 |
 |---|---|
-| **euclidean_geodesic/** | ★ **真实欧氏曲面测地距离**：标签生成流水线（flip-out 精确算法 + 毒点对隔离与热方法回填）、方案评测、几何基线、结果与图表。**这是本次最核心的工作**（详见该目录 README） |
-| **ablation/** | 解剖式消融：M0 / A1 / A2 / A3 / A4，2x2 因子设计 |
-| **baselines/** | 三篇论文方法的忠实实现与对比（GeGnn / NeuroGF / LiteGE） |
-| scripts_local/ | 其它实验脚本（消融与对比驱动、历史实验、云端编排） |
-| docs/实验报告/ | 三份实验报告（表面距离结果、解剖式消融、三篇 baseline 对比） |
+| **euclidean_geodesic/** | ★ 真实欧氏曲面测地距离：标签生成流水线、方案评测、几何基线、配置与结果（详见该目录 README） |
+| scripts_local/ | 实验脚本（表面标签、评测、云端编排等） |
+| docs/实验报告/ | 表面距离实验结果报告 |
 
-关键结论一句话：**换用真实表面测地标签后，模型学的是正确的物理量**；
-解剖式消融显示「欧氏残差输出参数化」是方法能工作的前提（去掉它 MRE 从 3.29% 崩到 69.09%），
-「地形分区+highway」是精度增益（去掉劣化 27%）。
+### 5. 误差最小配置怎么复现
+
+    export EUCLID_RESIDUAL_SCALE=1.0        # 把欧氏残差幅度从默认 0.5 放宽到 1.0
+    python main.py --off_file <EP_high.off> --labels_file euclidean_geodesic/results/ep_high_surface_*.csv ...
+    # 或走 runner: scripts_local/cloud_ep_high_runner.py --grid_json euclidean_geodesic/configs/ep_high_grid_surface_res1.json
+
+关键结论一句话：**换用真实表面测地标签后，模型学的是正确的物理量**（旧标签系统性高估真值 ~10%）；
+残差幅度是限制精度的瓶颈——真实曲面距离 / 直线距离的比值有 2.25% 的点对超过默认上限 1.5，
+放宽到 1.0 后 RMSE 从 548 降到 500。

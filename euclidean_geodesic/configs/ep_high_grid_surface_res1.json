@@ -1,0 +1,3 @@
+[
+  {"name": "surf_res1_h64_k3_100ep", "sample_strategy": "random", "loss_type": "huber", "highway_k": 3, "hidden_dim": 64, "out_dim": 32, "transit_k": 8, "num_epoch": 100, "early_stop_patience": 100, "batch_size": 16}
+]

@@ -1,7 +1,12 @@
 # GNN 模块：三段式 DistancePredictor（Inner 本地段 / Inter 高速段 / Fusion 融合段）。
+import os as _os
 import torch
 import torch.nn as nn
 import torch_geometric.nn as geo_nn
+
+# 欧氏残差幅度：默认 0.5（原实现，预测区间 [0.5,1.5]x 直线距离）。
+# 设为 1.0 得到误差最小的配置（区间 [0,2]x，覆盖真实曲面距离的 p99.9 以上）。
+_RESIDUAL_SCALE = float(_os.environ.get("EUCLID_RESIDUAL_SCALE", "0.5"))
 
 
 class InnerGNN(nn.Module):
@@ -286,12 +291,12 @@ class DistancePredictor(nn.Module):
             # learn a bounded multiplicative correction around it instead of
             # predicting the full distance from scratch.
             highway_base = torch.expm1(hdf[:, -1]).clamp_min(1e-6)
-            correction = 0.5 * torch.tanh(raw)
+            correction = _RESIDUAL_SCALE * torch.tanh(raw)
             return (highway_base * (1.0 + correction)).clamp_min(1e-6)
         if self.prediction_mode == "euclidean_residual" and euclidean_dist_feat is not None:
             edf = euclidean_dist_feat.to(fusion_input.device).view(-1)
             euclidean_base = torch.expm1(edf).clamp_min(1e-6)
-            correction = 0.5 * torch.tanh(raw)
+            correction = _RESIDUAL_SCALE * torch.tanh(raw)
             return (euclidean_base * (1.0 + correction)).clamp_min(1e-6)
         return self.output_activation(raw)
 
@@ -499,7 +504,7 @@ class SingleGNNPredictor(nn.Module):
         raw = self.fusion_mlp(fusion_input).view(-1)
         if self.prediction_mode == "euclidean_residual" and edf is not None:
             euclidean_base = torch.expm1(edf.view(-1)).clamp_min(1e-6)
-            correction = 0.5 * torch.tanh(raw)
+            correction = _RESIDUAL_SCALE * torch.tanh(raw)
             return (euclidean_base * (1.0 + correction)).clamp_min(1e-6)
         return self.output_activation(raw)
 
