@@ -1,0 +1,5 @@
+[
+  {"name": "cpu_measure_tk8", "sample_strategy": "random", "loss_type": "huber", "highway_k": 3, "hidden_dim": 32, "out_dim": 16, "transit_k": 8, "num_epoch": 6, "early_stop_patience": 4, "batch_size": 16},
+  {"name": "cpu_best_tk8", "sample_strategy": "random", "loss_type": "huber", "highway_k": 3, "hidden_dim": 32, "out_dim": 16, "transit_k": 8, "num_epoch": 12, "early_stop_patience": 6, "batch_size": 16},
+  {"name": "cpu_relative_tk8", "sample_strategy": "random", "loss_type": "relative", "highway_k": 3, "hidden_dim": 32, "out_dim": 16, "transit_k": 8, "num_epoch": 12, "early_stop_patience": 6, "batch_size": 16}
+]

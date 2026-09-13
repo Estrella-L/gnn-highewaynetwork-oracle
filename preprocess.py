@@ -140,8 +140,166 @@ def _save_samples_csv(path, samples):
             f.write(f"{int(smp['s'])},{int(smp['t'])},{float(smp['distance'])}\n")
 
 
+def _canonical_pair(s, t, undirected):
+    if undirected and s > t:
+        return t, s
+    return s, t
+
+
+def _add_random_pairs(seen, n, target_count, rng, undirected=True, predicate=None, max_trials=None):
+    max_trials = max_trials or max(1000, 50 * max(1, target_count))
+    tries = 0
+    while len(seen) < target_count and tries < max_trials:
+        tries += 1
+        s = rng.randrange(n)
+        t = rng.randrange(n)
+        if s == t:
+            continue
+        s, t = _canonical_pair(s, t, undirected)
+        if predicate is not None and not predicate(s, t):
+            continue
+        seen.add((s, t))
+    return tries
+
+
+def _sample_distance_gap_pairs(graph_info, cap, weighted=True, seed=42, undirected=True, candidate_factor=8):
+    """Sample a candidate pool, compute true distances, then balance short/mid/long pairs.
+
+    This is a local/diagnostic version of distance-gap query generation: it keeps the
+    exact Dijkstra labels, but makes the selected supervision pairs less dominated by
+    the most common distance range. It is intentionally candidate-based so large graphs
+    do not require all-pairs distances.
+    """
+    if cap <= 0:
+        raise ValueError("distance_gap sampling requires a positive distance_samples cap.")
+
+    from build_highway import iter_source_distances
+
+    n = len(graph_info[0])
+    total_pairs = n * (n - 1) // 2 if undirected else n * (n - 1)
+    pool_target = min(total_pairs, max(cap, cap * candidate_factor))
+    rng = random.Random(seed)
+    seen = set()
+    _add_random_pairs(seen, n, pool_target, rng, undirected=undirected, max_trials=100 * pool_target)
+    pair_list = list(seen)
+
+    by_src = defaultdict(list)
+    for s, t in pair_list:
+        by_src[s].append(t)
+
+    eu, ev, ew = graph_info[3][0], graph_info[3][1], graph_info[4]
+    reachable = []
+    for s, dist in iter_source_distances(n, eu, ev, ew, list(by_src.keys()), weighted=weighted):
+        for t in by_src[s]:
+            d = dist[t]
+            if d != float("inf"):
+                reachable.append((s, t, float(d)))
+
+    if not reachable:
+        return []
+
+    reachable.sort(key=lambda x: x[2])
+    bins = [reachable[0::3], reachable[1::3], reachable[2::3]]
+    selected = []
+    per_bin = cap // 3
+    remainder = cap - 3 * per_bin
+    for idx, bucket in enumerate(bins):
+        rng.shuffle(bucket)
+        take = per_bin + (1 if idx < remainder else 0)
+        selected.extend(bucket[:take])
+
+    if len(selected) < min(cap, len(reachable)):
+        selected_pairs = {(s, t) for s, t, _ in selected}
+        leftovers = [x for x in reachable if (x[0], x[1]) not in selected_pairs]
+        rng.shuffle(leftovers)
+        selected.extend(leftovers[: min(cap, len(reachable)) - len(selected)])
+
+    rng.shuffle(selected)
+    dists = [d for _, _, d in selected]
+    q1 = sorted(dists)[len(dists) // 3]
+    q2 = sorted(dists)[(2 * len(dists)) // 3]
+    print(
+        f"[distance] distance_gap pairs: total={len(selected)} "
+        f"candidate_pool={len(reachable)} q1={q1:.6f} q2={q2:.6f}"
+    )
+    return [{"s": s, "t": t, "distance": d} for s, t, d in selected]
+
+
+def _sample_oracle_mix_pairs(n, cap, leaf_of, seed=42, undirected=True):
+    """
+    按 EAR-Oracle 查询口径采样：约 1/3 同叶子、1/3 跨叶子、1/3 随机 mixed。
+
+    这里只决定 (s,t) 集合，真实距离仍由后续 Dijkstra 精确计算，因此不会改变标签定义。
+    """
+    if leaf_of is None:
+        raise ValueError("sample_strategy='oracle_mix' requires leaf_of from the quadtree partition.")
+
+    rng = random.Random(seed)
+    by_leaf = defaultdict(list)
+    for node in range(n):
+        if node in leaf_of:
+            by_leaf[leaf_of[node]].append(node)
+    leaves = [leaf for leaf, nodes in by_leaf.items() if len(nodes) > 0]
+    inner_leaves = [leaf for leaf in leaves if len(by_leaf[leaf]) >= 2]
+    if not leaves or not inner_leaves:
+        raise ValueError("oracle_mix sampling needs at least one non-empty leaf with two or more nodes.")
+
+    inner_target = cap // 3
+    inter_target = cap // 3
+    random_target = cap - inner_target - inter_target
+    seen = set()
+
+    def same_leaf(s, t):
+        return leaf_of.get(s) == leaf_of.get(t)
+
+    def different_leaf(s, t):
+        return leaf_of.get(s) != leaf_of.get(t)
+
+    # 同分区查询：对应教授项目里的 inner-box queries。
+    inner_seen_target = len(seen) + inner_target
+    inner_tries = 0
+    while len(seen) < inner_seen_target and inner_tries < max(1000, 50 * max(1, inner_target)):
+        inner_tries += 1
+        leaf = rng.choice(inner_leaves)
+        s, t = rng.sample(by_leaf[leaf], 2)
+        s, t = _canonical_pair(s, t, undirected)
+        seen.add((s, t))
+
+    # 跨分区查询：对应教授项目里的 inter-box queries。
+    inter_seen_target = len(seen) + inter_target
+    inter_tries = 0
+    if len(leaves) >= 2:
+        while len(seen) < inter_seen_target and inter_tries < max(1000, 50 * max(1, inter_target)):
+            inter_tries += 1
+            leaf_s, leaf_t = rng.sample(leaves, 2)
+            s = rng.choice(by_leaf[leaf_s])
+            t = rng.choice(by_leaf[leaf_t])
+            s, t = _canonical_pair(s, t, undirected)
+            if different_leaf(s, t):
+                seen.add((s, t))
+
+    # mixed/random 查询：不强制同/跨分区，用来保留真实随机分布。
+    random_seen_target = min(cap, len(seen) + random_target)
+    _add_random_pairs(seen, n, random_seen_target, rng, undirected=undirected)
+
+    # 极端情况下某一类因为叶子太小没采满，用全局随机补齐。
+    if len(seen) < cap:
+        _add_random_pairs(seen, n, cap, rng, undirected=undirected, max_trials=100 * cap)
+
+    pair_list = list(seen)
+    rng.shuffle(pair_list)
+    inner_count = sum(1 for s, t in pair_list if same_leaf(s, t))
+    inter_count = len(pair_list) - inner_count
+    print(
+        f"[distance] oracle_mix pairs: total={len(pair_list)} "
+        f"same_leaf={inner_count} cross_leaf={inter_count} "
+        f"leaves={len(leaves)}"
+    )
+    return pair_list
+
+
 def build_distance_samples(graph_info, num_samples=None, weighted=True, seed=42, undirected=True,
-                           cache_path=None):
+                           cache_path=None, sample_strategy="random", leaf_of=None):
     """
     构造节点对最短路监督样本（唯一、无重复、无泄漏），并对大图高效。
 
@@ -155,6 +313,9 @@ def build_distance_samples(graph_info, num_samples=None, weighted=True, seed=42,
         num_samples (int | None): 采样上限；None 或 <=0 时尝试全部对（大图会自动设上限保护）。
         undirected (bool): True 时只取 s < t 的无向对（无向网格距离对称）。
         cache_path (str | None): 给定则：命中直接读、未命中算完写盘（同图同参数第二次起跳过全部 Dijkstra）。
+        sample_strategy: "random" 为原始全局随机采样；"oracle_mix" 为 inner/inter/mixed 均衡采样；
+            "distance_gap" 为短/中/长距离分桶均衡采样。
+        leaf_of: oracle_mix 需要的 quadtree 叶子映射。
 
     Returns:
         list[dict]: [{"s": int, "t": int, "distance": float}, ...]（每对唯一、无跨集泄漏）
@@ -177,27 +338,34 @@ def build_distance_samples(graph_info, num_samples=None, weighted=True, seed=42,
     if cap is None and total_pairs > 50000:
         cap = 20000
 
-    if cap is None or cap >= total_pairs:
+    if sample_strategy == "distance_gap" and cap is not None and cap < total_pairs:
+        samples = _sample_distance_gap_pairs(
+            graph_info=graph_info,
+            cap=cap,
+            weighted=weighted,
+            seed=seed,
+            undirected=undirected,
+        )
+        if cache_path:
+            _save_samples_csv(cache_path, samples)
+            print(f"[distance] cached samples -> {cache_path}")
+        return samples
+    elif sample_strategy == "oracle_mix" and cap is not None and cap < total_pairs:
+        pair_list = _sample_oracle_mix_pairs(n, cap, leaf_of=leaf_of, seed=seed, undirected=undirected)
+    elif sample_strategy == "random" and (cap is None or cap >= total_pairs):
         pair_list = []
         for s in range(n):
             for t in range(n):
                 if s == t or (undirected and s > t):
                     continue
                 pair_list.append((s, t))
-    else:
+    elif sample_strategy == "random":
         seen = set()
-        max_trials = 20 * cap
-        tries = 0
-        while len(seen) < cap and tries < max_trials:
-            tries += 1
-            s = random.randrange(n)
-            t = random.randrange(n)
-            if s == t:
-                continue
-            if undirected and s > t:
-                s, t = t, s
-            seen.add((s, t))
+        rng = random.Random(seed)
+        _add_random_pairs(seen, n, cap, rng, undirected=undirected, max_trials=20 * cap)
         pair_list = list(seen)
+    else:
+        raise ValueError(f"unknown sample_strategy: {sample_strategy}")
 
     by_src = defaultdict(list)
     for s, t in pair_list:
@@ -220,6 +388,40 @@ def build_distance_samples(graph_info, num_samples=None, weighted=True, seed=42,
     if cache_path:
         _save_samples_csv(cache_path, samples)
         print(f"[distance] cached samples -> {cache_path}")
+    return samples
+
+
+def load_label_pairs_csv(path, value_col="distance"):
+    """读取外部标签 CSV，构造训练用样本列表。
+
+    用途：当监督标签不是「网格图 Dijkstra」而是**外部算好的真值**（例如 pygeodesic 的
+    精确曲面测地距离 exact_geo）时，直接用这份 CSV 当样本集，跳过内置采样与 Dijkstra。
+
+    Args:
+        path: CSV 路径，需含列 s, t 以及 value_col
+        value_col: 作为监督距离的列名（默认 distance；精确测地结果里是 exact_geo）
+
+    Returns:
+        list[dict]: [{"s": int, "t": int, "distance": float}, ...]
+    """
+    import csv as _csv
+    samples = []
+    with open(path, "r", encoding="utf-8-sig") as f:
+        reader = _csv.DictReader(f)
+        if reader.fieldnames is None:
+            raise ValueError("标签文件为空或缺少表头: " + path)
+        if value_col not in reader.fieldnames:
+            raise ValueError("标签文件缺少列 " + value_col + "，实际列 = " + str(reader.fieldnames))
+        for row in reader:
+            try:
+                s = int(row["s"]); t = int(row["t"]); d = float(row[value_col])
+            except (ValueError, KeyError, TypeError):
+                continue
+            if not (d == d):  # NaN
+                continue
+            if s == t:
+                continue
+            samples.append({"s": s, "t": t, "distance": d})
     return samples
 
 
@@ -540,6 +742,20 @@ def build_synthetic_partition_inputs(
     highway_dist_feat = torch.log1p(
         torch.tensor([access_s, seg, access_t, est], dtype=torch.float, device=device)
     )
+    node_coords3d = external_highway_context.get("node_coords3d") or external_highway_context.get("node_coords", {})
+    s_coord = node_coords3d.get(s)
+    t_coord = node_coords3d.get(t)
+    if s_coord is None or t_coord is None:
+        euclidean_dist = 0.0
+    else:
+        sx, sy = float(s_coord[0]), float(s_coord[1])
+        tx, ty = float(t_coord[0]), float(t_coord[1])
+        sz = float(s_coord[2]) if len(s_coord) > 2 else 0.0
+        tz = float(t_coord[2]) if len(t_coord) > 2 else 0.0
+        euclidean_dist = math.sqrt((sx - tx) ** 2 + (sy - ty) ** 2 + (sz - tz) ** 2)
+    euclidean_dist_feat = torch.log1p(
+        torch.tensor([euclidean_dist], dtype=torch.float, device=device)
+    )
 
     return {
         "x_s": x_s,
@@ -555,4 +771,125 @@ def build_synthetic_partition_inputs(
         "s_connect_idx": s_connect_idx,
         "t_connect_idx": t_connect_idx,
         "highway_dist_feat": highway_dist_feat,
+        "euclidean_dist_feat": euclidean_dist_feat,
     }
+
+
+# ---------------------------------------------------------------------------
+# 消融实验支持：不使用地形分区 / highway 网络时，「单 GNN 全图」分支所需的张量构造
+# ---------------------------------------------------------------------------
+def build_full_graph_tensors(graph_info, coords, feature_dim=64, device="cpu"):
+    """把整张地形网格图一次性张量化，供"单 GNN"消融分支使用。
+
+    节点特征与 FeatureBuilder.node_row 完全同口径：
+        base = [label/max_label, degree/max_degree, x_norm, y_norm]，再重复填充到 feature_dim。
+    这样消融分支与三段式主方法的**输入特征完全一致**，差异只来自"结构"（有无分区/highway）。
+
+    Returns:
+        (x, edge_index):
+            x (Tensor): [N, feature_dim]
+            edge_index (LongTensor): [2, 2E]，无向边双向各存一条（SAGEConv 需要）
+    """
+    n = len(graph_info[0])
+    labels = np.asarray(graph_info[1], dtype=np.float32)
+    degree = np.asarray(graph_info[2], dtype=np.float32)
+    max_label = float(max(1.0, labels.max() if n else 1.0))
+    max_degree = float(max(1.0, degree.max() if n else 1.0))
+
+    xs = np.array([coords[i][0] for i in range(n)], dtype=np.float32) if n else np.zeros(0, np.float32)
+    ys = np.array([coords[i][1] for i in range(n)], dtype=np.float32) if n else np.zeros(0, np.float32)
+    x_min, x_max = (float(xs.min()), float(xs.max())) if n else (0.0, 1.0)
+    y_min, y_max = (float(ys.min()), float(ys.max())) if n else (0.0, 1.0)
+    x_range = max(1e-6, x_max - x_min)
+    y_range = max(1e-6, y_max - y_min)
+
+    base = np.stack(
+        [labels / max_label, degree / max_degree, (xs - x_min) / x_range, (ys - y_min) / y_range],
+        axis=1,
+    )  # [N, 4]
+    repeat_n = int(math.ceil(feature_dim / base.shape[1]))
+    x_np = np.tile(base, (1, repeat_n))[:, :feature_dim]
+    x = torch.tensor(np.ascontiguousarray(x_np), dtype=torch.float, device=device)
+
+    eu, ev = graph_info[3][0], graph_info[3][1]
+    edge_index = torch.tensor(
+        [np.asarray(eu, dtype=np.int64), np.asarray(ev, dtype=np.int64)],
+        dtype=torch.long, device=device,
+    )
+    return x, edge_index
+
+
+def build_pair_euclidean_features(samples, vertices3d, device="cpu"):
+    """为样本列表构造 log1p(3D 欧氏直线距离) 特征，与 build_synthetic_partition_inputs 同口径。
+
+    Returns:
+        Tensor [len(samples)]：log1p(||v_s - v_t||_2)
+    """
+    vals = np.empty(len(samples), dtype=np.float32)
+    for i, smp in enumerate(samples):
+        s = int(smp["s"]); t = int(smp["t"])
+        sx, sy, sz = vertices3d[s][0], vertices3d[s][1], vertices3d[s][2]
+        tx, ty, tz = vertices3d[t][0], vertices3d[t][1], vertices3d[t][2]
+        vals[i] = math.sqrt((sx - tx) ** 2 + (sy - ty) ** 2 + (sz - tz) ** 2)
+    return torch.log1p(torch.tensor(vals, dtype=torch.float, device=device))
+
+
+
+def build_point_feature_tensors(graph_info, vertices3d, device="cpu", with_normals=False):
+    """给 baseline（GeGnn / NeuroGF / LiteGE）准备的「点特征」张量。
+
+    与 build_full_graph_tensors 的区别：这里返回的是**真实 3D 几何**（坐标，可选法向），
+    而不是 [label, degree, x, y] 那种为分区模型设计的统计特征——因为三篇 baseline
+    的输入本来就是点坐标（NeuroGF/LiteGE）或 坐标+法向（GeGnn 的 6 通道输入）。
+
+    Returns:
+        (x, edge_index, edge_len, pos)
+          x          [N, 3] 或 [N, 6]（with_normals=True 时拼接单位法向）
+          edge_index [2, 2E] 无向边双向各一条
+          edge_len   [2E]     每条边的 3D 欧氏长度
+          pos        [N, 3]   归一化到单位盒的坐标（GeoConv 计算相对位置用）
+    """
+    n = len(graph_info[0])
+    V = np.asarray([[vertices3d[i][0], vertices3d[i][1], vertices3d[i][2]] for i in range(n)],
+                   dtype=np.float64) if n else np.zeros((0, 3))
+    mins, maxs = V.min(axis=0), V.max(axis=0)
+    span = np.maximum(maxs - mins, 1e-9)
+    pos_np = ((V - mins) / span).astype(np.float32)   # 归一化到 [0,1]^3，数值稳定
+
+    feats = [pos_np]
+    if with_normals:
+        normals = _vertex_normals(V, graph_info)
+        feats.append(normals.astype(np.float32))
+    x = torch.tensor(np.ascontiguousarray(np.concatenate(feats, axis=1)),
+                     dtype=torch.float, device=device)
+
+    eu, ev = graph_info[3][0], graph_info[3][1]
+    edge_index = torch.tensor([np.asarray(eu, dtype=np.int64), np.asarray(ev, dtype=np.int64)],
+                              dtype=torch.long, device=device)
+    eu_np = np.asarray(eu, dtype=np.int64); ev_np = np.asarray(ev, dtype=np.int64)
+    edge_len = torch.tensor(np.linalg.norm(V[eu_np] - V[ev_np], axis=1).astype(np.float32),
+                            dtype=torch.float, device=device)
+    pos = torch.tensor(pos_np, dtype=torch.float, device=device)
+    return x, edge_index, edge_len, pos
+
+
+def _vertex_normals(V, graph_info):
+    """面法向按面积加权累加到顶点，再单位化（GeGnn 的输入是 坐标+法向 6 通道）。"""
+    n = len(V)
+    acc = np.zeros((n, 3), dtype=np.float64)
+    eu = np.asarray(graph_info[3][0], dtype=np.int64)
+    ev = np.asarray(graph_info[3][1], dtype=np.int64)
+    # 网格边是无向且双向存储的，这里用 (u, v) 与共享邻居重建三角形代价高；
+    # 改用更稳的近似：用 1-ring 邻域点做 PCA，最小特征向量即法向。
+    nbr = graph_info[5]
+    for i in range(n):
+        ring = nbr[i]
+        if len(ring) < 3:
+            continue
+        P = V[list(ring)] - V[i]
+        C = P.T @ P
+        w, vec = np.linalg.eigh(C)
+        nrm = vec[:, 0]
+        acc[i] = nrm
+    norm = np.linalg.norm(acc, axis=1, keepdims=True)
+    return acc / np.maximum(norm, 1e-9)

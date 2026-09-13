@@ -2,6 +2,7 @@
 import torch
 import torch.nn as nn
 from gnn import DistancePredictor as ThreeStageDistancePredictor
+from gnn import SingleGNNPredictor
 
 
 class DistanceRegressionNet(nn.Module):
@@ -23,6 +24,7 @@ class DistanceRegressionNet(nn.Module):
         dropout=0.1,
         use_highway_distance_feature=True,
         highway_distance_feat_dim=4,
+        prediction_mode="direct",
     ):
         super().__init__()
         self.backbone = ThreeStageDistancePredictor(
@@ -38,6 +40,7 @@ class DistanceRegressionNet(nn.Module):
             dropout=dropout,
             use_highway_distance_feature=use_highway_distance_feature,
             highway_distance_feat_dim=highway_distance_feat_dim,
+            prediction_mode=prediction_mode,
         )
 
     def forward(
@@ -55,6 +58,7 @@ class DistanceRegressionNet(nn.Module):
         s_connect_idx,
         t_connect_idx,
         highway_dist_feat=None,
+        euclidean_dist_feat=None,
         return_aux=False,
     ):
         return self.backbone(
@@ -71,12 +75,61 @@ class DistanceRegressionNet(nn.Module):
             s_connect_idx=s_connect_idx,
             t_connect_idx=t_connect_idx,
             highway_dist_feat=highway_dist_feat,
+            euclidean_dist_feat=euclidean_dist_feat,
             return_aux=return_aux,
         )
 
     def forward_batch(self, samples):
         """批量前向，透传到 backbone；samples 为单样本输入字典的列表，返回 [B] 预测距离。"""
         return self.backbone.forward_batch(samples)
+
+
+def build_distance_model(
+    architecture,
+    prediction_mode,
+    node_feat_dim,
+    highway_feat_dim,
+    global_feat_dim,
+    hidden_dim=64,
+    out_dim=32,
+    fusion_hidden_dim=128,
+    dropout=0.1,
+    use_highway_distance_feature=True,
+    highway_distance_feat_dim=4,
+    single_gnn_layers=3,
+):
+    """按消融配置构造模型。
+
+    - architecture="three_stage"（默认主线）：四叉树分区子图 + highway 骨架 + Inner/Inter 双 GNN + Fusion。
+    - architecture="single_gnn"（消融）：不使用地形分区、不使用 highway 网络，只在全图上跑一个 GNN。
+      两条分支的 prediction_mode（direct / euclidean_residual）与输出参数化完全一致，
+      因此任意两次运行之间的差异只来自被消融掉的结构组件。
+    """
+    if architecture == "three_stage":
+        return DistanceRegressionNet(
+            node_feat_dim=node_feat_dim,
+            highway_feat_dim=highway_feat_dim,
+            global_feat_dim=global_feat_dim,
+            hidden_dim=hidden_dim,
+            inner_out_dim=out_dim,
+            inter_out_dim=out_dim,
+            fusion_hidden_dim=fusion_hidden_dim,
+            dropout=dropout,
+            use_highway_distance_feature=use_highway_distance_feature,
+            highway_distance_feat_dim=highway_distance_feat_dim,
+            prediction_mode=prediction_mode,
+        )
+    if architecture == "single_gnn":
+        return SingleGNNPredictor(
+            node_feat_dim=node_feat_dim,
+            hidden_dim=hidden_dim,
+            out_dim=out_dim,
+            num_layers=single_gnn_layers,
+            fusion_hidden_dim=fusion_hidden_dim,
+            dropout=dropout,
+            prediction_mode=prediction_mode,
+        )
+    raise ValueError(f"unknown architecture: {architecture}")
 
 
 def compute_distance_metrics(y_true, y_pred, eps=1e-9):

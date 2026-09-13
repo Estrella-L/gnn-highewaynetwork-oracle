@@ -5,8 +5,8 @@ import os
 import torch
 
 from model import DistanceRegressionNet
-from preprocess import build_synthetic_partition_inputs
-from build_highway import build_pipeline_inputs_cached
+from preprocess import build_synthetic_partition_inputs, precompute_nearest_k
+from build_highway import build_pipeline_inputs_cached, load_off
 
 
 def build_parser():
@@ -28,6 +28,12 @@ def build_parser():
     parser.add_argument("--dropout_ratio", type=float, default=0.2, help="dropout ratio")
     parser.add_argument("--highway_k", type=int, default=3, help="number of nearest highway nodes for s/t connections")
     parser.add_argument(
+        "--transit_k",
+        type=int,
+        default=0,
+        help="highway transit sparsification used during training (must match training)",
+    )
+    parser.add_argument(
         "--inner_mode",
         type=str,
         default="partition",
@@ -38,6 +44,13 @@ def build_parser():
         "--disable_highway_distance_feature",
         action="store_true",
         help="disable the highway-decomposition distance feature (must match training config)",
+    )
+    parser.add_argument(
+        "--prediction_mode",
+        type=str,
+        default="direct",
+        choices=["direct", "highway_residual", "euclidean_residual"],
+        help="prediction mode used during training (must match training)",
     )
     parser.add_argument("--device", type=str, default="cpu", help="cpu or cuda")
     parser.add_argument("--cache_dir", type=str, default="outputs/cache", help="高速上下文缓存目录（按项目根解析）")
@@ -66,6 +79,12 @@ def main():
         feature_dim=args.in_feat,
         device=args.device,
         cache_dir=cache_dir,
+        transit_k=args.transit_k,
+    )
+    vertices3d, _ = load_off(off_path)
+    highway_context["node_coords3d"] = {i: vertices3d[i] for i in range(len(vertices3d))}
+    highway_context["nearest_k_local"] = precompute_nearest_k(
+        highway_context["access_dist"], k_max=max(16, args.highway_k)
     )
 
     n_nodes = len(graph_info[0])
@@ -83,13 +102,22 @@ def main():
         dropout=args.dropout_ratio,
         use_highway_distance_feature=not args.disable_highway_distance_feature,
         highway_distance_feat_dim=4,
+        prediction_mode=args.prediction_mode,
     ).to(args.device)
 
     state_dict = torch.load(args.model_path, map_location=args.device)
     model.load_state_dict(state_dict)
     model.eval()
 
-    sample = {"s": args.s, "t": args.t, "distance": 0.0}
+    if args.s == args.t:
+        print(f"predicted_distance({args.s}->{args.t}) = 0.000000")
+        return
+
+    # Training uses canonical undirected pairs (s < t). Keep inference on the
+    # same orientation because the concatenation-based fusion MLP is ordered.
+    source, target = args.s, args.t
+    s, t = (source, target) if source < target else (target, source)
+    sample = {"s": s, "t": t, "distance": 0.0}
     inputs = build_synthetic_partition_inputs(
         graph_info=graph_info,
         sample=sample,
@@ -102,7 +130,7 @@ def main():
 
     with torch.no_grad():
         pred = model(**inputs)
-    print(f"predicted_distance({args.s}->{args.t}) = {float(pred.item()):.6f}")
+    print(f"predicted_distance({source}->{target}) = {float(pred.item()):.6f}")
 
 
 if __name__ == "__main__":

@@ -24,7 +24,7 @@ import argparse
 import math
 import os
 
-from build_highway import load_off
+from build_highway import load_off, build_pipeline_inputs_cached
 
 
 def build_parser():
@@ -34,6 +34,13 @@ def build_parser():
     p.add_argument("--test_pairs_file", type=str, required=True,
                    help="main.py 导出的 test 点对 CSV(s,t,true_distance)，作为唯一的 test 集来源")
     p.add_argument("--out_file", type=str, default="", help="可选：将结果写入该路径")
+    p.add_argument("--max_depth", type=int, default=3, help="highway baseline quadtree max depth")
+    p.add_argument("--capacity", type=int, default=32, help="highway baseline quadtree capacity")
+    p.add_argument("--uniform", action="store_true", help="use uniform quadtree for highway baseline")
+    p.add_argument("--in_feat", type=int, default=64, help="feature dim used for highway cache key")
+    p.add_argument("--highway_k", type=int, default=3, help="nearest entrances per endpoint for highway decomposition baseline; <=0 uses all")
+    p.add_argument("--transit_k", type=int, default=0, help="same transit sparsification used by training; 0=full")
+    p.add_argument("--cache_dir", type=str, default="outputs/cache", help="cache dir for derived highway context")
     return p
 
 
@@ -79,6 +86,46 @@ def euclidean_2d(vertices, s, t):
     return math.sqrt((xs - xt) ** 2 + (ys - yt) ** 2)
 
 
+
+
+def _nearest_indices(row, k):
+    finite = [(float(d), idx) for idx, d in enumerate(row) if d != float("inf")]
+    finite.sort(key=lambda x: x[0])
+    if not finite:
+        return []
+    if k is not None and k > 0:
+        finite = finite[:k]
+    return finite
+
+
+def highway_decomposition_preds(off_path, args, pairs, project_root):
+    cache_dir = args.cache_dir if os.path.isabs(args.cache_dir) else os.path.join(project_root, args.cache_dir)
+    _, _, _, _, context = build_pipeline_inputs_cached(
+        off_path=off_path,
+        max_depth=args.max_depth,
+        capacity=args.capacity,
+        adaptive=not args.uniform,
+        weighted=True,
+        feature_dim=args.in_feat,
+        device="cpu",
+        cache_dir=cache_dir,
+        transit_k=args.transit_k,
+    )
+    access = context["access_dist"]
+    highway = context["highway_pair_dist"]
+    preds = []
+    for s, t, _ in pairs:
+        s_entries = _nearest_indices(access[s], args.highway_k)
+        t_entries = _nearest_indices(access[t], args.highway_k)
+        best = float("inf")
+        for ds, i in s_entries:
+            for dt, j in t_entries:
+                dh = float(highway[i][j])
+                if dh != float("inf"):
+                    best = min(best, ds + dh + dt)
+        preds.append(best if best != float("inf") else 0.0)
+    return preds
+
 def main():
     args = build_parser().parse_args()
     project_root = os.path.dirname(os.path.abspath(__file__))
@@ -101,9 +148,10 @@ def main():
         "mean_constant": [mean_const] * len(pairs),
         "euclidean_2d": [euclidean_2d(vertices, s, t) for (s, t, _) in pairs],
         "euclidean_3d": [euclidean_3d(vertices, s, t) for (s, t, _) in pairs],
+        "highway_decomp": highway_decomposition_preds(off_path, args, pairs, project_root),
     }
 
-    order = ["mean_constant", "euclidean_2d", "euclidean_3d"]
+    order = ["mean_constant", "euclidean_2d", "euclidean_3d", "highway_decomp"]
     results = {}
     for name in order:
         m = compute_metrics(y_true, preds[name])

@@ -1,0 +1,5 @@
+[
+  {"name": "surf_best_h64_k3_100ep", "sample_strategy": "random", "loss_type": "huber", "highway_k": 3, "hidden_dim": 64, "out_dim": 32, "transit_k": 8, "num_epoch": 100, "early_stop_patience": 100, "batch_size": 16},
+  {"name": "surf_h64_k1_40ep", "sample_strategy": "random", "loss_type": "huber", "highway_k": 1, "hidden_dim": 64, "out_dim": 32, "transit_k": 8, "num_epoch": 40, "early_stop_patience": 15, "batch_size": 16},
+  {"name": "surf_h32_k3_40ep", "sample_strategy": "random", "loss_type": "huber", "highway_k": 3, "hidden_dim": 32, "out_dim": 16, "transit_k": 8, "num_epoch": 40, "early_stop_patience": 15, "batch_size": 16}
+]

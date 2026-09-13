@@ -238,6 +238,7 @@ class DistancePredictor(nn.Module):
         dropout=0.1,
         use_highway_distance_feature=True,
         highway_distance_feat_dim=4,
+        prediction_mode="direct",
     ):
         super().__init__()
         self.inner_gnn = InnerGNN(
@@ -257,10 +258,14 @@ class DistancePredictor(nn.Module):
         )
         self.use_highway_distance_feature = use_highway_distance_feature
         self.highway_distance_feat_dim = highway_distance_feat_dim if use_highway_distance_feature else 0
+        if prediction_mode not in {"direct", "highway_residual", "euclidean_residual"}:
+            raise ValueError(f"unknown prediction_mode: {prediction_mode}")
+        self.prediction_mode = prediction_mode
         # 融合输入为 4 块嵌入：[h_s_inner | h_t_inner | h_s_inter | h_t_inter]
         # （h_s_inter/h_t_inter 由 InterGNN 的两个虚拟节点给出，对应论文图中的绿/棕两块）
         # 可选再拼接 highway 分解距离特征。
-        fusion_in_dim = 2 * inner_out_dim + 2 * inter_out_dim + self.highway_distance_feat_dim
+        euclidean_prior_dim = 1 if prediction_mode == "euclidean_residual" else 0
+        fusion_in_dim = 2 * inner_out_dim + 2 * inter_out_dim + self.highway_distance_feat_dim + euclidean_prior_dim
         self.fusion_mlp = nn.Sequential(
             nn.Linear(fusion_in_dim, fusion_hidden_dim),
             nn.ReLU(),
@@ -269,6 +274,26 @@ class DistancePredictor(nn.Module):
             nn.Linear(fusion_hidden_dim // 2, 1),
         )
         self.output_activation = nn.Softplus()
+
+    def _predict_from_fusion(self, fusion_input, highway_dist_feat=None, euclidean_dist_feat=None):
+        raw = self.fusion_mlp(fusion_input).view(-1)
+        if self.prediction_mode == "highway_residual" and highway_dist_feat is not None:
+            hdf = highway_dist_feat.to(fusion_input.device)
+            if hdf.dim() == 1:
+                hdf = hdf.view(1, -1)
+            # highway_dist_feat[-1] = log1p(access_s + highway + access_t).
+            # The non-learning highway decomposition is a very strong baseline;
+            # learn a bounded multiplicative correction around it instead of
+            # predicting the full distance from scratch.
+            highway_base = torch.expm1(hdf[:, -1]).clamp_min(1e-6)
+            correction = 0.5 * torch.tanh(raw)
+            return (highway_base * (1.0 + correction)).clamp_min(1e-6)
+        if self.prediction_mode == "euclidean_residual" and euclidean_dist_feat is not None:
+            edf = euclidean_dist_feat.to(fusion_input.device).view(-1)
+            euclidean_base = torch.expm1(edf).clamp_min(1e-6)
+            correction = 0.5 * torch.tanh(raw)
+            return (euclidean_base * (1.0 + correction)).clamp_min(1e-6)
+        return self.output_activation(raw)
 
     def forward(
         self,
@@ -285,6 +310,7 @@ class DistancePredictor(nn.Module):
         s_connect_idx,
         t_connect_idx,
         highway_dist_feat=None,
+        euclidean_dist_feat=None,
         return_aux=False,
     ):
         """
@@ -323,8 +349,14 @@ class DistancePredictor(nn.Module):
         fusion_parts = [h_s_inner, h_t_inner, st_virtual_emb]
         if self.use_highway_distance_feature and highway_dist_feat is not None:
             fusion_parts.append(highway_dist_feat.view(1, -1).to(h_s_inner.device))
+        if self.prediction_mode == "euclidean_residual" and euclidean_dist_feat is not None:
+            fusion_parts.append(euclidean_dist_feat.view(1, -1).to(h_s_inner.device))
         fusion_input = torch.cat(fusion_parts, dim=-1)
-        y_hat = self.output_activation(self.fusion_mlp(fusion_input)).view(-1)
+        y_hat = self._predict_from_fusion(
+            fusion_input,
+            highway_dist_feat=highway_dist_feat,
+            euclidean_dist_feat=euclidean_dist_feat,
+        )
 
         if not return_aux:
             return y_hat
@@ -368,11 +400,108 @@ class DistancePredictor(nn.Module):
             [d["t_connect_idx"] for d in samples],
         )
         fusion_parts = [h_s_inner, h_t_inner, st_virtual_emb]
+        hdf = None
+        edf = None
         if self.use_highway_distance_feature and samples[0].get("highway_dist_feat") is not None:
             hdf = torch.stack([d["highway_dist_feat"].reshape(-1) for d in samples], dim=0).to(device)
             fusion_parts.append(hdf)
+        if self.prediction_mode == "euclidean_residual" and samples[0].get("euclidean_dist_feat") is not None:
+            edf = torch.stack([d["euclidean_dist_feat"].reshape(-1) for d in samples], dim=0).to(device)
+            fusion_parts.append(edf)
         fusion_input = torch.cat(fusion_parts, dim=-1)  # [B, fusion_in_dim]
-        return self.output_activation(self.fusion_mlp(fusion_input)).view(-1)  # [B]
+        return self._predict_from_fusion(
+            fusion_input,
+            highway_dist_feat=hdf,
+            euclidean_dist_feat=edf,
+        )  # [B]
+
+
+class SingleGNNPredictor(nn.Module):
+    """消融用「单 GNN」预测器：**不使用**四叉树地形分区，也**不使用** highway 网络。
+
+    与三段式 DistancePredictor 的对照关系（消融实验要求只改结构、不改输出参数化）：
+
+    - 表征：整张地形网格图上跑一个 GraphSAGE，取 s、t 两个节点的嵌入；
+      不做分区子图（InnerGNN），不做高速骨架 + 虚拟节点（InterGNN）。
+    - 融合头输入与三段式**同维度**：三段式是 [h_s_inner | h_t_inner | h_s_inter | h_t_inter] = 4*out_dim；
+      这里是 [h_s | h_t | |h_s-h_t| | h_s⊙h_t] = 4*out_dim，保证 MLP 头容量可比（不靠"砍容量"制造差距）。
+    - 输出层与三段式逐字一致：
+        direct            -> softplus(raw)
+        euclidean_residual-> d_3D * (1 + 0.5*tanh(raw))，并把 log1p(d_3D) 拼进融合头输入
+      因此 A2/A3 与 M0/A1 的差别只来自「有没有地形分区 + highway 网络」。
+    """
+
+    def __init__(
+        self,
+        node_feat_dim,
+        hidden_dim=64,
+        out_dim=32,
+        num_layers=3,
+        fusion_hidden_dim=128,
+        dropout=0.1,
+        prediction_mode="direct",
+    ):
+        super().__init__()
+        if num_layers < 2:
+            raise ValueError("num_layers must be >= 2 for SingleGNNPredictor.")
+        if prediction_mode not in {"direct", "highway_residual", "euclidean_residual"}:
+            raise ValueError(f"unknown prediction_mode: {prediction_mode}")
+        self.prediction_mode = prediction_mode
+        self.dropout = dropout
+
+        self.convs = nn.ModuleList()
+        self.convs.append(geo_nn.SAGEConv(node_feat_dim, hidden_dim))
+        for _ in range(num_layers - 2):
+            self.convs.append(geo_nn.SAGEConv(hidden_dim, hidden_dim))
+        self.convs.append(geo_nn.SAGEConv(hidden_dim, out_dim))
+        self.act = nn.ReLU()
+
+        euclidean_prior_dim = 1 if prediction_mode == "euclidean_residual" else 0
+        head_in_dim = 4 * out_dim + euclidean_prior_dim
+        self.fusion_mlp = nn.Sequential(
+            nn.Linear(head_in_dim, fusion_hidden_dim),
+            nn.ReLU(),
+            nn.Linear(fusion_hidden_dim, fusion_hidden_dim // 2),
+            nn.ReLU(),
+            nn.Linear(fusion_hidden_dim // 2, 1),
+        )
+        self.output_activation = nn.Softplus()
+
+    def head_parameters(self):
+        return self.fusion_mlp.parameters()
+
+    def encode(self, x, edge_index):
+        """整图一次消息传递，返回全部节点嵌入 [N, out_dim]。"""
+        h = x
+        for layer_idx, conv in enumerate(self.convs):
+            h = conv(h, edge_index)
+            if layer_idx != len(self.convs) - 1:
+                h = self.act(h)
+                h = nn.functional.dropout(h, p=self.dropout, training=self.training)
+        return h
+
+    def _pair_repr(self, h_s, h_t):
+        return torch.cat([h_s, h_t, (h_s - h_t).abs(), h_s * h_t], dim=-1)
+
+    def predict_from_embeddings(self, h_s, h_t, euclidean_dist_feat=None):
+        """由 s/t 节点嵌入直接得到预测距离 [B]。
+
+        Args:
+            h_s / h_t (Tensor): [B, out_dim]
+            euclidean_dist_feat (Tensor | None): [B] 或 [B,1]，log1p(3D 欧氏距离)
+        """
+        parts = [self._pair_repr(h_s, h_t)]
+        edf = None
+        if self.prediction_mode == "euclidean_residual" and euclidean_dist_feat is not None:
+            edf = euclidean_dist_feat.to(h_s.device).view(-1, 1)
+            parts.append(edf)
+        fusion_input = torch.cat(parts, dim=-1)
+        raw = self.fusion_mlp(fusion_input).view(-1)
+        if self.prediction_mode == "euclidean_residual" and edf is not None:
+            euclidean_base = torch.expm1(edf.view(-1)).clamp_min(1e-6)
+            correction = 0.5 * torch.tanh(raw)
+            return (euclidean_base * (1.0 + correction)).clamp_min(1e-6)
+        return self.output_activation(raw)
 
 
 if __name__ == "__main__":
@@ -405,6 +534,7 @@ if __name__ == "__main__":
         inter_out_dim=64,
         use_highway_distance_feature=True,
         highway_distance_feat_dim=4,
+        prediction_mode="direct",
     )
     highway_dist_feat = torch.log1p(torch.tensor([2.0, 5.0, 3.0, 10.0]))
     pred, aux = model(

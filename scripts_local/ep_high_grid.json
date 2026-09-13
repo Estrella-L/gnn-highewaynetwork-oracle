@@ -1,0 +1,15 @@
+[
+  {"name": "measure_tk8", "sample_strategy": "random", "loss_type": "huber", "highway_k": 3, "hidden_dim": 32, "out_dim": 16, "transit_k": 8, "num_epoch": 12, "early_stop_patience": 10, "batch_size": 16},
+  {"name": "random_relative_k3_tk8", "sample_strategy": "random", "loss_type": "relative", "highway_k": 3, "hidden_dim": 32, "out_dim": 16, "transit_k": 8, "num_epoch": 12, "early_stop_patience": 10, "batch_size": 16},
+  {"name": "random_logl1_k3_tk8", "sample_strategy": "random", "loss_type": "log_l1", "highway_k": 3, "hidden_dim": 32, "out_dim": 16, "transit_k": 8, "num_epoch": 12, "early_stop_patience": 10, "batch_size": 16},
+  {"name": "random_huber_k1_tk8", "sample_strategy": "random", "loss_type": "huber", "highway_k": 1, "hidden_dim": 32, "out_dim": 16, "transit_k": 8, "num_epoch": 12, "early_stop_patience": 10, "batch_size": 16},
+  {"name": "random_huber_k5_tk8", "sample_strategy": "random", "loss_type": "huber", "highway_k": 5, "hidden_dim": 32, "out_dim": 16, "transit_k": 8, "num_epoch": 12, "early_stop_patience": 10, "batch_size": 16},
+  {"name": "random_huber_k3_m_tk8", "sample_strategy": "random", "loss_type": "huber", "highway_k": 3, "hidden_dim": 64, "out_dim": 32, "transit_k": 8, "num_epoch": 12, "early_stop_patience": 10, "batch_size": 16},
+  {"name": "gap_huber_k3_tk8", "sample_strategy": "distance_gap", "loss_type": "huber", "highway_k": 3, "hidden_dim": 32, "out_dim": 16, "transit_k": 8, "num_epoch": 12, "early_stop_patience": 10, "batch_size": 16},
+  {"name": "mix_huber_k3_tk8", "sample_strategy": "oracle_mix", "loss_type": "huber", "highway_k": 3, "hidden_dim": 32, "out_dim": 16, "transit_k": 8, "num_epoch": 12, "early_stop_patience": 10, "batch_size": 16},
+  {"name": "random_huber_k3_tk8_b32", "sample_strategy": "random", "loss_type": "huber", "highway_k": 3, "hidden_dim": 32, "out_dim": 16, "transit_k": 8, "num_epoch": 12, "early_stop_patience": 10, "batch_size": 32},
+  {"name": "best_from_ep_low", "sample_strategy": "random", "loss_type": "huber", "highway_k": 3, "hidden_dim": 32, "out_dim": 16, "transit_k": 0, "num_epoch": 10, "early_stop_patience": 8, "batch_size": 16},
+  {"name": "final_best_h64_k3", "sample_strategy": "random", "loss_type": "huber", "highway_k": 3, "hidden_dim": 64, "out_dim": 32, "transit_k": 8, "num_epoch": 40, "early_stop_patience": 15, "batch_size": 16},
+  {"name": "final_h64_k1", "sample_strategy": "random", "loss_type": "huber", "highway_k": 1, "hidden_dim": 64, "out_dim": 32, "transit_k": 8, "num_epoch": 30, "early_stop_patience": 12, "batch_size": 16},
+  {"name": "final_best_h64_k3_100ep", "sample_strategy": "random", "loss_type": "huber", "highway_k": 3, "hidden_dim": 64, "out_dim": 32, "transit_k": 8, "num_epoch": 100, "early_stop_patience": 100, "batch_size": 16}
+]
