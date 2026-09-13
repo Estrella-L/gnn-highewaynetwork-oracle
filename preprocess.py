@@ -391,7 +391,7 @@ def build_distance_samples(graph_info, num_samples=None, weighted=True, seed=42,
     return samples
 
 
-def load_label_pairs_csv(path, value_col="distance"):
+def load_label_pairs_csv(path, value_col="distance", num_nodes=None):
     """读取外部标签 CSV，构造训练用样本列表。
 
     用途：当监督标签不是「网格图 Dijkstra」而是**外部算好的真值**（例如 pygeodesic 的
@@ -406,22 +406,32 @@ def load_label_pairs_csv(path, value_col="distance"):
     """
     import csv as _csv
     samples = []
+    seen = {}
     with open(path, "r", encoding="utf-8-sig") as f:
         reader = _csv.DictReader(f)
-        if reader.fieldnames is None:
-            raise ValueError("标签文件为空或缺少表头: " + path)
-        if value_col not in reader.fieldnames:
-            raise ValueError("标签文件缺少列 " + value_col + "，实际列 = " + str(reader.fieldnames))
-        for row in reader:
+        required = {"s", "t", value_col}
+        if not required.issubset(reader.fieldnames or []):
+            raise ValueError(f"标签文件缺少必要列 {required}: {path}")
+        for line, row in enumerate(reader, 2):
             try:
-                s = int(row["s"]); t = int(row["t"]); d = float(row[value_col])
-            except (ValueError, KeyError, TypeError):
-                continue
-            if not (d == d):  # NaN
-                continue
+                s, t, d = int(row["s"]), int(row["t"]), float(row[value_col])
+            except (ValueError, KeyError, TypeError) as exc:
+                raise ValueError(f"标签第 {line} 行格式错误: {path}") from exc
+            if min(s, t) < 0 or (num_nodes is not None and max(s, t) >= num_nodes):
+                raise ValueError(f"标签第 {line} 行顶点编号越界: {(s, t)}")
+            if not math.isfinite(d) or d < 0 or (s != t and d == 0):
+                raise ValueError(f"标签第 {line} 行距离必须有限且非自身点对为正: {d}")
             if s == t:
                 continue
-            samples.append({"s": s, "t": t, "distance": d})
+            pair = (min(s, t), max(s, t))
+            if pair in seen:
+                if seen[pair] != d:
+                    raise ValueError(f"标签第 {line} 行同一点对存在冲突距离: {pair}")
+                continue
+            seen[pair] = d
+            samples.append({"s": pair[0], "t": pair[1], "distance": d})
+    if not samples:
+        raise ValueError(f"标签文件没有有效的非自身点对: {path}")
     return samples
 
 
