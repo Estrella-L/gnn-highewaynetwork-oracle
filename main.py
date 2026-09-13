@@ -560,7 +560,8 @@ if __name__ == "__main__":
         samples_cache_path = os.path.join(cache_dir, sample_cache_name)
     if args.labels_file:
         labels_path = args.labels_file if os.path.isabs(args.labels_file) else os.path.join(project_root, args.labels_file)
-        distance_samples = load_label_pairs_csv(labels_path, value_col=args.labels_col)
+        distance_samples = load_label_pairs_csv(labels_path, value_col=args.labels_col,
+                                               num_nodes=len(data_graph_info[0]))
         print(f"[distance] 使用外部标签 {labels_path} (列={args.labels_col})："
               f"{len(distance_samples)} 对（跳过内置采样/Dijkstra）")
     else:

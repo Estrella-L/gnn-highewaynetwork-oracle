@@ -16,7 +16,7 @@ import time
 
 import numpy as np
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 
 def build_heat(off_path):
@@ -50,17 +50,19 @@ def read_main(path):
                 d = float(r["true_distance"])
             except Exception:
                 d = float("nan")
-            rows.append([s, t, d])
+            rows.append([s, t, d, r.get("graph_distance", ""), r.get("label_method", "unknown")])
     return rows
 
 
 def merge(main_csv):
     fill = {}
     for p in sorted(glob.glob(main_csv + ".poisonfill*")):
-        data = open(p, "rb").read()
+        with open(p, "rb") as source:
+            data = source.read()
         if data and not data.endswith(b"\n"):
             cut = data.rfind(b"\n")
-            open(p, "wb").write(data[:cut + 1] if cut >= 0 else b"")
+            with open(p, "wb") as target:
+                target.write(data[:cut + 1] if cut >= 0 else b"")
         with open(p, encoding="utf-8-sig") as f:
             for r in csv.DictReader(f):
                 try:
@@ -72,13 +74,14 @@ def merge(main_csv):
     for row in rows:
         if is_bad(row[2]) and (row[0], row[1]) in fill:
             row[2] = fill[(row[0], row[1])]
+            row[4] = "heat"
             filled += 1
     tmp = main_csv + ".tmp"
     with open(tmp, "w", encoding="utf-8-sig", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["s", "t", "true_distance", "graph_distance"])
-        for s, t, d in rows:
-            w.writerow([s, t, "%.6f" % d if math.isfinite(d) else "inf", ""])
+        w.writerow(["s", "t", "true_distance", "graph_distance", "label_method"])
+        for s, t, d, graph_d, method in rows:
+            w.writerow([s, t, "%.6f" % d if math.isfinite(d) else "inf", graph_d, method])
     os.replace(tmp, main_csv)
     bad_left = len([1 for r in rows if is_bad(r[2])])
     for p in glob.glob(main_csv + ".poisonfill*"):
@@ -103,7 +106,7 @@ def main():
         return
 
     rows = read_main(args.main_csv)
-    bad = [(i, s, t) for i, (s, t, d) in enumerate(rows) if is_bad(d)]
+    bad = [(i, s, t) for i, (s, t, d, _, _) in enumerate(rows) if is_bad(d)]
     mine = [(s, t) for i, s, t in bad if i % args.shards == args.shard]
     out_path = args.main_csv + ".poisonfill%d" % args.shard
     done = set()
