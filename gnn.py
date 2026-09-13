@@ -1,5 +1,7 @@
 # GNN 模块：三段式 DistancePredictor（Inner 本地段 / Inter 高速段 / Fusion 融合段）。
 import os as _os
+import math
+import warnings
 import torch
 import torch.nn as nn
 import torch_geometric.nn as geo_nn
@@ -228,7 +230,28 @@ class InterGNN(nn.Module):
         return torch.cat([s_emb, t_emb], dim=-1)  # [B, 2*output_dim]
 
 
-class DistancePredictor(nn.Module):
+class _ResidualPredictor(nn.Module):
+    """Persist the output scale while retaining legacy state-dict compatibility."""
+    def __init__(self):
+        super().__init__()
+        if not math.isfinite(_RESIDUAL_SCALE) or _RESIDUAL_SCALE < 0:
+            raise ValueError("EUCLID_RESIDUAL_SCALE must be finite and nonnegative")
+        self.register_buffer("residual_scale", torch.tensor(_RESIDUAL_SCALE))
+
+    def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict,
+                              missing_keys, unexpected_keys, error_msgs):
+        key = prefix + "residual_scale"
+        if key not in state_dict:
+            if getattr(self, "prediction_mode", "direct") != "direct":
+                warnings.warn("Legacy checkpoint has no residual scale; using "
+                              "EUCLID_RESIDUAL_SCALE (default 0.5). Set it to the "
+                              "training value before loading.", UserWarning)
+            state_dict[key] = self.residual_scale.detach().clone()
+        super()._load_from_state_dict(state_dict, prefix, local_metadata, strict,
+                                     missing_keys, unexpected_keys, error_msgs)
+
+
+class DistancePredictor(_ResidualPredictor):
     def __init__(
         self,
         node_feat_dim,
@@ -291,12 +314,12 @@ class DistancePredictor(nn.Module):
             # learn a bounded multiplicative correction around it instead of
             # predicting the full distance from scratch.
             highway_base = torch.expm1(hdf[:, -1]).clamp_min(1e-6)
-            correction = _RESIDUAL_SCALE * torch.tanh(raw)
+            correction = self.residual_scale * torch.tanh(raw)
             return (highway_base * (1.0 + correction)).clamp_min(1e-6)
         if self.prediction_mode == "euclidean_residual" and euclidean_dist_feat is not None:
             edf = euclidean_dist_feat.to(fusion_input.device).view(-1)
             euclidean_base = torch.expm1(edf).clamp_min(1e-6)
-            correction = _RESIDUAL_SCALE * torch.tanh(raw)
+            correction = self.residual_scale * torch.tanh(raw)
             return (euclidean_base * (1.0 + correction)).clamp_min(1e-6)
         return self.output_activation(raw)
 
@@ -421,7 +444,7 @@ class DistancePredictor(nn.Module):
         )  # [B]
 
 
-class SingleGNNPredictor(nn.Module):
+class SingleGNNPredictor(_ResidualPredictor):
     """消融用「单 GNN」预测器：**不使用**四叉树地形分区，也**不使用** highway 网络。
 
     与三段式 DistancePredictor 的对照关系（消融实验要求只改结构、不改输出参数化）：
@@ -504,7 +527,7 @@ class SingleGNNPredictor(nn.Module):
         raw = self.fusion_mlp(fusion_input).view(-1)
         if self.prediction_mode == "euclidean_residual" and edf is not None:
             euclidean_base = torch.expm1(edf.view(-1)).clamp_min(1e-6)
-            correction = _RESIDUAL_SCALE * torch.tanh(raw)
+            correction = self.residual_scale * torch.tanh(raw)
             return (euclidean_base * (1.0 + correction)).clamp_min(1e-6)
         return self.output_activation(raw)
 
