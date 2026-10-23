@@ -1,0 +1,7 @@
+{
+  "mesh_sha256": "7bf6e184d1e1a6280b4604f7f2c0efbe79ba3d27697cbd4e7087e6f0c149564e",
+  "pairs_sha256": "d98fbe8b98752735df45c66079ec4f90950d26b9601446f9faab3c8d20378a31",
+  "method": "flipout approximate; no automatic fallback",
+  "split": "ordered first 40000 train, next 5000 val, final 5000 test",
+  "center_coordinates": true
+}

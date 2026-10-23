@@ -1,0 +1,350 @@
+{
+  "repository": "Estrella-L/gnn-highewaynetwork-oracle",
+  "branch": "codex/datasets-baselines",
+  "datasets": {
+    "EP_high": {
+      "labels": 50000,
+      "split": [
+        40000,
+        5000,
+        5000
+      ],
+      "data_asset": "EP_high.off.gz",
+      "data_sha256": "0e4e6cd00c04bb97fa74b16659c529e5036b8b6f4dc5c9232095cdc39ea4d660",
+      "data_bytes": 98961915,
+      "mesh_available": true,
+      "off_counts": [
+        1392236,
+        2776348,
+        4168583
+      ]
+    },
+    "BH_high": {
+      "labels": 50000,
+      "split": [
+        40000,
+        5000,
+        5000
+      ],
+      "data_asset": "BH_high.off.gz",
+      "data_sha256": "7bf6e184d1e1a6280b4604f7f2c0efbe79ba3d27697cbd4e7087e6f0c149564e",
+      "data_bytes": 119303835,
+      "mesh_available": true,
+      "off_counts": [
+        1318844,
+        2637538,
+        3956381
+      ]
+    },
+    "SF_high": {
+      "labels": 50000,
+      "split": [
+        40000,
+        5000,
+        5000
+      ],
+      "data_asset": "SF_high.off.gz",
+      "data_sha256": "1404318832f9156a903dd8686e44b09802749bc296372673f41909363d33d9a9",
+      "data_bytes": 115758309,
+      "mesh_available": true,
+      "off_counts": [
+        1539082,
+        3075516,
+        4614597
+      ]
+    },
+    "USGS_CO": {
+      "labels": 50000,
+      "split": [
+        40000,
+        5000,
+        5000
+      ],
+      "data_asset": "USGS_CO.off.gz",
+      "data_sha256": "4035d95e963a240dc9cbd9ec29aef6eee31bc6fe9b7e9e75c8a6318d76392643",
+      "data_bytes": 220239640,
+      "mesh_available": true,
+      "off_counts": [
+        2560000,
+        5113602,
+        0
+      ]
+    },
+    "USGS_WA": {
+      "labels": 50000,
+      "split": [
+        40000,
+        5000,
+        5000
+      ],
+      "data_asset": "USGS_WA.off.gz",
+      "data_sha256": "73686d4135c6f30c82dbf6507ea021bbf904bf68a21240002c50ee54329b57a3",
+      "data_bytes": 220180503,
+      "mesh_available": true,
+      "off_counts": [
+        2560000,
+        5113602,
+        0
+      ]
+    },
+    "LA": {
+      "labels": 50000,
+      "split": [
+        40000,
+        5000,
+        5000
+      ],
+      "data_asset": "la-4kx4k.npy.gz",
+      "data_sha256": "d6fdb923058e7d9ad2faada73a4e2fbf78f2fdd779984a72394937fe044cb3a3",
+      "data_bytes": 64000128,
+      "mesh_available": false
+    }
+  },
+  "files": [
+    {
+      "path": "DATASETS_BASELINES.md",
+      "bytes": 1240,
+      "sha256": "55bba68a605ca756f143cef5a88df415264ed3234e89b6e3f20af69bc46201a5"
+    },
+    {
+      "path": "baselines/HISTORICAL_README.md",
+      "bytes": 2521,
+      "sha256": "3dc0eca1eb8589bca9c66419266963e793c4dfe6065961492e35365219e2e0a3"
+    },
+    {
+      "path": "baselines/README.md",
+      "bytes": 1430,
+      "sha256": "dea45ddbf8392e0e6ba015fc27ae91382023f51a59d68b60132d998f4e523f27"
+    },
+    {
+      "path": "baselines/common.py",
+      "bytes": 3021,
+      "sha256": "079427008beb8327eb8a8f21810cb9c4ce5527c858ea731b1f609f77260deb3e"
+    },
+    {
+      "path": "baselines/litege_desc.py",
+      "bytes": 6210,
+      "sha256": "6587aa5f49d9fd86b1e5343bb02210a69bf20245163705560a4b9c7ed9ffb569"
+    },
+    {
+      "path": "baselines/models.py",
+      "bytes": 10124,
+      "sha256": "c2fc32144a4e906f34572efe3d1901cc0df138ce3dad37ddb0a52661de82d28d"
+    },
+    {
+      "path": "baselines/plot_compare.py",
+      "bytes": 5302,
+      "sha256": "808544469aabde44f1ecb9c0f03037491b12fbe8a061c10846f8984bb2665e5f"
+    },
+    {
+      "path": "baselines/requirements.txt",
+      "bytes": 29,
+      "sha256": "69cc798e218332e73e55f553dfc117dbb7701aa69b1a2f12decd66801acb454c"
+    },
+    {
+      "path": "baselines/run_all.sh",
+      "bytes": 764,
+      "sha256": "d907d46c1c82deaaf200cb14a355ab768bfa3edee38c0835dae9599d8adfc8e1"
+    },
+    {
+      "path": "baselines/summarize.py",
+      "bytes": 2745,
+      "sha256": "dbf4172415dd21eef15fb904950e0b0486d18b30d0900be8365ff2e360f05381"
+    },
+    {
+      "path": "baselines/train.py",
+      "bytes": 10878,
+      "sha256": "7cdad2f8e2cadb47144a0a387bf3ab2a7d0fc6d73fe034d1a348c0f585038bad"
+    },
+    {
+      "path": "datasets/BH_high/labels.csv",
+      "bytes": 3137544,
+      "sha256": "8c56369f730291b5e395188418cb6555b3fedb1e5f0bec0cd798b55a2ee6aa1a"
+    },
+    {
+      "path": "datasets/BH_high/metadata.json",
+      "bytes": 334,
+      "sha256": "18e82366abd9cd8e2cafcaf06afcbc3a8d788de9dd7dad9a0b42ffe3dd3d69c6"
+    },
+    {
+      "path": "datasets/BH_high/test_pairs.csv",
+      "bytes": 71522,
+      "sha256": "e5e8fd5a6dbc85320b3934bfd50be8458f54a9c410a0e0907ef90d0d642ceac4"
+    },
+    {
+      "path": "datasets/BH_high/train_pairs.csv",
+      "bytes": 572510,
+      "sha256": "bdfbd27ea47ceece6eb7f96f82c245709e849b9e96841bc2ec953c58246bb480"
+    },
+    {
+      "path": "datasets/BH_high/val_pairs.csv",
+      "bytes": 71617,
+      "sha256": "bdc1c6798d314530eb0136da94dcdc7315d6ac367d55bc0f822caa1eccdbafe2"
+    },
+    {
+      "path": "datasets/EP_high/labels.csv",
+      "bytes": 1434734,
+      "sha256": "4b0af824f8e58bce23fcfbd0cbb9e66d981eb1aa74cd828f14f21f1bfda66f58"
+    },
+    {
+      "path": "datasets/EP_high/metadata.json",
+      "bytes": 214,
+      "sha256": "0bf82f9351f1863698caf15beea4234201887a54176462971b023c981f7974d8"
+    },
+    {
+      "path": "datasets/EP_high/test_pairs.csv",
+      "bytes": 77038,
+      "sha256": "dffc30504cb6348e09db31a11635a732a7391844c7e5dfb16ed36d1386742447"
+    },
+    {
+      "path": "datasets/EP_high/train_pairs.csv",
+      "bytes": 616155,
+      "sha256": "0b6ff6ee77085a599aa2d26a23903011eb46c3e3e65820bff533fe316421c34d"
+    },
+    {
+      "path": "datasets/EP_high/val_pairs.csv",
+      "bytes": 77002,
+      "sha256": "b500df3f8c93312503f5054ed81b2af2ed615c4b349813c53d35b7af9a1fc961"
+    },
+    {
+      "path": "datasets/LA/historical_prepare_la.py",
+      "bytes": 1180,
+      "sha256": "d4de62b0c8a0e83604cd00a0de610c69878715e4853b55a62879c6480c9bb855"
+    },
+    {
+      "path": "datasets/LA/labels.csv",
+      "bytes": 3251754,
+      "sha256": "3ded6faf4d8a8c3e858137bb80ed3f05781543764fab3f54341dfd49acbd4e03"
+    },
+    {
+      "path": "datasets/LA/mesh.json",
+      "bytes": 268,
+      "sha256": "63f71bb792c16dc54626a39a75a07c5bbd86931465d595a0eeb83bb006d39a85"
+    },
+    {
+      "path": "datasets/LA/metadata.json",
+      "bytes": 334,
+      "sha256": "181938bd0489bb66edf8497b63f2b002f02da1dc077c0cddab1c41dee37bec77"
+    },
+    {
+      "path": "datasets/LA/test_pairs.csv",
+      "bytes": 82990,
+      "sha256": "e705a307197f988f0e6d602c2a15f2f576d347e8f411dc10dc49e40e25e3e4e7"
+    },
+    {
+      "path": "datasets/LA/train_pairs.csv",
+      "bytes": 664448,
+      "sha256": "fcfae2d1f7cdc36baeb1c8920b43152e02fd43a7e7c88990301aaffd552a267e"
+    },
+    {
+      "path": "datasets/LA/val_pairs.csv",
+      "bytes": 83130,
+      "sha256": "1e0f6ab2b26f4737169f21d9df506df31d35ef6e9c26bb34d7abb67d2d3d4e75"
+    },
+    {
+      "path": "datasets/README.md",
+      "bytes": 1071,
+      "sha256": "788890bee61bba157ff414afb414b9c7bd749ab15c3dfc111c87f015961b532f"
+    },
+    {
+      "path": "datasets/SF_high/labels.csv",
+      "bytes": 3150599,
+      "sha256": "9fb4e1aea82a102bcfc7347fde2105a0672e010e8e4a8397947482d1838dd8b3"
+    },
+    {
+      "path": "datasets/SF_high/metadata.json",
+      "bytes": 334,
+      "sha256": "9bb41fa32d1f289469c37e1f9e917fe68dbfed6a7812c6f0d2938adb6f1358e6"
+    },
+    {
+      "path": "datasets/SF_high/test_pairs.csv",
+      "bytes": 72742,
+      "sha256": "2a4e804a3be545d9f9ee64916c58eb0cce614f57e4d53af3f406c5b571273430"
+    },
+    {
+      "path": "datasets/SF_high/train_pairs.csv",
+      "bytes": 582283,
+      "sha256": "d83d7748c7f2c1900b67a930d6d291568d2c4a693b82c1161a5b3aaff03c211f"
+    },
+    {
+      "path": "datasets/SF_high/val_pairs.csv",
+      "bytes": 72853,
+      "sha256": "ece0d2235c34f2065ee5742d499d25683f5658f23bd2250a722206699fa8f54d"
+    },
+    {
+      "path": "datasets/USGS_CO/labels.csv",
+      "bytes": 3185843,
+      "sha256": "7e65cfb7276fbdb18f88a291809fc2e4ec36c919ee4f453855354664f0159866"
+    },
+    {
+      "path": "datasets/USGS_CO/mesh.json",
+      "bytes": 667,
+      "sha256": "11d6d6dcd4919db86507594fb9120d66f081b3bc834e8539ff08bcf76c70c249"
+    },
+    {
+      "path": "datasets/USGS_CO/metadata.json",
+      "bytes": 334,
+      "sha256": "ef3f5bf348c8e85cbb07491d178366a4c56582ff3613d9b4632bd8d49302bf44"
+    },
+    {
+      "path": "datasets/USGS_CO/source.json",
+      "bytes": 4171,
+      "sha256": "790d65b969014e7bcda0517de10219f8d1e6c28219bb345e8e9454eeceeedf0a"
+    },
+    {
+      "path": "datasets/USGS_CO/test_pairs.csv",
+      "bytes": 75650,
+      "sha256": "452cb5b1478e8ddac0c15e9cbcd222656b45a3be33bbc217bac6790d94b599c5"
+    },
+    {
+      "path": "datasets/USGS_CO/train_pairs.csv",
+      "bytes": 605291,
+      "sha256": "623f119fe2ca3a9e20ee75d84a1e8ee75da582b938cd418ab3555f4a7a2e4b23"
+    },
+    {
+      "path": "datasets/USGS_CO/val_pairs.csv",
+      "bytes": 75691,
+      "sha256": "32e65f2978c69a83c3e50a24a1ba1c5776f243b2d242ba9ea2d03cf49801f47e"
+    },
+    {
+      "path": "datasets/USGS_WA/labels.csv",
+      "bytes": 3185095,
+      "sha256": "0cfc56abadafb27b4f964aea175f265e46871e044b4e3025bbe506f756e0db4f"
+    },
+    {
+      "path": "datasets/USGS_WA/mesh.json",
+      "bytes": 666,
+      "sha256": "1dc8cf3b1fa02c38889826e2375a6a58a49c6016c19b44ef1acc9b0e81c6e6e6"
+    },
+    {
+      "path": "datasets/USGS_WA/metadata.json",
+      "bytes": 334,
+      "sha256": "73bb08260abee3388af062b3a182bd0ca12346397ca8efea8806f6d1d10a571c"
+    },
+    {
+      "path": "datasets/USGS_WA/source.json",
+      "bytes": 4171,
+      "sha256": "0eb2b95a446027d649cd284520fb8e100a2ceaaf3c4fe39a7f4e1503a9ab1839"
+    },
+    {
+      "path": "datasets/USGS_WA/test_pairs.csv",
+      "bytes": 75650,
+      "sha256": "452cb5b1478e8ddac0c15e9cbcd222656b45a3be33bbc217bac6790d94b599c5"
+    },
+    {
+      "path": "datasets/USGS_WA/train_pairs.csv",
+      "bytes": 605291,
+      "sha256": "623f119fe2ca3a9e20ee75d84a1e8ee75da582b938cd418ab3555f4a7a2e4b23"
+    },
+    {
+      "path": "datasets/USGS_WA/val_pairs.csv",
+      "bytes": 75691,
+      "sha256": "32e65f2978c69a83c3e50a24a1ba1c5776f243b2d242ba9ea2d03cf49801f47e"
+    },
+    {
+      "path": "scripts/fetch_terrain_data.py",
+      "bytes": 2481,
+      "sha256": "8fd0b012630c013749a5e19b03033069b779ee17c305f5472787df71277a59cf"
+    }
+  ]
+}

@@ -509,3 +509,8 @@ main 目录：
 - 外部标签读取统一无向点对并去重；冲突距离、非有限值、非法编号直接报错。重复行被删除后切分可能变化，应重新导出三份点对供所有方法共用。
 - 热方法回填保留 `graph_distance`，并新增 `label_method`；历史未知来源标为 `unknown`，回填标为 `heat`。
 - 本次为代码和文档修复，历史实验数值未重跑。
+
+
+## Dataset and baseline upload (2026-10-23)
+
+See [DATASETS_BASELINES.md](DATASETS_BASELINES.md) for six terrain datasets, final label/split files, terrain-adapted baseline code, and large input downloads.

@@ -1,0 +1,4 @@
+{
+  "split": "Python random.Random(42).shuffle then 40000/5000/5000; exported here from the archived 50000-row label CSV",
+  "labels": "historical approximate surface geodesic labels; flip-out and heat fallback"
+}
