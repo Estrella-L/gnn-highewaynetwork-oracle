@@ -1,0 +1,2 @@
+# Preserve archived label and query CSV bytes across platforms.
+datasets/**/*.csv -text
