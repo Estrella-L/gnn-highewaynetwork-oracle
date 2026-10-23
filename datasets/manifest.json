@@ -1,6 +1,6 @@
 {
   "repository": "Estrella-L/gnn-highewaynetwork-oracle",
-  "branch": "codex/datasets-baselines",
+  "branch": "datasets-baselines",
   "datasets": {
     "EP_high": {
       "labels": 50000,
