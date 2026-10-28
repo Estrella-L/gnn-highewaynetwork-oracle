@@ -1,0 +1,38 @@
+{
+  "product": {
+    "title": "USGS 1/3 Arc Second n40w107 20260708",
+    "moreInfo": "This tile of the 3D Elevation Program (3DEP) seamless products is 1/3 Arc Second resolution. 3DEP data serve as the elevation layer of The National Map, and provide basic elevation information for Earth science studies and mapping applications in the United States. Scientists and resource managers use 3DEP data for global change research, hydrologic modeling, resource monitoring, mapping and visualization, and many other applications. 3DEP data compose an elevation dataset that consists of seamless layers and a high resolution layer. Each of these layers consists of the best available raster elevation data of the conterminous United States, Alaska, Hawaii, territorial islands, Mexico and Canada. 3DEP data are updated continually as [...]",
+    "sourceId": "6a4f030e1ba49b58894cf1d1",
+    "sourceName": "ScienceBase",
+    "sourceOriginId": null,
+    "sourceOriginName": "gda",
+    "metaUrl": "https://www.sciencebase.gov/catalog/item/6a4f030e1ba49b58894cf1d1",
+    "vendorMetaUrl": "https://thor-f5.er.usgs.gov/ngtoc/metadata/waf/elevation/1-3_arc-second/CO_NorthwestCO_2020_D20/USGS_13_n40w107_20260708.xml",
+    "publicationDate": "2026-07-08",
+    "lastUpdated": "2026-07-08T20:10:32.769-06:00",
+    "dateCreated": "2026-07-08T20:10:22.915-06:00",
+    "sizeInBytes": 425389234,
+    "extent": "1 x 1 degree",
+    "format": "GeoTIFF",
+    "downloadURL": "https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/13/TIFF/historical/n40w107/USGS_13_n40w107_20260708.tif",
+    "downloadURLRaster": null,
+    "previewGraphicURL": "https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/13/TIFF/historical/n40w107/USGS_13_n40w107_20260708.jpg",
+    "downloadLazURL": null,
+    "urls": {
+      "TIFF": "https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/13/TIFF/historical/n40w107/USGS_13_n40w107_20260708.tif"
+    },
+    "datasets": [],
+    "boundingBox": {
+      "minX": -107.0005555562933,
+      "maxX": -105.99944444410522,
+      "minY": 38.99944444420663,
+      "maxY": 40.000555556394715
+    },
+    "bestFitIndex": 0.0,
+    "body": "This tile of the 3D Elevation Program (3DEP) seamless products is 1/3 Arc Second resolution. 3DEP data serve as the elevation layer of The National Map, and provide basic elevation information for Earth science studies and mapping applications in the United States. Scientists and resource managers use 3DEP data for global change research, hydrologic modeling, resource monitoring, mapping and visualization, and many other applications. 3DEP data compose an elevation dataset that consists of seamless layers and a high resolution layer. Each of these layers consists of the best available raster elevation data of the conterminous United States, Alaska, Hawaii, territorial islands, Mexico and Canada. 3DEP data are updated continually as new data become available. Seamless 3DEP data are derived from diverse source data that are processed to a common coordinate system and unit of vertical measure. These data are distributed in geographic coordinates in units of decimal degrees, and in conformance with the North American Datum of 1983 (NAD 83). All elevation values are in meters and, over the conterminous United States, are referenced to the North American Vertical Datum of 1988 (NAVD 88). The vertical reference will vary in other areas. Seamless 3DEP data are available nationally (except for Alaska) at resolutions of 1 arc-second (approximately 30 meters) and 1/3 arc-second (approximately 10 meters). In most of Alaska, only lower resolution source data are available. As a result, most seamless 3DEP data for Alaska are at 2 arc-second (approximately 60 meters) grid spacing. Part of Alaska is available at the 1 and 1/3 arc-second resolutions from interferometric synthetic aperture radar (ifsar) collections starting in 2010. Plans are in place for collection of statewide ifsar in Alaska. All 3DEP products are public domain.",
+    "processingUrl": "processingUrl",
+    "modificationInfo": "2026-07-08"
+  },
+  "sha256": "bcc1d883cdc991d71aead8d7accb9d4c7dda0a816eedb7cc21974395b16df804",
+  "bytes": 425389234
+}

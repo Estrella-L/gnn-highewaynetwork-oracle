@@ -1,0 +1,36 @@
+{
+  "name": "USGS_CO",
+  "vertices": 2560000,
+  "faces": 5113602,
+  "crop_pixels": [
+    1906,
+    8925,
+    1600,
+    1600
+  ],
+  "source_crs": "EPSG:4269",
+  "target_crs": "EPSG:32613",
+  "xy_origin_m": [
+    348673.33157294017,
+    4329342.698643895
+  ],
+  "xy_units": "metres",
+  "z_units": "metres (USGS DEM convention; source product retained)",
+  "source_transform": [
+    9.259259269220167e-05,
+    0.0,
+    -107.0005555562933,
+    0.0,
+    -9.259259269220167e-05,
+    40.000555556394715,
+    0.0,
+    0.0,
+    1.0
+  ],
+  "resampling": "none; contiguous native-resolution crop",
+  "center_requested_lonlat": [
+    -106.75,
+    39.1
+  ],
+  "nodata_pixels": 0
+}

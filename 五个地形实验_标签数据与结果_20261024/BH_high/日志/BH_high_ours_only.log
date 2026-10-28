@@ -1,0 +1,424 @@
+[2026-09-28 06:33:28] [stage=prep] loading /root/autodl-tmp/terrain_suite_20260927/data/BH_high.off
+[2026-09-28 06:33:49] [stage=prep] |V|=1318844 leaves=64 occupied=64
+[2026-09-28 06:33:52] [stage=prep] boundary K=33531 (2.54% of V)
+[2026-09-28 06:33:59] [stage=prep] single-source dijkstra ~0.611s -> seq est 5.69h / 8 workers est 0.71h
+  [prep] merged 192 / 33531
+  [prep] merged 384 / 33531
+  [prep] merged 576 / 33531
+  [prep] merged 768 / 33531
+  [prep] merged 960 / 33531
+  [prep] merged 1152 / 33531
+  [prep] merged 1344 / 33531
+  [prep] merged 1536 / 33531
+  [prep] merged 1728 / 33531
+  [prep] merged 1920 / 33531
+  [prep] merged 2112 / 33531
+  [prep] merged 2304 / 33531
+  [prep] merged 2496 / 33531
+  [prep] merged 2688 / 33531
+  [prep] merged 2880 / 33531
+  [prep] merged 3072 / 33531
+  [prep] merged 3264 / 33531
+  [prep] merged 3456 / 33531
+  [prep] merged 3648 / 33531
+  [prep] merged 3840 / 33531
+  [prep] merged 4032 / 33531
+  [prep] merged 4224 / 33531
+  [prep] merged 4416 / 33531
+  [prep] merged 4608 / 33531
+  [prep] merged 4800 / 33531
+  [prep] merged 4992 / 33531
+  [prep] merged 5184 / 33531
+  [prep] merged 5376 / 33531
+  [prep] merged 5568 / 33531
+  [prep] merged 5760 / 33531
+  [prep] merged 5952 / 33531
+  [prep] merged 6144 / 33531
+  [prep] merged 6336 / 33531
+  [prep] merged 6528 / 33531
+  [prep] merged 6720 / 33531
+  [prep] merged 6912 / 33531
+  [prep] merged 7104 / 33531
+  [prep] merged 7296 / 33531
+  [prep] merged 7488 / 33531
+  [prep] merged 7680 / 33531
+  [prep] merged 7872 / 33531
+  [prep] merged 8064 / 33531
+  [prep] merged 8256 / 33531
+  [prep] merged 8448 / 33531
+  [prep] merged 8640 / 33531
+  [prep] merged 8832 / 33531
+  [prep] merged 9024 / 33531
+  [prep] merged 9216 / 33531
+  [prep] merged 9408 / 33531
+  [prep] merged 9600 / 33531
+  [prep] merged 9792 / 33531
+  [prep] merged 9984 / 33531
+  [prep] merged 10176 / 33531
+  [prep] merged 10368 / 33531
+  [prep] merged 10560 / 33531
+  [prep] merged 10752 / 33531
+  [prep] merged 10944 / 33531
+  [prep] merged 11136 / 33531
+  [prep] merged 11328 / 33531
+  [prep] merged 11520 / 33531
+  [prep] merged 11712 / 33531
+  [prep] merged 11904 / 33531
+  [prep] merged 12096 / 33531
+  [prep] merged 12288 / 33531
+  [prep] merged 12480 / 33531
+  [prep] merged 12672 / 33531
+  [prep] merged 12864 / 33531
+  [prep] merged 13056 / 33531
+  [prep] merged 13248 / 33531
+  [prep] merged 13440 / 33531
+  [prep] merged 13632 / 33531
+  [prep] merged 13824 / 33531
+  [prep] merged 14016 / 33531
+  [prep] merged 14208 / 33531
+  [prep] merged 14400 / 33531
+  [prep] merged 14592 / 33531
+  [prep] merged 14784 / 33531
+  [prep] merged 14976 / 33531
+  [prep] merged 15168 / 33531
+  [prep] merged 15360 / 33531
+  [prep] merged 15552 / 33531
+  [prep] merged 15744 / 33531
+  [prep] merged 15936 / 33531
+  [prep] merged 16128 / 33531
+  [prep] merged 16320 / 33531
+  [prep] merged 16512 / 33531
+  [prep] merged 16704 / 33531
+  [prep] merged 16896 / 33531
+  [prep] merged 17088 / 33531
+  [prep] merged 17280 / 33531
+  [prep] merged 17472 / 33531
+  [prep] merged 17664 / 33531
+  [prep] merged 17856 / 33531
+  [prep] merged 18048 / 33531
+  [prep] merged 18240 / 33531
+  [prep] merged 18432 / 33531
+  [prep] merged 18624 / 33531
+  [prep] merged 18816 / 33531
+  [prep] merged 19008 / 33531
+  [prep] merged 19200 / 33531
+  [prep] merged 19392 / 33531
+  [prep] merged 19584 / 33531
+  [prep] merged 19776 / 33531
+  [prep] merged 19968 / 33531
+  [prep] merged 20160 / 33531
+  [prep] merged 20352 / 33531
+  [prep] merged 20544 / 33531
+  [prep] merged 20736 / 33531
+  [prep] merged 20928 / 33531
+  [prep] merged 21120 / 33531
+  [prep] merged 21312 / 33531
+  [prep] merged 21504 / 33531
+  [prep] merged 21696 / 33531
+  [prep] merged 21888 / 33531
+  [prep] merged 22080 / 33531
+  [prep] merged 22272 / 33531
+  [prep] merged 22464 / 33531
+  [prep] merged 22656 / 33531
+  [prep] merged 22848 / 33531
+  [prep] merged 23040 / 33531
+  [prep] merged 23232 / 33531
+  [prep] merged 23424 / 33531
+  [prep] merged 23616 / 33531
+  [prep] merged 23808 / 33531
+  [prep] merged 24000 / 33531
+  [prep] merged 24192 / 33531
+
+[recovery] Bounded preprocessing restart; previous RAM-only progress not reusable.
+[2026-09-28 16:15:14] [stage=prep] loading /root/autodl-tmp/terrain_suite_20260927/data/BH_high.off
+[2026-09-28 16:15:33] [stage=prep] |V|=1318844 leaves=64 occupied=64
+[2026-09-28 16:15:35] [stage=prep] boundary K=33531 (2.54% of V)
+[2026-09-28 16:15:42] [stage=prep] single-source dijkstra ~0.631s -> seq est 5.88h / 8 workers est 0.74h
+  [prep] merged 192 / 33531
+  [prep] merged 384 / 33531
+  [prep] merged 576 / 33531
+  [prep] merged 768 / 33531
+  [prep] merged 960 / 33531
+  [prep] merged 1152 / 33531
+  [prep] merged 1344 / 33531
+  [prep] merged 1536 / 33531
+  [prep] merged 1728 / 33531
+  [prep] merged 1920 / 33531
+  [prep] merged 2112 / 33531
+  [prep] merged 2304 / 33531
+  [prep] merged 2496 / 33531
+  [prep] merged 2688 / 33531
+  [prep] merged 2880 / 33531
+  [prep] merged 3072 / 33531
+  [prep] merged 3264 / 33531
+  [prep] merged 3456 / 33531
+  [prep] merged 3648 / 33531
+  [prep] merged 3840 / 33531
+  [prep] merged 4032 / 33531
+  [prep] merged 4224 / 33531
+  [prep] merged 4416 / 33531
+  [prep] merged 4608 / 33531
+  [prep] merged 4800 / 33531
+  [prep] merged 4992 / 33531
+  [prep] merged 5184 / 33531
+  [prep] merged 5376 / 33531
+  [prep] merged 5568 / 33531
+  [prep] merged 5760 / 33531
+  [prep] merged 5952 / 33531
+  [prep] merged 6144 / 33531
+  [prep] merged 6336 / 33531
+  [prep] merged 6528 / 33531
+  [prep] merged 6720 / 33531
+  [prep] merged 6912 / 33531
+  [prep] merged 7104 / 33531
+  [prep] merged 7296 / 33531
+  [prep] merged 7488 / 33531
+  [prep] merged 7680 / 33531
+  [prep] merged 7872 / 33531
+  [prep] merged 8064 / 33531
+  [prep] merged 8256 / 33531
+  [prep] merged 8448 / 33531
+  [prep] merged 8640 / 33531
+  [prep] merged 8832 / 33531
+  [prep] merged 9024 / 33531
+  [prep] merged 9216 / 33531
+  [prep] merged 9408 / 33531
+  [prep] merged 9600 / 33531
+  [prep] merged 9792 / 33531
+  [prep] merged 9984 / 33531
+  [prep] merged 10176 / 33531
+  [prep] merged 10368 / 33531
+  [prep] merged 10560 / 33531
+  [prep] merged 10752 / 33531
+  [prep] merged 10944 / 33531
+  [prep] merged 11136 / 33531
+  [prep] merged 11328 / 33531
+  [prep] merged 11520 / 33531
+  [prep] merged 11712 / 33531
+  [prep] merged 11904 / 33531
+  [prep] merged 12096 / 33531
+  [prep] merged 12288 / 33531
+  [prep] merged 12480 / 33531
+  [prep] merged 12672 / 33531
+  [prep] merged 12864 / 33531
+  [prep] merged 13056 / 33531
+  [prep] merged 13248 / 33531
+  [prep] merged 13440 / 33531
+  [prep] merged 13632 / 33531
+  [prep] merged 13824 / 33531
+  [prep] merged 14016 / 33531
+  [prep] merged 14208 / 33531
+  [prep] merged 14400 / 33531
+  [prep] merged 14592 / 33531
+  [prep] merged 14784 / 33531
+  [prep] merged 14976 / 33531
+  [prep] merged 15168 / 33531
+  [prep] merged 15360 / 33531
+  [prep] merged 15552 / 33531
+  [prep] merged 15744 / 33531
+  [prep] merged 15936 / 33531
+  [prep] merged 16128 / 33531
+  [prep] merged 16320 / 33531
+  [prep] merged 16512 / 33531
+  [prep] merged 16704 / 33531
+  [prep] merged 16896 / 33531
+  [prep] merged 17088 / 33531
+  [prep] merged 17280 / 33531
+  [prep] merged 17472 / 33531
+  [prep] merged 17664 / 33531
+  [prep] merged 17856 / 33531
+  [prep] merged 18048 / 33531
+  [prep] merged 18240 / 33531
+  [prep] merged 18432 / 33531
+  [prep] merged 18624 / 33531
+  [prep] merged 18816 / 33531
+  [prep] merged 19008 / 33531
+  [prep] merged 19200 / 33531
+  [prep] merged 19392 / 33531
+  [prep] merged 19584 / 33531
+  [prep] merged 19776 / 33531
+  [prep] merged 19968 / 33531
+  [prep] merged 20160 / 33531
+  [prep] merged 20352 / 33531
+  [prep] merged 20544 / 33531
+  [prep] merged 20736 / 33531
+  [prep] merged 20928 / 33531
+  [prep] merged 21120 / 33531
+  [prep] merged 21312 / 33531
+  [prep] merged 21504 / 33531
+  [prep] merged 21696 / 33531
+  [prep] merged 21888 / 33531
+  [prep] merged 22080 / 33531
+  [prep] merged 22272 / 33531
+  [prep] merged 22464 / 33531
+  [prep] merged 22656 / 33531
+  [prep] merged 22848 / 33531
+  [prep] merged 23040 / 33531
+  [prep] merged 23232 / 33531
+  [prep] merged 23424 / 33531
+  [prep] merged 23616 / 33531
+  [prep] merged 23808 / 33531
+  [prep] merged 24000 / 33531
+  [prep] merged 24192 / 33531
+  [prep] merged 24384 / 33531
+  [prep] merged 24576 / 33531
+  [prep] merged 24768 / 33531
+  [prep] merged 24960 / 33531
+  [prep] merged 25152 / 33531
+  [prep] merged 25344 / 33531
+  [prep] merged 25536 / 33531
+  [prep] merged 25728 / 33531
+  [prep] merged 25920 / 33531
+  [prep] merged 26112 / 33531
+  [prep] merged 26304 / 33531
+  [prep] merged 26496 / 33531
+  [prep] merged 26688 / 33531
+  [prep] merged 26880 / 33531
+  [prep] merged 27072 / 33531
+  [prep] merged 27264 / 33531
+  [prep] merged 27456 / 33531
+  [prep] merged 27648 / 33531
+  [prep] merged 27840 / 33531
+  [prep] merged 28032 / 33531
+  [prep] merged 28224 / 33531
+  [prep] merged 28416 / 33531
+  [prep] merged 28608 / 33531
+  [prep] merged 28800 / 33531
+  [prep] merged 28992 / 33531
+  [prep] merged 29184 / 33531
+  [prep] merged 29376 / 33531
+  [prep] merged 29568 / 33531
+  [prep] merged 29760 / 33531
+  [prep] merged 29952 / 33531
+  [prep] merged 30144 / 33531
+  [prep] merged 30336 / 33531
+  [prep] merged 30528 / 33531
+  [prep] merged 30720 / 33531
+  [prep] merged 30912 / 33531
+  [prep] merged 31104 / 33531
+  [prep] merged 31296 / 33531
+  [prep] merged 31488 / 33531
+  [prep] merged 31680 / 33531
+  [prep] merged 31872 / 33531
+  [prep] merged 32064 / 33531
+  [prep] merged 32256 / 33531
+  [prep] merged 32448 / 33531
+  [prep] merged 32640 / 33531
+  [prep] merged 32832 / 33531
+  [prep] merged 33024 / 33531
+  [prep] merged 33216 / 33531
+  [prep] merged 33408 / 33531
+[2026-09-28 19:59:17] [stage=prep] topk access tables computed in 13414.4s shape=(1318844, 16) 84.4MB
+[2026-09-28 19:59:19] [stage=prep] highway full edges=18055436
+[2026-09-28 19:59:19] [stage=prep] highway tk8 edges=338456
+[2026-09-28 19:59:19] [stage=prep] highway tk16 edges=614104
+[2026-09-28 19:59:44] [stage=prep] artifacts saved: /root/autodl-tmp/terrain_suite_20260927/code/outputs/cache_7bf6e184d1e1a628/topk_artifacts_d3_c32.npz
+/root/autodl-tmp/terrain_suite_20260927/code/preprocess.py:606: UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor. (Triggered internally at /pytorch/torch/csrc/utils/tensor_new.cpp:253.)
+  edge_index_highway = torch.tensor([local_u, local_v], dtype=torch.long, device=device)
+[2026-09-28 19:59:49] [stage=context] built. nearest_k=(1318844, 16)
+[2026-09-28 19:59:49] [stage=grid] running configs from /root/autodl-tmp/terrain_suite_20260927/configs/BH_high_ours_s42_100ep.json (appended online)
+[2026-09-28 19:59:49] [stage=grid] #1 BH_high_ours_s42_100ep start
+[2026-09-28 20:03:03]   [BH_high_ours_s42_100ep] epoch=000 train_mae=88.1570 val_mae=79.4249 train_rel=0.016169 val_rel=0.014707 lr=1.00e-03 time=192.8s
+[2026-09-28 20:05:05]   [BH_high_ours_s42_100ep] epoch=001 train_mae=78.6723 val_mae=72.5051 train_rel=0.014636 val_rel=0.013611 lr=1.00e-03 time=122.3s
+[2026-09-28 20:07:08]   [BH_high_ours_s42_100ep] epoch=002 train_mae=74.9944 val_mae=73.7193 train_rel=0.013967 val_rel=0.013569 lr=1.00e-03 time=122.6s
+[2026-09-28 20:09:10]   [BH_high_ours_s42_100ep] epoch=003 train_mae=72.5299 val_mae=68.1086 train_rel=0.013548 val_rel=0.012717 lr=1.00e-03 time=122.6s
+[2026-09-28 20:11:14]   [BH_high_ours_s42_100ep] epoch=004 train_mae=71.3736 val_mae=70.9443 train_rel=0.013333 val_rel=0.013256 lr=1.00e-03 time=123.1s
+[2026-09-28 20:13:20]   [BH_high_ours_s42_100ep] epoch=005 train_mae=69.6337 val_mae=67.4833 train_rel=0.013053 val_rel=0.012628 lr=1.00e-03 time=126.2s
+[2026-09-28 20:15:23]   [BH_high_ours_s42_100ep] epoch=006 train_mae=68.2608 val_mae=66.2564 train_rel=0.012834 val_rel=0.012453 lr=1.00e-03 time=123.2s
+[2026-09-28 20:17:26]   [BH_high_ours_s42_100ep] epoch=007 train_mae=67.2162 val_mae=67.0329 train_rel=0.012675 val_rel=0.012574 lr=1.00e-03 time=123.1s
+[2026-09-28 20:19:29]   [BH_high_ours_s42_100ep] epoch=008 train_mae=66.2402 val_mae=64.1428 train_rel=0.012533 val_rel=0.012050 lr=1.00e-03 time=123.4s
+[2026-09-28 20:21:33]   [BH_high_ours_s42_100ep] epoch=009 train_mae=65.5905 val_mae=65.4814 train_rel=0.012412 val_rel=0.012386 lr=1.00e-03 time=123.3s
+[2026-09-28 20:23:37]   [BH_high_ours_s42_100ep] epoch=010 train_mae=64.6545 val_mae=65.2013 train_rel=0.012255 val_rel=0.012165 lr=1.00e-03 time=124.1s
+[2026-09-28 20:25:40]   [BH_high_ours_s42_100ep] epoch=011 train_mae=64.0844 val_mae=63.8216 train_rel=0.012178 val_rel=0.012087 lr=1.00e-03 time=123.4s
+[2026-09-28 20:27:44]   [BH_high_ours_s42_100ep] epoch=012 train_mae=63.3497 val_mae=64.6135 train_rel=0.012047 val_rel=0.012109 lr=1.00e-03 time=123.5s
+[2026-09-28 20:29:47]   [BH_high_ours_s42_100ep] epoch=013 train_mae=63.2585 val_mae=62.0952 train_rel=0.012019 val_rel=0.011810 lr=1.00e-03 time=123.4s
+[2026-09-28 20:31:51]   [BH_high_ours_s42_100ep] epoch=014 train_mae=62.3871 val_mae=61.6033 train_rel=0.011893 val_rel=0.011648 lr=1.00e-03 time=123.5s
+[2026-09-28 20:33:54]   [BH_high_ours_s42_100ep] epoch=015 train_mae=62.3385 val_mae=62.4131 train_rel=0.011866 val_rel=0.011848 lr=1.00e-03 time=123.3s
+[2026-09-28 20:35:57]   [BH_high_ours_s42_100ep] epoch=016 train_mae=62.0286 val_mae=64.6110 train_rel=0.011811 val_rel=0.012106 lr=1.00e-03 time=123.5s
+[2026-09-28 20:38:01]   [BH_high_ours_s42_100ep] epoch=017 train_mae=61.7770 val_mae=61.5621 train_rel=0.011800 val_rel=0.011709 lr=1.00e-03 time=123.5s
+[2026-09-28 20:40:04]   [BH_high_ours_s42_100ep] epoch=018 train_mae=61.3814 val_mae=60.6411 train_rel=0.011706 val_rel=0.011587 lr=1.00e-03 time=123.3s
+[2026-09-28 20:42:08]   [BH_high_ours_s42_100ep] epoch=019 train_mae=61.3357 val_mae=61.8080 train_rel=0.011662 val_rel=0.011619 lr=1.00e-03 time=123.5s
+[2026-09-28 20:44:11]   [BH_high_ours_s42_100ep] epoch=020 train_mae=61.2107 val_mae=62.2066 train_rel=0.011623 val_rel=0.011669 lr=1.00e-03 time=123.5s
+[2026-09-28 20:46:15]   [BH_high_ours_s42_100ep] epoch=021 train_mae=60.7978 val_mae=60.3772 train_rel=0.011587 val_rel=0.011440 lr=1.00e-03 time=123.5s
+[2026-09-28 20:48:18]   [BH_high_ours_s42_100ep] epoch=022 train_mae=60.4985 val_mae=58.8053 train_rel=0.011567 val_rel=0.011203 lr=1.00e-03 time=123.6s
+[2026-09-28 20:50:22]   [BH_high_ours_s42_100ep] epoch=023 train_mae=60.6526 val_mae=59.7640 train_rel=0.011549 val_rel=0.011313 lr=1.00e-03 time=123.6s
+[2026-09-28 20:52:25]   [BH_high_ours_s42_100ep] epoch=024 train_mae=60.5898 val_mae=60.6872 train_rel=0.011530 val_rel=0.011440 lr=1.00e-03 time=123.4s
+[2026-09-28 20:54:28]   [BH_high_ours_s42_100ep] epoch=025 train_mae=60.4623 val_mae=60.4727 train_rel=0.011520 val_rel=0.011394 lr=1.00e-03 time=123.3s
+[2026-09-28 20:56:32]   [BH_high_ours_s42_100ep] epoch=026 train_mae=59.9369 val_mae=61.4618 train_rel=0.011413 val_rel=0.011552 lr=1.00e-03 time=123.4s
+[2026-09-28 20:58:35]   [BH_high_ours_s42_100ep] epoch=027 train_mae=60.0977 val_mae=60.1889 train_rel=0.011436 val_rel=0.011235 lr=1.00e-03 time=123.4s
+[2026-09-28 21:00:39]   [BH_high_ours_s42_100ep] epoch=028 train_mae=59.6778 val_mae=59.7178 train_rel=0.011399 val_rel=0.011167 lr=1.00e-03 time=123.4s
+[2026-09-28 21:02:42]   [BH_high_ours_s42_100ep] epoch=029 train_mae=59.3379 val_mae=59.0550 train_rel=0.011323 val_rel=0.011135 lr=1.00e-03 time=123.4s
+[2026-09-28 21:04:45]   [BH_high_ours_s42_100ep] epoch=030 train_mae=59.6053 val_mae=59.6290 train_rel=0.011385 val_rel=0.011317 lr=1.00e-03 time=123.3s
+[2026-09-28 21:06:49]   [BH_high_ours_s42_100ep] epoch=031 train_mae=59.0396 val_mae=60.1917 train_rel=0.011279 val_rel=0.011314 lr=1.00e-03 time=123.4s
+[2026-09-28 21:08:52]   [BH_high_ours_s42_100ep] epoch=032 train_mae=58.8419 val_mae=58.1343 train_rel=0.011244 val_rel=0.011044 lr=1.00e-03 time=123.3s
+[2026-09-28 21:10:55]   [BH_high_ours_s42_100ep] epoch=033 train_mae=58.7624 val_mae=58.6926 train_rel=0.011224 val_rel=0.011117 lr=1.00e-03 time=123.3s
+[2026-09-28 21:12:59]   [BH_high_ours_s42_100ep] epoch=034 train_mae=58.8792 val_mae=60.3160 train_rel=0.011260 val_rel=0.011325 lr=1.00e-03 time=123.4s
+[2026-09-28 21:15:02]   [BH_high_ours_s42_100ep] epoch=035 train_mae=58.5539 val_mae=60.0244 train_rel=0.011183 val_rel=0.011245 lr=1.00e-03 time=123.6s
+[2026-09-28 21:17:06]   [BH_high_ours_s42_100ep] epoch=036 train_mae=58.7585 val_mae=58.7835 train_rel=0.011217 val_rel=0.011089 lr=1.00e-03 time=123.4s
+[2026-09-28 21:19:09]   [BH_high_ours_s42_100ep] epoch=037 train_mae=58.2002 val_mae=57.1298 train_rel=0.011134 val_rel=0.010813 lr=1.00e-03 time=123.4s
+[2026-09-28 21:21:13]   [BH_high_ours_s42_100ep] epoch=038 train_mae=58.3189 val_mae=59.9220 train_rel=0.011123 val_rel=0.011328 lr=1.00e-03 time=123.4s
+[2026-09-28 21:23:16]   [BH_high_ours_s42_100ep] epoch=039 train_mae=58.0357 val_mae=56.3261 train_rel=0.011094 val_rel=0.010758 lr=1.00e-03 time=123.4s
+[2026-09-28 21:25:18]   [BH_high_ours_s42_100ep] epoch=040 train_mae=57.8636 val_mae=56.4415 train_rel=0.011060 val_rel=0.010781 lr=1.00e-03 time=122.4s
+[2026-09-28 21:27:20]   [BH_high_ours_s42_100ep] epoch=041 train_mae=58.1629 val_mae=57.4119 train_rel=0.011112 val_rel=0.010953 lr=1.00e-03 time=121.9s
+[2026-09-28 21:29:24]   [BH_high_ours_s42_100ep] epoch=042 train_mae=57.8931 val_mae=58.0697 train_rel=0.011060 val_rel=0.010935 lr=1.00e-03 time=123.4s
+[2026-09-28 21:31:27]   [BH_high_ours_s42_100ep] epoch=043 train_mae=58.0011 val_mae=57.5777 train_rel=0.011079 val_rel=0.010901 lr=1.00e-03 time=123.3s
+[2026-09-28 21:33:30]   [BH_high_ours_s42_100ep] epoch=044 train_mae=57.8295 val_mae=57.4020 train_rel=0.011067 val_rel=0.010887 lr=1.00e-03 time=123.5s
+[2026-09-28 21:35:34]   [BH_high_ours_s42_100ep] epoch=045 train_mae=57.6653 val_mae=55.6764 train_rel=0.011032 val_rel=0.010627 lr=1.00e-03 time=123.3s
+[2026-09-28 21:37:37]   [BH_high_ours_s42_100ep] epoch=046 train_mae=57.8407 val_mae=57.1095 train_rel=0.011067 val_rel=0.010820 lr=1.00e-03 time=123.4s
+[2026-09-28 21:39:40]   [BH_high_ours_s42_100ep] epoch=047 train_mae=57.4409 val_mae=57.4408 train_rel=0.011007 val_rel=0.010948 lr=1.00e-03 time=123.2s
+[2026-09-28 21:41:43]   [BH_high_ours_s42_100ep] epoch=048 train_mae=57.2931 val_mae=56.4436 train_rel=0.010979 val_rel=0.010809 lr=1.00e-03 time=123.0s
+[2026-09-28 21:43:47]   [BH_high_ours_s42_100ep] epoch=049 train_mae=57.3452 val_mae=56.9358 train_rel=0.010978 val_rel=0.010872 lr=1.00e-03 time=123.4s
+[2026-09-28 21:45:50]   [BH_high_ours_s42_100ep] epoch=050 train_mae=57.4670 val_mae=56.9886 train_rel=0.011008 val_rel=0.010902 lr=1.00e-03 time=123.4s
+[2026-09-28 21:47:54]   [BH_high_ours_s42_100ep] epoch=051 train_mae=57.3297 val_mae=56.7197 train_rel=0.010976 val_rel=0.010839 lr=1.00e-03 time=123.5s
+[2026-09-28 21:49:57]   [BH_high_ours_s42_100ep] epoch=052 train_mae=53.6990 val_mae=56.9164 train_rel=0.010385 val_rel=0.010866 lr=5.00e-04 time=123.2s
+[2026-09-28 21:52:00]   [BH_high_ours_s42_100ep] epoch=053 train_mae=53.0712 val_mae=53.0646 train_rel=0.010294 val_rel=0.010254 lr=5.00e-04 time=123.4s
+[2026-09-28 21:54:04]   [BH_high_ours_s42_100ep] epoch=054 train_mae=53.1038 val_mae=52.8006 train_rel=0.010286 val_rel=0.010199 lr=5.00e-04 time=123.5s
+[2026-09-28 21:56:07]   [BH_high_ours_s42_100ep] epoch=055 train_mae=52.7786 val_mae=52.3693 train_rel=0.010229 val_rel=0.010075 lr=5.00e-04 time=123.0s
+[2026-09-28 21:58:10]   [BH_high_ours_s42_100ep] epoch=056 train_mae=52.5470 val_mae=53.1006 train_rel=0.010200 val_rel=0.010245 lr=5.00e-04 time=123.1s
+[2026-09-28 22:00:13]   [BH_high_ours_s42_100ep] epoch=057 train_mae=52.6564 val_mae=51.4597 train_rel=0.010227 val_rel=0.010019 lr=5.00e-04 time=123.2s
+[2026-09-28 22:02:16]   [BH_high_ours_s42_100ep] epoch=058 train_mae=52.3026 val_mae=52.9334 train_rel=0.010155 val_rel=0.010271 lr=5.00e-04 time=123.4s
+[2026-09-28 22:04:20]   [BH_high_ours_s42_100ep] epoch=059 train_mae=52.4028 val_mae=52.6089 train_rel=0.010161 val_rel=0.010143 lr=5.00e-04 time=123.3s
+[2026-09-28 22:06:23]   [BH_high_ours_s42_100ep] epoch=060 train_mae=52.2144 val_mae=51.7042 train_rel=0.010123 val_rel=0.010011 lr=5.00e-04 time=123.3s
+[2026-09-28 22:08:26]   [BH_high_ours_s42_100ep] epoch=061 train_mae=52.0298 val_mae=52.6875 train_rel=0.010099 val_rel=0.010193 lr=5.00e-04 time=123.4s
+[2026-09-28 22:10:30]   [BH_high_ours_s42_100ep] epoch=062 train_mae=52.0571 val_mae=51.8025 train_rel=0.010093 val_rel=0.010081 lr=5.00e-04 time=123.6s
+[2026-09-28 22:12:35]   [BH_high_ours_s42_100ep] epoch=063 train_mae=51.7220 val_mae=51.3496 train_rel=0.010029 val_rel=0.010003 lr=5.00e-04 time=124.8s
+[2026-09-28 22:14:38]   [BH_high_ours_s42_100ep] epoch=064 train_mae=51.8170 val_mae=52.8171 train_rel=0.010058 val_rel=0.010155 lr=5.00e-04 time=123.5s
+[2026-09-28 22:16:42]   [BH_high_ours_s42_100ep] epoch=065 train_mae=52.0370 val_mae=51.9360 train_rel=0.010065 val_rel=0.010001 lr=5.00e-04 time=123.4s
+[2026-09-28 22:18:45]   [BH_high_ours_s42_100ep] epoch=066 train_mae=51.9027 val_mae=52.4029 train_rel=0.010069 val_rel=0.010119 lr=5.00e-04 time=123.1s
+[2026-09-28 22:20:48]   [BH_high_ours_s42_100ep] epoch=067 train_mae=51.7589 val_mae=52.3650 train_rel=0.010022 val_rel=0.010127 lr=5.00e-04 time=123.3s
+[2026-09-28 22:22:51]   [BH_high_ours_s42_100ep] epoch=068 train_mae=51.4746 val_mae=51.5333 train_rel=0.009974 val_rel=0.009882 lr=5.00e-04 time=123.4s
+[2026-09-28 22:24:55]   [BH_high_ours_s42_100ep] epoch=069 train_mae=51.3674 val_mae=52.3129 train_rel=0.009964 val_rel=0.010126 lr=5.00e-04 time=123.4s
+[2026-09-28 22:26:58]   [BH_high_ours_s42_100ep] epoch=070 train_mae=51.4336 val_mae=52.4346 train_rel=0.009964 val_rel=0.010090 lr=5.00e-04 time=123.4s
+[2026-09-28 22:29:02]   [BH_high_ours_s42_100ep] epoch=071 train_mae=51.2199 val_mae=52.3784 train_rel=0.009928 val_rel=0.010036 lr=5.00e-04 time=123.8s
+[2026-09-28 22:31:06]   [BH_high_ours_s42_100ep] epoch=072 train_mae=50.9357 val_mae=51.6112 train_rel=0.009901 val_rel=0.009938 lr=5.00e-04 time=123.7s
+[2026-09-28 22:33:09]   [BH_high_ours_s42_100ep] epoch=073 train_mae=51.1943 val_mae=51.1001 train_rel=0.009939 val_rel=0.009931 lr=5.00e-04 time=123.6s
+[2026-09-28 22:35:13]   [BH_high_ours_s42_100ep] epoch=074 train_mae=51.0273 val_mae=51.3323 train_rel=0.009923 val_rel=0.009830 lr=5.00e-04 time=123.5s
+[2026-09-28 22:37:16]   [BH_high_ours_s42_100ep] epoch=075 train_mae=51.0706 val_mae=50.2488 train_rel=0.009904 val_rel=0.009746 lr=5.00e-04 time=123.4s
+[2026-09-28 22:39:20]   [BH_high_ours_s42_100ep] epoch=076 train_mae=51.0705 val_mae=51.5040 train_rel=0.009895 val_rel=0.009931 lr=5.00e-04 time=123.7s
+[2026-09-28 22:41:23]   [BH_high_ours_s42_100ep] epoch=077 train_mae=50.8640 val_mae=51.3800 train_rel=0.009857 val_rel=0.009958 lr=5.00e-04 time=123.4s
+[2026-09-28 22:43:27]   [BH_high_ours_s42_100ep] epoch=078 train_mae=50.7074 val_mae=50.5237 train_rel=0.009837 val_rel=0.009789 lr=5.00e-04 time=123.5s
+[2026-09-28 22:45:30]   [BH_high_ours_s42_100ep] epoch=079 train_mae=50.7535 val_mae=51.1294 train_rel=0.009872 val_rel=0.009895 lr=5.00e-04 time=123.4s
+[2026-09-28 22:47:34]   [BH_high_ours_s42_100ep] epoch=080 train_mae=50.8216 val_mae=51.0483 train_rel=0.009868 val_rel=0.009837 lr=5.00e-04 time=123.4s
+[2026-09-28 22:49:37]   [BH_high_ours_s42_100ep] epoch=081 train_mae=50.8688 val_mae=52.2814 train_rel=0.009854 val_rel=0.010050 lr=5.00e-04 time=123.5s
+[2026-09-28 22:51:41]   [BH_high_ours_s42_100ep] epoch=082 train_mae=48.6823 val_mae=48.7724 train_rel=0.009515 val_rel=0.009491 lr=2.50e-04 time=123.4s
+[2026-09-28 22:53:44]   [BH_high_ours_s42_100ep] epoch=083 train_mae=48.4475 val_mae=49.0597 train_rel=0.009466 val_rel=0.009536 lr=2.50e-04 time=123.4s
+[2026-09-28 22:55:47]   [BH_high_ours_s42_100ep] epoch=084 train_mae=48.3021 val_mae=48.1880 train_rel=0.009443 val_rel=0.009409 lr=2.50e-04 time=123.6s
+[2026-09-28 22:57:51]   [BH_high_ours_s42_100ep] epoch=085 train_mae=48.2542 val_mae=48.5333 train_rel=0.009440 val_rel=0.009427 lr=2.50e-04 time=123.6s
+[2026-09-28 22:59:55]   [BH_high_ours_s42_100ep] epoch=086 train_mae=48.0093 val_mae=49.8639 train_rel=0.009392 val_rel=0.009654 lr=2.50e-04 time=123.6s
+[2026-09-28 23:01:58]   [BH_high_ours_s42_100ep] epoch=087 train_mae=47.9853 val_mae=49.4289 train_rel=0.009400 val_rel=0.009620 lr=2.50e-04 time=123.5s
+[2026-09-28 23:04:01]   [BH_high_ours_s42_100ep] epoch=088 train_mae=48.1583 val_mae=49.5642 train_rel=0.009414 val_rel=0.009573 lr=2.50e-04 time=123.4s
+[2026-09-28 23:06:04]   [BH_high_ours_s42_100ep] epoch=089 train_mae=47.9284 val_mae=50.3105 train_rel=0.009362 val_rel=0.009725 lr=2.50e-04 time=122.8s
+[2026-09-28 23:08:08]   [BH_high_ours_s42_100ep] epoch=090 train_mae=47.9866 val_mae=49.1020 train_rel=0.009389 val_rel=0.009527 lr=2.50e-04 time=123.3s
+[2026-09-28 23:10:11]   [BH_high_ours_s42_100ep] epoch=091 train_mae=46.9078 val_mae=47.3445 train_rel=0.009215 val_rel=0.009234 lr=1.25e-04 time=123.5s
+[2026-09-28 23:12:15]   [BH_high_ours_s42_100ep] epoch=092 train_mae=46.7919 val_mae=47.4627 train_rel=0.009189 val_rel=0.009270 lr=1.25e-04 time=123.6s
+[2026-09-28 23:14:18]   [BH_high_ours_s42_100ep] epoch=093 train_mae=46.4592 val_mae=47.6289 train_rel=0.009143 val_rel=0.009288 lr=1.25e-04 time=123.5s
+[2026-09-28 23:16:22]   [BH_high_ours_s42_100ep] epoch=094 train_mae=46.7316 val_mae=47.5395 train_rel=0.009189 val_rel=0.009261 lr=1.25e-04 time=123.3s
+[2026-09-28 23:18:25]   [BH_high_ours_s42_100ep] epoch=095 train_mae=46.5093 val_mae=47.5408 train_rel=0.009143 val_rel=0.009275 lr=1.25e-04 time=123.4s
+[2026-09-28 23:20:28]   [BH_high_ours_s42_100ep] epoch=096 train_mae=46.5180 val_mae=47.0200 train_rel=0.009141 val_rel=0.009186 lr=1.25e-04 time=123.4s
+[2026-09-28 23:22:32]   [BH_high_ours_s42_100ep] epoch=097 train_mae=46.4847 val_mae=46.9137 train_rel=0.009135 val_rel=0.009167 lr=1.25e-04 time=123.5s
+[2026-09-28 23:24:35]   [BH_high_ours_s42_100ep] epoch=098 train_mae=46.3974 val_mae=47.1745 train_rel=0.009135 val_rel=0.009226 lr=1.25e-04 time=123.2s
+[2026-09-28 23:26:38]   [BH_high_ours_s42_100ep] epoch=099 train_mae=46.4748 val_mae=47.1613 train_rel=0.009135 val_rel=0.009227 lr=1.25e-04 time=122.9s
+[2026-09-28 23:26:53] [stage=grid] #1 BH_high_ours_s42_100ep done test_rel=0.009032170288264751
+[2026-09-28 23:26:53] [stage=grid] === RANKING (by test_relative_error) ===
+[2026-09-28 23:26:53]   0.00903 | BH_high_ours_s42_100ep | best_ep=97 mae=45.64 rmse=60.47
+[2026-09-28 23:26:53] [ALL DONE] total 25899.8s

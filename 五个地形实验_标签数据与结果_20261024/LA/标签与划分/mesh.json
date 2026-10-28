@@ -1,0 +1,10 @@
+{
+  "vertices": 16000000,
+  "faces": 31984002,
+  "nominal_spacing_m": 28.34,
+  "actual_spacing_m": 28.347086771692922,
+  "zero_policy": "retain as author code",
+  "units": "metres",
+  "resampling": false,
+  "author_commit": "7d1e193e0e685053447f69baee2e8eec0b936b7d"
+}

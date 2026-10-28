@@ -1,0 +1,372 @@
+[
+  {
+    "path": "BH_high/标签与划分/labels.csv",
+    "bytes": 3137544,
+    "sha256": "8c56369f730291b5e395188418cb6555b3fedb1e5f0bec0cd798b55a2ee6aa1a"
+  },
+  {
+    "path": "BH_high/标签与划分/metadata.json",
+    "bytes": 334,
+    "sha256": "18e82366abd9cd8e2cafcaf06afcbc3a8d788de9dd7dad9a0b42ffe3dd3d69c6"
+  },
+  {
+    "path": "BH_high/标签与划分/test_pairs.csv",
+    "bytes": 71522,
+    "sha256": "e5e8fd5a6dbc85320b3934bfd50be8458f54a9c410a0e0907ef90d0d642ceac4"
+  },
+  {
+    "path": "BH_high/标签与划分/train_pairs.csv",
+    "bytes": 572510,
+    "sha256": "bdfbd27ea47ceece6eb7f96f82c245709e849b9e96841bc2ec953c58246bb480"
+  },
+  {
+    "path": "BH_high/标签与划分/val_pairs.csv",
+    "bytes": 71617,
+    "sha256": "bdc1c6798d314530eb0136da94dcdc7315d6ac367d55bc0f822caa1eccdbafe2"
+  },
+  {
+    "path": "BH_high/原始地形/BH_high.off",
+    "bytes": 119303835,
+    "sha256": "7bf6e184d1e1a6280b4604f7f2c0efbe79ba3d27697cbd4e7087e6f0c149564e"
+  },
+  {
+    "path": "BH_high/模型/BH_high_ours_s42_100ep.pt",
+    "bytes": 182849,
+    "sha256": "f836049993c43a6b3aec170c45d7b6c678b041637913c217cb8242e545a6689a"
+  },
+  {
+    "path": "BH_high/结果/BH_high_ours_s42_100ep_grid.jsonl",
+    "bytes": 1081,
+    "sha256": "9a1ed822d2be6433ff25fd85334056e7b53eba71333d01df0443339a6dfd1b5d"
+  },
+  {
+    "path": "BH_high/日志/BH_high_ours_only.log",
+    "bytes": 26402,
+    "sha256": "9052890aa4bb1a9c9275acaa22b4e7a7a19285b6a5b2658c19eb139208387d66"
+  },
+  {
+    "path": "BH_high/日志/BH_high_ours_only.exit.json",
+    "bytes": 45,
+    "sha256": "791df8e5df8f58164ad0e9902df9d832e73cf2aab89d96970b79670fa0e3516a"
+  },
+  {
+    "path": "BH_high/配置/BH_high_ours_s42_100ep.json",
+    "bytes": 216,
+    "sha256": "e31a9c546897e2a1f993db78b05594f2ad1a00ed1fdfb63359d361fec59f00a6"
+  },
+  {
+    "path": "BH_high/图表/BH_high_convergence.png",
+    "bytes": 101943,
+    "sha256": "d8f8b4643b21812759db9fb3b18291a607a6e3ba11c66dcbe5f3ca4ccfab7f3e"
+  },
+  {
+    "path": "SF_high/标签与划分/labels.csv",
+    "bytes": 3150599,
+    "sha256": "9fb4e1aea82a102bcfc7347fde2105a0672e010e8e4a8397947482d1838dd8b3"
+  },
+  {
+    "path": "SF_high/标签与划分/metadata.json",
+    "bytes": 334,
+    "sha256": "9bb41fa32d1f289469c37e1f9e917fe68dbfed6a7812c6f0d2938adb6f1358e6"
+  },
+  {
+    "path": "SF_high/标签与划分/test_pairs.csv",
+    "bytes": 72742,
+    "sha256": "2a4e804a3be545d9f9ee64916c58eb0cce614f57e4d53af3f406c5b571273430"
+  },
+  {
+    "path": "SF_high/标签与划分/train_pairs.csv",
+    "bytes": 582283,
+    "sha256": "d83d7748c7f2c1900b67a930d6d291568d2c4a693b82c1161a5b3aaff03c211f"
+  },
+  {
+    "path": "SF_high/标签与划分/val_pairs.csv",
+    "bytes": 72853,
+    "sha256": "ece0d2235c34f2065ee5742d499d25683f5658f23bd2250a722206699fa8f54d"
+  },
+  {
+    "path": "SF_high/原始地形/SF_high.off",
+    "bytes": 115758309,
+    "sha256": "1404318832f9156a903dd8686e44b09802749bc296372673f41909363d33d9a9"
+  },
+  {
+    "path": "SF_high/模型/SF_high_ours_s42_100ep.pt",
+    "bytes": 182849,
+    "sha256": "4cde916a0a5a3271833e28aea1a6c1be99fe84558def9618f0c98b817b42b729"
+  },
+  {
+    "path": "SF_high/结果/SF_high_ours_s42_100ep_grid.jsonl",
+    "bytes": 1081,
+    "sha256": "4c5ef4ccd5bec28543dd43b36f18de7fdf7db36527813785f3c00d28fed9a85c"
+  },
+  {
+    "path": "SF_high/日志/SF_high_ours_only.log",
+    "bytes": 24814,
+    "sha256": "c3bdfa493bb52c81447ad97f8ff376f077b520ab82627d5c4a77eacd17ea4c1f"
+  },
+  {
+    "path": "SF_high/日志/SF_high_ours_only.exit.json",
+    "bytes": 44,
+    "sha256": "47aea71593b8159f3ebf5a6d67d425a6f0c7e5092a9bf0387b25c52416c6df0f"
+  },
+  {
+    "path": "SF_high/配置/SF_high_ours_s42_100ep.json",
+    "bytes": 216,
+    "sha256": "2f2df3f3c04a5419fe648c528a7054936593eec45e0256988fdcb29d754c45ec"
+  },
+  {
+    "path": "SF_high/图表/SF_high_convergence.png",
+    "bytes": 97923,
+    "sha256": "cafde31322a3c597169d577d38ddd8f140494449acdeaf3de098bf6516613bb3"
+  },
+  {
+    "path": "USGS_CO/标签与划分/labels.csv",
+    "bytes": 3185843,
+    "sha256": "7e65cfb7276fbdb18f88a291809fc2e4ec36c919ee4f453855354664f0159866"
+  },
+  {
+    "path": "USGS_CO/标签与划分/mesh.json",
+    "bytes": 667,
+    "sha256": "11d6d6dcd4919db86507594fb9120d66f081b3bc834e8539ff08bcf76c70c249"
+  },
+  {
+    "path": "USGS_CO/标签与划分/metadata.json",
+    "bytes": 334,
+    "sha256": "ef3f5bf348c8e85cbb07491d178366a4c56582ff3613d9b4632bd8d49302bf44"
+  },
+  {
+    "path": "USGS_CO/标签与划分/source.json",
+    "bytes": 4171,
+    "sha256": "790d65b969014e7bcda0517de10219f8d1e6c28219bb345e8e9454eeceeedf0a"
+  },
+  {
+    "path": "USGS_CO/标签与划分/test_pairs.csv",
+    "bytes": 75650,
+    "sha256": "452cb5b1478e8ddac0c15e9cbcd222656b45a3be33bbc217bac6790d94b599c5"
+  },
+  {
+    "path": "USGS_CO/标签与划分/train_pairs.csv",
+    "bytes": 605291,
+    "sha256": "623f119fe2ca3a9e20ee75d84a1e8ee75da582b938cd418ab3555f4a7a2e4b23"
+  },
+  {
+    "path": "USGS_CO/标签与划分/val_pairs.csv",
+    "bytes": 75691,
+    "sha256": "32e65f2978c69a83c3e50a24a1ba1c5776f243b2d242ba9ea2d03cf49801f47e"
+  },
+  {
+    "path": "USGS_CO/原始地形/USGS_CO.off",
+    "bytes": 220239640,
+    "sha256": "4035d95e963a240dc9cbd9ec29aef6eee31bc6fe9b7e9e75c8a6318d76392643"
+  },
+  {
+    "path": "USGS_CO/模型/USGS_CO_ours_s42_100ep.pt",
+    "bytes": 182849,
+    "sha256": "e0a40ff3fb013aa0d9db8ff2fdd7295549b4e2a7239735f16af1dd9836428fd8"
+  },
+  {
+    "path": "USGS_CO/结果/USGS_CO_ours_s42_100ep_grid.jsonl",
+    "bytes": 1080,
+    "sha256": "4a443a51feef410e36e796f214d7bfe78a485536ca65810321f05bf4b57aac4f"
+  },
+  {
+    "path": "USGS_CO/日志/USGS_CO_ours_only.log",
+    "bytes": 24087,
+    "sha256": "24c7da60cc9377fe8bf2f3ef6975abda540c1f103182c3d965cb965f17f27255"
+  },
+  {
+    "path": "USGS_CO/日志/USGS_CO_ours_only.exit.json",
+    "bytes": 45,
+    "sha256": "38fc528758d21fadd24c8ef358b0416a2467f3fb6f38a6fca346ab39cbd60f6e"
+  },
+  {
+    "path": "USGS_CO/配置/USGS_CO_ours_s42_100ep.json",
+    "bytes": 216,
+    "sha256": "2046c6d240dbecb2ee09b056c7922ae8b59fa3e4dc5c43f1ed89d987a7eaddff"
+  },
+  {
+    "path": "USGS_CO/图表/USGS_CO_convergence.png",
+    "bytes": 106591,
+    "sha256": "ec5e5941acac4399f5108c434848a2f21b006ed43f9ac3e64b63324353265fa8"
+  },
+  {
+    "path": "USGS_WA/标签与划分/labels.csv",
+    "bytes": 3185095,
+    "sha256": "0cfc56abadafb27b4f964aea175f265e46871e044b4e3025bbe506f756e0db4f"
+  },
+  {
+    "path": "USGS_WA/标签与划分/mesh.json",
+    "bytes": 666,
+    "sha256": "1dc8cf3b1fa02c38889826e2375a6a58a49c6016c19b44ef1acc9b0e81c6e6e6"
+  },
+  {
+    "path": "USGS_WA/标签与划分/metadata.json",
+    "bytes": 334,
+    "sha256": "73bb08260abee3388af062b3a182bd0ca12346397ca8efea8806f6d1d10a571c"
+  },
+  {
+    "path": "USGS_WA/标签与划分/source.json",
+    "bytes": 4171,
+    "sha256": "0eb2b95a446027d649cd284520fb8e100a2ceaaf3c4fe39a7f4e1503a9ab1839"
+  },
+  {
+    "path": "USGS_WA/标签与划分/test_pairs.csv",
+    "bytes": 75650,
+    "sha256": "452cb5b1478e8ddac0c15e9cbcd222656b45a3be33bbc217bac6790d94b599c5"
+  },
+  {
+    "path": "USGS_WA/标签与划分/train_pairs.csv",
+    "bytes": 605291,
+    "sha256": "623f119fe2ca3a9e20ee75d84a1e8ee75da582b938cd418ab3555f4a7a2e4b23"
+  },
+  {
+    "path": "USGS_WA/标签与划分/val_pairs.csv",
+    "bytes": 75691,
+    "sha256": "32e65f2978c69a83c3e50a24a1ba1c5776f243b2d242ba9ea2d03cf49801f47e"
+  },
+  {
+    "path": "USGS_WA/原始地形/USGS_WA.off",
+    "bytes": 220180503,
+    "sha256": "73686d4135c6f30c82dbf6507ea021bbf904bf68a21240002c50ee54329b57a3"
+  },
+  {
+    "path": "USGS_WA/模型/USGS_WA_ours_s42_100ep.pt",
+    "bytes": 182849,
+    "sha256": "dd1bceb0fc3427fe973dd44195952c64982a0bac2f91466f9214dd7551c608f7"
+  },
+  {
+    "path": "USGS_WA/结果/USGS_WA_ours_s42_100ep_grid.jsonl",
+    "bytes": 1077,
+    "sha256": "ffc90b674c7e1fae8d9bd4cdf02010409f677db7a6f556f84fc18832677b6b71"
+  },
+  {
+    "path": "USGS_WA/日志/USGS_WA_ours_only.log",
+    "bytes": 16916,
+    "sha256": "f055a0f97173ed240a1814412623d3136ab2db3205cd9b2133d572af1f929722"
+  },
+  {
+    "path": "USGS_WA/日志/USGS_WA_ours_only.exit.json",
+    "bytes": 45,
+    "sha256": "ba542676d593c08f01059dbc96324598f5114a7c20b9c1f5da80b53153ab63b5"
+  },
+  {
+    "path": "USGS_WA/配置/USGS_WA_ours_s42_100ep.json",
+    "bytes": 216,
+    "sha256": "d01f0c7fa252efe1e49844b1771f51b83cfddcf5302c6763304aeffbfc2f4e06"
+  },
+  {
+    "path": "USGS_WA/图表/USGS_WA_convergence.png",
+    "bytes": 93961,
+    "sha256": "5672e8e0d7f774e26056e633608cf675d767714efa0b507986ee04a21f347d4e"
+  },
+  {
+    "path": "LA/标签与划分/historical_prepare_la.py",
+    "bytes": 1180,
+    "sha256": "d4de62b0c8a0e83604cd00a0de610c69878715e4853b55a62879c6480c9bb855"
+  },
+  {
+    "path": "LA/标签与划分/labels.csv",
+    "bytes": 3251754,
+    "sha256": "3ded6faf4d8a8c3e858137bb80ed3f05781543764fab3f54341dfd49acbd4e03"
+  },
+  {
+    "path": "LA/标签与划分/mesh.json",
+    "bytes": 268,
+    "sha256": "63f71bb792c16dc54626a39a75a07c5bbd86931465d595a0eeb83bb006d39a85"
+  },
+  {
+    "path": "LA/标签与划分/metadata.json",
+    "bytes": 334,
+    "sha256": "181938bd0489bb66edf8497b63f2b002f02da1dc077c0cddab1c41dee37bec77"
+  },
+  {
+    "path": "LA/标签与划分/test_pairs.csv",
+    "bytes": 82990,
+    "sha256": "e705a307197f988f0e6d602c2a15f2f576d347e8f411dc10dc49e40e25e3e4e7"
+  },
+  {
+    "path": "LA/标签与划分/train_pairs.csv",
+    "bytes": 664448,
+    "sha256": "fcfae2d1f7cdc36baeb1c8920b43152e02fd43a7e7c88990301aaffd552a267e"
+  },
+  {
+    "path": "LA/标签与划分/val_pairs.csv",
+    "bytes": 83130,
+    "sha256": "1e0f6ab2b26f4737169f21d9df506df31d35ef6e9c26bb34d7abb67d2d3d4e75"
+  },
+  {
+    "path": "LA/原始地形/la-4kx4k.npy",
+    "bytes": 64000128,
+    "sha256": "d6fdb923058e7d9ad2faada73a4e2fbf78f2fdd779984a72394937fe044cb3a3"
+  },
+  {
+    "path": "LA/模型/LA_ours_s42_100ep.pt",
+    "bytes": 182620,
+    "sha256": "c73973216290f255af39df80a4b2dc058a88fd195cddc42de7f61074d4cc20d0"
+  },
+  {
+    "path": "LA/结果/LA_ours_s42_100ep_grid.jsonl",
+    "bytes": 1041,
+    "sha256": "3edc9a4616d04c8bcf638753fafd4dfc24494e30ed45191f608224917a689be2"
+  },
+  {
+    "path": "LA/日志/LA_ours_only.log",
+    "bytes": 19001,
+    "sha256": "144af13659660129151ea57a27cf19f3a144fd5bfd978f0d29eefe843215cffe"
+  },
+  {
+    "path": "LA/日志/LA_ours_only.exit.json",
+    "bytes": 74,
+    "sha256": "64ac40918470002d9f3c76d0e2a12d5377fc6e8e7bd1b9add6e066f8b6c6cb71"
+  },
+  {
+    "path": "LA/配置/LA_ours_s42_100ep.json",
+    "bytes": 211,
+    "sha256": "c9c1bdb44c94769f1fbd4f5be86ea801b09fee2a67a9c3ffc56c2545b8180fd1"
+  },
+  {
+    "path": "LA/图表/LA_convergence.png",
+    "bytes": 98896,
+    "sha256": "2ce22f45727401df34355de50e6dc43666fe3556b996f14f60a3a4ca1c199557"
+  },
+  {
+    "path": "汇总/结果汇总.csv",
+    "bytes": 914,
+    "sha256": "2f7424b9871b42c5d490e4b4bb31ce100adfa55f6b7fafea37f7459e34287414"
+  },
+  {
+    "path": "汇总/结果汇总.json",
+    "bytes": 2319,
+    "sha256": "77c45862505ccf0e84b7f52b5213be0401e960bbc0236bf506eb42e5e5a3e261"
+  },
+  {
+    "path": "汇总/分组测试结果.csv",
+    "bytes": 1546,
+    "sha256": "87928c22cc7563867ee74640643a365247c7f2da19e251efe4a5c3b5283c48fe"
+  },
+  {
+    "path": "汇总/逐轮训练指标.csv",
+    "bytes": 31824,
+    "sha256": "77db907b52a804a5c4863525c378e2905c394eeb8b8a06be45a2151ad70ce3c1"
+  },
+  {
+    "path": "汇总/阅读说明.md",
+    "bytes": 2773,
+    "sha256": "2985cdd3e3647676b830ec16b75bd135bb06d0f0f3e8b833379e68578affc8d3"
+  },
+  {
+    "path": "汇总/导出验证.json",
+    "bytes": 516,
+    "sha256": "a11d34bf8909fe4ea640e3e565fa5b6f63e00233fb8126aac452b533160f4f78"
+  },
+  {
+    "path": "汇总/test_mre_comparison.png",
+    "bytes": 53973,
+    "sha256": "55048987758d102fe7084f533ef9b87920b41a37bad6c6c2b7fbdafc77da8bde"
+  },
+  {
+    "path": "汇总/validation_convergence.png",
+    "bytes": 154381,
+    "sha256": "0705fa63eaa41d8a9afd48110c860380bc277aaed7922fbddc45a72713999a24"
+  }
+]

@@ -1,0 +1,353 @@
+[2026-09-29 00:02:04] [stage=prep] loading /root/autodl-tmp/terrain_suite_20260927/data/USGS_CO.off
+[2026-09-29 00:02:29] [stage=prep] |V|=2560000 leaves=64 occupied=64
+[2026-09-29 00:02:30] [stage=prep] boundary K=45162 (1.76% of V)
+[2026-09-29 00:02:38] [stage=prep] single-source dijkstra ~0.614s -> seq est 7.71h / 8 workers est 0.96h
+  [prep] merged 192 / 45162
+  [prep] merged 384 / 45162
+  [prep] merged 576 / 45162
+  [prep] merged 768 / 45162
+  [prep] merged 960 / 45162
+  [prep] merged 1152 / 45162
+  [prep] merged 1344 / 45162
+  [prep] merged 1536 / 45162
+  [prep] merged 1728 / 45162
+  [prep] merged 1920 / 45162
+  [prep] merged 2112 / 45162
+  [prep] merged 2304 / 45162
+  [prep] merged 2496 / 45162
+  [prep] merged 2688 / 45162
+  [prep] merged 2880 / 45162
+  [prep] merged 3072 / 45162
+  [prep] merged 3264 / 45162
+  [prep] merged 3456 / 45162
+  [prep] merged 3648 / 45162
+  [prep] merged 3840 / 45162
+  [prep] merged 4032 / 45162
+  [prep] merged 4224 / 45162
+  [prep] merged 4416 / 45162
+  [prep] merged 4608 / 45162
+  [prep] merged 4800 / 45162
+  [prep] merged 4992 / 45162
+  [prep] merged 5184 / 45162
+  [prep] merged 5376 / 45162
+  [prep] merged 5568 / 45162
+  [prep] merged 5760 / 45162
+  [prep] merged 5952 / 45162
+  [prep] merged 6144 / 45162
+  [prep] merged 6336 / 45162
+  [prep] merged 6528 / 45162
+  [prep] merged 6720 / 45162
+  [prep] merged 6912 / 45162
+  [prep] merged 7104 / 45162
+  [prep] merged 7296 / 45162
+  [prep] merged 7488 / 45162
+  [prep] merged 7680 / 45162
+  [prep] merged 7872 / 45162
+  [prep] merged 8064 / 45162
+  [prep] merged 8256 / 45162
+  [prep] merged 8448 / 45162
+  [prep] merged 8640 / 45162
+  [prep] merged 8832 / 45162
+  [prep] merged 9024 / 45162
+  [prep] merged 9216 / 45162
+  [prep] merged 9408 / 45162
+  [prep] merged 9600 / 45162
+  [prep] merged 9792 / 45162
+  [prep] merged 9984 / 45162
+  [prep] merged 10176 / 45162
+  [prep] merged 10368 / 45162
+  [prep] merged 10560 / 45162
+  [prep] merged 10752 / 45162
+  [prep] merged 10944 / 45162
+  [prep] merged 11136 / 45162
+  [prep] merged 11328 / 45162
+  [prep] merged 11520 / 45162
+  [prep] merged 11712 / 45162
+  [prep] merged 11904 / 45162
+  [prep] merged 12096 / 45162
+  [prep] merged 12288 / 45162
+  [prep] merged 12480 / 45162
+  [prep] merged 12672 / 45162
+  [prep] merged 12864 / 45162
+  [prep] merged 13056 / 45162
+  [prep] merged 13248 / 45162
+  [prep] merged 13440 / 45162
+  [prep] merged 13632 / 45162
+  [prep] merged 13824 / 45162
+  [prep] merged 14016 / 45162
+  [prep] merged 14208 / 45162
+  [prep] merged 14400 / 45162
+  [prep] merged 14592 / 45162
+  [prep] merged 14784 / 45162
+  [prep] merged 14976 / 45162
+  [prep] merged 15168 / 45162
+  [prep] merged 15360 / 45162
+  [prep] merged 15552 / 45162
+  [prep] merged 15744 / 45162
+  [prep] merged 15936 / 45162
+  [prep] merged 16128 / 45162
+  [prep] merged 16320 / 45162
+  [prep] merged 16512 / 45162
+  [prep] merged 16704 / 45162
+  [prep] merged 16896 / 45162
+  [prep] merged 17088 / 45162
+  [prep] merged 17280 / 45162
+  [prep] merged 17472 / 45162
+  [prep] merged 17664 / 45162
+  [prep] merged 17856 / 45162
+  [prep] merged 18048 / 45162
+  [prep] merged 18240 / 45162
+  [prep] merged 18432 / 45162
+  [prep] merged 18624 / 45162
+  [prep] merged 18816 / 45162
+  [prep] merged 19008 / 45162
+  [prep] merged 19200 / 45162
+  [prep] merged 19392 / 45162
+  [prep] merged 19584 / 45162
+  [prep] merged 19776 / 45162
+  [prep] merged 19968 / 45162
+  [prep] merged 20160 / 45162
+  [prep] merged 20352 / 45162
+  [prep] merged 20544 / 45162
+  [prep] merged 20736 / 45162
+  [prep] merged 20928 / 45162
+  [prep] merged 21120 / 45162
+  [prep] merged 21312 / 45162
+  [prep] merged 21504 / 45162
+  [prep] merged 21696 / 45162
+  [prep] merged 21888 / 45162
+  [prep] merged 22080 / 45162
+  [prep] merged 22272 / 45162
+  [prep] merged 22464 / 45162
+  [prep] merged 22656 / 45162
+  [prep] merged 22848 / 45162
+  [prep] merged 23040 / 45162
+  [prep] merged 23232 / 45162
+  [prep] merged 23424 / 45162
+  [prep] merged 23616 / 45162
+  [prep] merged 23808 / 45162
+  [prep] merged 24000 / 45162
+  [prep] merged 24192 / 45162
+  [prep] merged 24384 / 45162
+  [prep] merged 24576 / 45162
+  [prep] merged 24768 / 45162
+  [prep] merged 24960 / 45162
+  [prep] merged 25152 / 45162
+  [prep] merged 25344 / 45162
+  [prep] merged 25536 / 45162
+  [prep] merged 25728 / 45162
+  [prep] merged 25920 / 45162
+  [prep] merged 26112 / 45162
+  [prep] merged 26304 / 45162
+  [prep] merged 26496 / 45162
+  [prep] merged 26688 / 45162
+  [prep] merged 26880 / 45162
+  [prep] merged 27072 / 45162
+  [prep] merged 27264 / 45162
+  [prep] merged 27456 / 45162
+  [prep] merged 27648 / 45162
+  [prep] merged 27840 / 45162
+  [prep] merged 28032 / 45162
+  [prep] merged 28224 / 45162
+  [prep] merged 28416 / 45162
+  [prep] merged 28608 / 45162
+  [prep] merged 28800 / 45162
+  [prep] merged 28992 / 45162
+  [prep] merged 29184 / 45162
+  [prep] merged 29376 / 45162
+  [prep] merged 29568 / 45162
+  [prep] merged 29760 / 45162
+  [prep] merged 29952 / 45162
+  [prep] merged 30144 / 45162
+  [prep] merged 30336 / 45162
+  [prep] merged 30528 / 45162
+  [prep] merged 30720 / 45162
+  [prep] merged 30912 / 45162
+  [prep] merged 31104 / 45162
+  [prep] merged 31296 / 45162
+  [prep] merged 31488 / 45162
+  [prep] merged 31680 / 45162
+  [prep] merged 31872 / 45162
+  [prep] merged 32064 / 45162
+  [prep] merged 32256 / 45162
+  [prep] merged 32448 / 45162
+  [prep] merged 32640 / 45162
+  [prep] merged 32832 / 45162
+  [prep] merged 33024 / 45162
+  [prep] merged 33216 / 45162
+  [prep] merged 33408 / 45162
+  [prep] merged 33600 / 45162
+  [prep] merged 33792 / 45162
+  [prep] merged 33984 / 45162
+  [prep] merged 34176 / 45162
+  [prep] merged 34368 / 45162
+  [prep] merged 34560 / 45162
+  [prep] merged 34752 / 45162
+  [prep] merged 34944 / 45162
+  [prep] merged 35136 / 45162
+  [prep] merged 35328 / 45162
+  [prep] merged 35520 / 45162
+  [prep] merged 35712 / 45162
+  [prep] merged 35904 / 45162
+  [prep] merged 36096 / 45162
+  [prep] merged 36288 / 45162
+  [prep] merged 36480 / 45162
+  [prep] merged 36672 / 45162
+  [prep] merged 36864 / 45162
+  [prep] merged 37056 / 45162
+  [prep] merged 37248 / 45162
+  [prep] merged 37440 / 45162
+  [prep] merged 37632 / 45162
+  [prep] merged 37824 / 45162
+  [prep] merged 38016 / 45162
+  [prep] merged 38208 / 45162
+  [prep] merged 38400 / 45162
+  [prep] merged 38592 / 45162
+  [prep] merged 38784 / 45162
+  [prep] merged 38976 / 45162
+  [prep] merged 39168 / 45162
+  [prep] merged 39360 / 45162
+  [prep] merged 39552 / 45162
+  [prep] merged 39744 / 45162
+  [prep] merged 39936 / 45162
+  [prep] merged 40128 / 45162
+  [prep] merged 40320 / 45162
+  [prep] merged 40512 / 45162
+  [prep] merged 40704 / 45162
+  [prep] merged 40896 / 45162
+  [prep] merged 41088 / 45162
+  [prep] merged 41280 / 45162
+  [prep] merged 41472 / 45162
+  [prep] merged 41664 / 45162
+  [prep] merged 41856 / 45162
+  [prep] merged 42048 / 45162
+  [prep] merged 42240 / 45162
+  [prep] merged 42432 / 45162
+  [prep] merged 42624 / 45162
+  [prep] merged 42816 / 45162
+  [prep] merged 43008 / 45162
+  [prep] merged 43200 / 45162
+  [prep] merged 43392 / 45162
+  [prep] merged 43584 / 45162
+  [prep] merged 43776 / 45162
+  [prep] merged 43968 / 45162
+  [prep] merged 44160 / 45162
+  [prep] merged 44352 / 45162
+  [prep] merged 44544 / 45162
+  [prep] merged 44736 / 45162
+  [prep] merged 44928 / 45162
+  [prep] merged 45120 / 45162
+[2026-09-29 09:08:17] [stage=prep] topk access tables computed in 32738.5s shape=(2560000, 16) 163.8MB
+[2026-09-29 09:08:21] [stage=prep] highway full edges=33163040
+[2026-09-29 09:08:21] [stage=prep] highway tk8 edges=453936
+[2026-09-29 09:08:21] [stage=prep] highway tk16 edges=822458
+[2026-09-29 09:08:39] [stage=prep] artifacts saved: /root/autodl-tmp/terrain_suite_20260927/code/outputs/cache_4035d95e963a240d/topk_artifacts_d3_c32.npz
+/root/autodl-tmp/terrain_suite_20260927/code/preprocess.py:606: UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor. (Triggered internally at /pytorch/torch/csrc/utils/tensor_new.cpp:253.)
+  edge_index_highway = torch.tensor([local_u, local_v], dtype=torch.long, device=device)
+[2026-09-29 09:08:47] [stage=context] built. nearest_k=(2560000, 16)
+[2026-09-29 09:08:47] [stage=grid] running configs from /root/autodl-tmp/terrain_suite_20260927/configs/USGS_CO_ours_s42_100ep.json (appended online)
+[2026-09-29 09:08:47] [stage=grid] #1 USGS_CO_ours_s42_100ep start
+[2026-09-29 09:12:48]   [USGS_CO_ours_s42_100ep] epoch=000 train_mae=93.6201 val_mae=80.5115 train_rel=0.012923 val_rel=0.011086 lr=1.00e-03 time=240.1s
+[2026-09-29 09:15:54]   [USGS_CO_ours_s42_100ep] epoch=001 train_mae=81.9298 val_mae=74.8261 train_rel=0.011182 val_rel=0.010299 lr=1.00e-03 time=186.6s
+[2026-09-29 09:19:01]   [USGS_CO_ours_s42_100ep] epoch=002 train_mae=78.3102 val_mae=74.1850 train_rel=0.010676 val_rel=0.010096 lr=1.00e-03 time=186.6s
+[2026-09-29 09:22:08]   [USGS_CO_ours_s42_100ep] epoch=003 train_mae=76.2235 val_mae=73.4513 train_rel=0.010370 val_rel=0.009922 lr=1.00e-03 time=186.6s
+[2026-09-29 09:25:14]   [USGS_CO_ours_s42_100ep] epoch=004 train_mae=74.7372 val_mae=72.9224 train_rel=0.010183 val_rel=0.009837 lr=1.00e-03 time=186.3s
+[2026-09-29 09:28:21]   [USGS_CO_ours_s42_100ep] epoch=005 train_mae=73.1638 val_mae=76.0409 train_rel=0.009980 val_rel=0.010267 lr=1.00e-03 time=186.6s
+[2026-09-29 09:31:28]   [USGS_CO_ours_s42_100ep] epoch=006 train_mae=72.2618 val_mae=71.9473 train_rel=0.009852 val_rel=0.009871 lr=1.00e-03 time=187.0s
+[2026-09-29 09:34:34]   [USGS_CO_ours_s42_100ep] epoch=007 train_mae=71.2889 val_mae=69.8754 train_rel=0.009736 val_rel=0.009457 lr=1.00e-03 time=186.8s
+[2026-09-29 09:37:41]   [USGS_CO_ours_s42_100ep] epoch=008 train_mae=70.9810 val_mae=69.1151 train_rel=0.009688 val_rel=0.009431 lr=1.00e-03 time=186.6s
+[2026-09-29 09:40:48]   [USGS_CO_ours_s42_100ep] epoch=009 train_mae=70.4550 val_mae=74.7967 train_rel=0.009626 val_rel=0.010074 lr=1.00e-03 time=186.6s
+[2026-09-29 09:43:54]   [USGS_CO_ours_s42_100ep] epoch=010 train_mae=69.7407 val_mae=74.4071 train_rel=0.009529 val_rel=0.010170 lr=1.00e-03 time=186.7s
+[2026-09-29 09:47:01]   [USGS_CO_ours_s42_100ep] epoch=011 train_mae=69.4393 val_mae=67.4243 train_rel=0.009484 val_rel=0.009151 lr=1.00e-03 time=186.6s
+[2026-09-29 09:50:08]   [USGS_CO_ours_s42_100ep] epoch=012 train_mae=68.9640 val_mae=64.7348 train_rel=0.009414 val_rel=0.008945 lr=1.00e-03 time=186.7s
+[2026-09-29 09:53:14]   [USGS_CO_ours_s42_100ep] epoch=013 train_mae=68.7486 val_mae=68.7082 train_rel=0.009393 val_rel=0.009303 lr=1.00e-03 time=186.8s
+[2026-09-29 09:56:21]   [USGS_CO_ours_s42_100ep] epoch=014 train_mae=68.4878 val_mae=70.5660 train_rel=0.009354 val_rel=0.009551 lr=1.00e-03 time=186.9s
+[2026-09-29 09:59:28]   [USGS_CO_ours_s42_100ep] epoch=015 train_mae=68.0338 val_mae=64.6900 train_rel=0.009288 val_rel=0.008815 lr=1.00e-03 time=186.7s
+[2026-09-29 10:02:35]   [USGS_CO_ours_s42_100ep] epoch=016 train_mae=67.7305 val_mae=69.8524 train_rel=0.009245 val_rel=0.009389 lr=1.00e-03 time=186.9s
+[2026-09-29 10:05:42]   [USGS_CO_ours_s42_100ep] epoch=017 train_mae=67.8882 val_mae=63.4603 train_rel=0.009269 val_rel=0.008687 lr=1.00e-03 time=186.8s
+[2026-09-29 10:08:48]   [USGS_CO_ours_s42_100ep] epoch=018 train_mae=66.9528 val_mae=66.7128 train_rel=0.009131 val_rel=0.009002 lr=1.00e-03 time=186.9s
+[2026-09-29 10:11:55]   [USGS_CO_ours_s42_100ep] epoch=019 train_mae=66.9411 val_mae=66.5465 train_rel=0.009165 val_rel=0.009184 lr=1.00e-03 time=186.9s
+[2026-09-29 10:15:02]   [USGS_CO_ours_s42_100ep] epoch=020 train_mae=66.5198 val_mae=62.7403 train_rel=0.009122 val_rel=0.008604 lr=1.00e-03 time=186.7s
+[2026-09-29 10:18:09]   [USGS_CO_ours_s42_100ep] epoch=021 train_mae=66.3678 val_mae=62.9462 train_rel=0.009078 val_rel=0.008500 lr=1.00e-03 time=186.8s
+[2026-09-29 10:21:16]   [USGS_CO_ours_s42_100ep] epoch=022 train_mae=66.2961 val_mae=67.7027 train_rel=0.009058 val_rel=0.009277 lr=1.00e-03 time=187.0s
+[2026-09-29 10:24:23]   [USGS_CO_ours_s42_100ep] epoch=023 train_mae=65.9669 val_mae=64.1557 train_rel=0.009009 val_rel=0.008830 lr=1.00e-03 time=187.1s
+[2026-09-29 10:27:30]   [USGS_CO_ours_s42_100ep] epoch=024 train_mae=65.7303 val_mae=64.5677 train_rel=0.008987 val_rel=0.008705 lr=1.00e-03 time=187.0s
+[2026-09-29 10:30:37]   [USGS_CO_ours_s42_100ep] epoch=025 train_mae=65.6105 val_mae=62.3641 train_rel=0.008957 val_rel=0.008527 lr=1.00e-03 time=186.9s
+[2026-09-29 10:33:44]   [USGS_CO_ours_s42_100ep] epoch=026 train_mae=65.2807 val_mae=63.4169 train_rel=0.008928 val_rel=0.008626 lr=1.00e-03 time=186.8s
+[2026-09-29 10:36:51]   [USGS_CO_ours_s42_100ep] epoch=027 train_mae=65.0267 val_mae=64.1657 train_rel=0.008900 val_rel=0.008636 lr=1.00e-03 time=187.1s
+[2026-09-29 10:39:58]   [USGS_CO_ours_s42_100ep] epoch=028 train_mae=61.7151 val_mae=60.6424 train_rel=0.008485 val_rel=0.008300 lr=5.00e-04 time=186.9s
+[2026-09-29 10:43:05]   [USGS_CO_ours_s42_100ep] epoch=029 train_mae=61.4714 val_mae=59.4754 train_rel=0.008432 val_rel=0.008084 lr=5.00e-04 time=186.8s
+[2026-09-29 10:46:11]   [USGS_CO_ours_s42_100ep] epoch=030 train_mae=61.0429 val_mae=58.9745 train_rel=0.008374 val_rel=0.008092 lr=5.00e-04 time=186.9s
+[2026-09-29 10:49:18]   [USGS_CO_ours_s42_100ep] epoch=031 train_mae=60.5146 val_mae=58.3445 train_rel=0.008312 val_rel=0.008020 lr=5.00e-04 time=186.8s
+[2026-09-29 10:52:25]   [USGS_CO_ours_s42_100ep] epoch=032 train_mae=60.5305 val_mae=57.9472 train_rel=0.008314 val_rel=0.007983 lr=5.00e-04 time=186.9s
+[2026-09-29 10:55:32]   [USGS_CO_ours_s42_100ep] epoch=033 train_mae=60.3283 val_mae=56.6246 train_rel=0.008293 val_rel=0.007845 lr=5.00e-04 time=186.9s
+[2026-09-29 10:58:39]   [USGS_CO_ours_s42_100ep] epoch=034 train_mae=59.8600 val_mae=58.0126 train_rel=0.008244 val_rel=0.007986 lr=5.00e-04 time=186.5s
+[2026-09-29 11:01:45]   [USGS_CO_ours_s42_100ep] epoch=035 train_mae=59.6569 val_mae=55.9895 train_rel=0.008224 val_rel=0.007743 lr=5.00e-04 time=186.3s
+[2026-09-29 11:04:52]   [USGS_CO_ours_s42_100ep] epoch=036 train_mae=59.5386 val_mae=57.3116 train_rel=0.008207 val_rel=0.007863 lr=5.00e-04 time=187.0s
+[2026-09-29 11:07:59]   [USGS_CO_ours_s42_100ep] epoch=037 train_mae=59.0549 val_mae=55.3911 train_rel=0.008149 val_rel=0.007680 lr=5.00e-04 time=186.8s
+[2026-09-29 11:11:06]   [USGS_CO_ours_s42_100ep] epoch=038 train_mae=58.7386 val_mae=55.4628 train_rel=0.008097 val_rel=0.007705 lr=5.00e-04 time=187.0s
+[2026-09-29 11:14:13]   [USGS_CO_ours_s42_100ep] epoch=039 train_mae=58.8717 val_mae=55.5439 train_rel=0.008124 val_rel=0.007673 lr=5.00e-04 time=186.8s
+[2026-09-29 11:17:19]   [USGS_CO_ours_s42_100ep] epoch=040 train_mae=58.5504 val_mae=56.2585 train_rel=0.008084 val_rel=0.007762 lr=5.00e-04 time=186.9s
+[2026-09-29 11:20:26]   [USGS_CO_ours_s42_100ep] epoch=041 train_mae=58.3946 val_mae=59.0103 train_rel=0.008078 val_rel=0.008116 lr=5.00e-04 time=186.8s
+[2026-09-29 11:23:33]   [USGS_CO_ours_s42_100ep] epoch=042 train_mae=58.3422 val_mae=56.3216 train_rel=0.008070 val_rel=0.007813 lr=5.00e-04 time=186.9s
+[2026-09-29 11:26:40]   [USGS_CO_ours_s42_100ep] epoch=043 train_mae=58.0844 val_mae=57.9558 train_rel=0.008014 val_rel=0.008052 lr=5.00e-04 time=186.8s
+[2026-09-29 11:29:47]   [USGS_CO_ours_s42_100ep] epoch=044 train_mae=58.1958 val_mae=55.8452 train_rel=0.008030 val_rel=0.007734 lr=5.00e-04 time=186.7s
+[2026-09-29 11:32:54]   [USGS_CO_ours_s42_100ep] epoch=045 train_mae=57.6635 val_mae=58.0470 train_rel=0.007988 val_rel=0.007973 lr=5.00e-04 time=187.1s
+[2026-09-29 11:36:01]   [USGS_CO_ours_s42_100ep] epoch=046 train_mae=55.4274 val_mae=53.8843 train_rel=0.007682 val_rel=0.007459 lr=2.50e-04 time=187.0s
+[2026-09-29 11:39:08]   [USGS_CO_ours_s42_100ep] epoch=047 train_mae=55.0328 val_mae=54.0603 train_rel=0.007630 val_rel=0.007442 lr=2.50e-04 time=187.0s
+[2026-09-29 11:42:15]   [USGS_CO_ours_s42_100ep] epoch=048 train_mae=54.7796 val_mae=53.2388 train_rel=0.007605 val_rel=0.007390 lr=2.50e-04 time=187.0s
+[2026-09-29 11:45:22]   [USGS_CO_ours_s42_100ep] epoch=049 train_mae=54.8889 val_mae=52.5395 train_rel=0.007630 val_rel=0.007314 lr=2.50e-04 time=187.1s
+[2026-09-29 11:48:29]   [USGS_CO_ours_s42_100ep] epoch=050 train_mae=54.6012 val_mae=51.7747 train_rel=0.007580 val_rel=0.007191 lr=2.50e-04 time=186.9s
+[2026-09-29 11:51:36]   [USGS_CO_ours_s42_100ep] epoch=051 train_mae=54.5531 val_mae=52.3883 train_rel=0.007586 val_rel=0.007272 lr=2.50e-04 time=187.1s
+[2026-09-29 11:54:43]   [USGS_CO_ours_s42_100ep] epoch=052 train_mae=54.5152 val_mae=51.8225 train_rel=0.007558 val_rel=0.007228 lr=2.50e-04 time=187.2s
+[2026-09-29 11:57:50]   [USGS_CO_ours_s42_100ep] epoch=053 train_mae=54.3416 val_mae=52.4769 train_rel=0.007553 val_rel=0.007278 lr=2.50e-04 time=187.1s
+[2026-09-29 12:00:57]   [USGS_CO_ours_s42_100ep] epoch=054 train_mae=54.3104 val_mae=51.7076 train_rel=0.007544 val_rel=0.007198 lr=2.50e-04 time=187.2s
+[2026-09-29 12:04:04]   [USGS_CO_ours_s42_100ep] epoch=055 train_mae=54.2900 val_mae=52.1110 train_rel=0.007550 val_rel=0.007250 lr=2.50e-04 time=186.9s
+[2026-09-29 12:07:11]   [USGS_CO_ours_s42_100ep] epoch=056 train_mae=54.0414 val_mae=51.5112 train_rel=0.007515 val_rel=0.007179 lr=2.50e-04 time=186.7s
+[2026-09-29 12:10:18]   [USGS_CO_ours_s42_100ep] epoch=057 train_mae=53.9345 val_mae=52.0252 train_rel=0.007490 val_rel=0.007238 lr=2.50e-04 time=186.9s
+[2026-09-29 12:13:25]   [USGS_CO_ours_s42_100ep] epoch=058 train_mae=54.0950 val_mae=51.7321 train_rel=0.007515 val_rel=0.007209 lr=2.50e-04 time=187.1s
+[2026-09-29 12:16:32]   [USGS_CO_ours_s42_100ep] epoch=059 train_mae=53.7166 val_mae=52.6701 train_rel=0.007456 val_rel=0.007312 lr=2.50e-04 time=186.9s
+[2026-09-29 12:19:39]   [USGS_CO_ours_s42_100ep] epoch=060 train_mae=53.4109 val_mae=52.2491 train_rel=0.007433 val_rel=0.007240 lr=2.50e-04 time=187.1s
+[2026-09-29 12:22:46]   [USGS_CO_ours_s42_100ep] epoch=061 train_mae=53.5282 val_mae=52.7605 train_rel=0.007456 val_rel=0.007313 lr=2.50e-04 time=187.0s
+[2026-09-29 12:25:53]   [USGS_CO_ours_s42_100ep] epoch=062 train_mae=53.4647 val_mae=51.0300 train_rel=0.007449 val_rel=0.007114 lr=2.50e-04 time=187.1s
+[2026-09-29 12:29:00]   [USGS_CO_ours_s42_100ep] epoch=063 train_mae=53.3586 val_mae=52.8271 train_rel=0.007416 val_rel=0.007257 lr=2.50e-04 time=187.1s
+[2026-09-29 12:32:07]   [USGS_CO_ours_s42_100ep] epoch=064 train_mae=53.3910 val_mae=52.6680 train_rel=0.007421 val_rel=0.007283 lr=2.50e-04 time=187.0s
+[2026-09-29 12:35:14]   [USGS_CO_ours_s42_100ep] epoch=065 train_mae=53.0421 val_mae=52.1097 train_rel=0.007376 val_rel=0.007186 lr=2.50e-04 time=187.0s
+[2026-09-29 12:38:21]   [USGS_CO_ours_s42_100ep] epoch=066 train_mae=53.2285 val_mae=51.1749 train_rel=0.007402 val_rel=0.007086 lr=2.50e-04 time=187.0s
+[2026-09-29 12:41:28]   [USGS_CO_ours_s42_100ep] epoch=067 train_mae=53.2107 val_mae=51.4008 train_rel=0.007394 val_rel=0.007119 lr=2.50e-04 time=187.1s
+[2026-09-29 12:44:35]   [USGS_CO_ours_s42_100ep] epoch=068 train_mae=52.8979 val_mae=51.0371 train_rel=0.007343 val_rel=0.007071 lr=2.50e-04 time=186.9s
+[2026-09-29 12:47:42]   [USGS_CO_ours_s42_100ep] epoch=069 train_mae=52.8793 val_mae=51.0344 train_rel=0.007344 val_rel=0.007052 lr=2.50e-04 time=187.0s
+[2026-09-29 12:50:49]   [USGS_CO_ours_s42_100ep] epoch=070 train_mae=52.7312 val_mae=52.1144 train_rel=0.007317 val_rel=0.007196 lr=2.50e-04 time=187.0s
+[2026-09-29 12:53:56]   [USGS_CO_ours_s42_100ep] epoch=071 train_mae=52.6534 val_mae=50.1786 train_rel=0.007320 val_rel=0.006973 lr=2.50e-04 time=187.0s
+[2026-09-29 12:57:03]   [USGS_CO_ours_s42_100ep] epoch=072 train_mae=52.8641 val_mae=51.4218 train_rel=0.007329 val_rel=0.007075 lr=2.50e-04 time=186.9s
+[2026-09-29 13:00:10]   [USGS_CO_ours_s42_100ep] epoch=073 train_mae=52.6891 val_mae=51.7002 train_rel=0.007325 val_rel=0.007163 lr=2.50e-04 time=186.8s
+[2026-09-29 13:03:16]   [USGS_CO_ours_s42_100ep] epoch=074 train_mae=52.5326 val_mae=51.0373 train_rel=0.007288 val_rel=0.007082 lr=2.50e-04 time=186.8s
+[2026-09-29 13:06:23]   [USGS_CO_ours_s42_100ep] epoch=075 train_mae=52.8010 val_mae=51.7937 train_rel=0.007321 val_rel=0.007150 lr=2.50e-04 time=186.8s
+[2026-09-29 13:09:30]   [USGS_CO_ours_s42_100ep] epoch=076 train_mae=52.5727 val_mae=51.3267 train_rel=0.007289 val_rel=0.007108 lr=2.50e-04 time=186.9s
+[2026-09-29 13:12:37]   [USGS_CO_ours_s42_100ep] epoch=077 train_mae=52.3888 val_mae=51.2645 train_rel=0.007279 val_rel=0.007115 lr=2.50e-04 time=186.8s
+[2026-09-29 13:15:44]   [USGS_CO_ours_s42_100ep] epoch=078 train_mae=51.3781 val_mae=50.0293 train_rel=0.007129 val_rel=0.006906 lr=1.25e-04 time=186.8s
+[2026-09-29 13:18:51]   [USGS_CO_ours_s42_100ep] epoch=079 train_mae=51.0370 val_mae=49.8983 train_rel=0.007096 val_rel=0.006895 lr=1.25e-04 time=186.8s
+[2026-09-29 13:21:58]   [USGS_CO_ours_s42_100ep] epoch=080 train_mae=50.8225 val_mae=50.2041 train_rel=0.007071 val_rel=0.006930 lr=1.25e-04 time=186.9s
+[2026-09-29 13:25:05]   [USGS_CO_ours_s42_100ep] epoch=081 train_mae=50.7311 val_mae=49.4964 train_rel=0.007051 val_rel=0.006846 lr=1.25e-04 time=187.0s
+[2026-09-29 13:28:12]   [USGS_CO_ours_s42_100ep] epoch=082 train_mae=50.8184 val_mae=49.4489 train_rel=0.007070 val_rel=0.006840 lr=1.25e-04 time=187.2s
+[2026-09-29 13:31:18]   [USGS_CO_ours_s42_100ep] epoch=083 train_mae=50.7497 val_mae=49.4160 train_rel=0.007049 val_rel=0.006823 lr=1.25e-04 time=186.8s
+[2026-09-29 13:34:25]   [USGS_CO_ours_s42_100ep] epoch=084 train_mae=50.3917 val_mae=49.2478 train_rel=0.007014 val_rel=0.006807 lr=1.25e-04 time=186.7s
+[2026-09-29 13:37:32]   [USGS_CO_ours_s42_100ep] epoch=085 train_mae=50.4304 val_mae=49.4978 train_rel=0.007005 val_rel=0.006836 lr=1.25e-04 time=186.8s
+[2026-09-29 13:40:39]   [USGS_CO_ours_s42_100ep] epoch=086 train_mae=50.5672 val_mae=49.0906 train_rel=0.007028 val_rel=0.006795 lr=1.25e-04 time=187.0s
+[2026-09-29 13:43:46]   [USGS_CO_ours_s42_100ep] epoch=087 train_mae=50.3873 val_mae=48.7474 train_rel=0.007008 val_rel=0.006766 lr=1.25e-04 time=186.9s
+[2026-09-29 13:46:53]   [USGS_CO_ours_s42_100ep] epoch=088 train_mae=50.7640 val_mae=49.8351 train_rel=0.007051 val_rel=0.006905 lr=1.25e-04 time=186.8s
+[2026-09-29 13:50:00]   [USGS_CO_ours_s42_100ep] epoch=089 train_mae=50.3590 val_mae=49.3222 train_rel=0.007003 val_rel=0.006829 lr=1.25e-04 time=186.9s
+[2026-09-29 13:53:07]   [USGS_CO_ours_s42_100ep] epoch=090 train_mae=50.5182 val_mae=49.4603 train_rel=0.007025 val_rel=0.006831 lr=1.25e-04 time=187.2s
+[2026-09-29 13:56:14]   [USGS_CO_ours_s42_100ep] epoch=091 train_mae=50.3491 val_mae=50.0545 train_rel=0.006992 val_rel=0.006873 lr=1.25e-04 time=187.2s
+[2026-09-29 13:59:21]   [USGS_CO_ours_s42_100ep] epoch=092 train_mae=50.3833 val_mae=49.4488 train_rel=0.006999 val_rel=0.006824 lr=1.25e-04 time=187.0s
+[2026-09-29 14:02:28]   [USGS_CO_ours_s42_100ep] epoch=093 train_mae=50.4405 val_mae=49.2646 train_rel=0.006994 val_rel=0.006813 lr=1.25e-04 time=186.9s
+[2026-09-29 14:05:35]   [USGS_CO_ours_s42_100ep] epoch=094 train_mae=49.4640 val_mae=48.5186 train_rel=0.006870 val_rel=0.006713 lr=6.25e-05 time=186.9s
+[2026-09-29 14:08:41]   [USGS_CO_ours_s42_100ep] epoch=095 train_mae=49.3430 val_mae=48.4401 train_rel=0.006862 val_rel=0.006701 lr=6.25e-05 time=186.1s
+[2026-09-29 14:11:47]   [USGS_CO_ours_s42_100ep] epoch=096 train_mae=49.4431 val_mae=48.5308 train_rel=0.006861 val_rel=0.006712 lr=6.25e-05 time=186.3s
+[2026-09-29 14:14:53]   [USGS_CO_ours_s42_100ep] epoch=097 train_mae=49.5557 val_mae=48.4928 train_rel=0.006875 val_rel=0.006702 lr=6.25e-05 time=186.1s
+[2026-09-29 14:18:00]   [USGS_CO_ours_s42_100ep] epoch=098 train_mae=49.4400 val_mae=48.3799 train_rel=0.006866 val_rel=0.006695 lr=6.25e-05 time=186.8s
+[2026-09-29 14:21:07]   [USGS_CO_ours_s42_100ep] epoch=099 train_mae=49.2674 val_mae=48.7892 train_rel=0.006861 val_rel=0.006724 lr=6.25e-05 time=187.0s
+[2026-09-29 14:21:30] [stage=grid] #1 USGS_CO_ours_s42_100ep done test_rel=0.006625754293054342
+[2026-09-29 14:21:30] [stage=grid] === RANKING (by test_relative_error) ===
+[2026-09-29 14:21:30]   0.00663 | USGS_CO_ours_s42_100ep | best_ep=98 mae=47.38 rmse=73.67
+[2026-09-29 14:21:30] [ALL DONE] total 51566.4s

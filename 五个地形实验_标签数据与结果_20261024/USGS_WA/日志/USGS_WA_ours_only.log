@@ -1,0 +1,115 @@
+[2026-09-30 21:07:55] [stage=prep] loading /root/autodl-tmp/terrain_suite_20260927/data/USGS_WA.off
+[2026-09-30 21:08:21] [stage=prep] |V|=2560000 leaves=64 occupied=64
+[2026-09-30 21:08:21] [stage=prep] boundary K=44856 (1.75% of V)
+[2026-09-30 21:08:30] [stage=prep] single-source dijkstra ~0.603s -> seq est 7.51h / 8 workers est 0.94h
+[2026-09-30 21:08:30] [stage=prep] loading topk artifacts: /root/autodl-tmp/terrain_suite_20260927/code/outputs/cache_73686d4135c6f30c/topk_artifacts_d3_c32.npz
+[2026-09-30 21:08:32] [stage=prep] loaded: topk=(2560000, 16) edges=32675892
+/root/autodl-tmp/terrain_suite_20260927/code/preprocess.py:606: UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor. (Triggered internally at /pytorch/torch/csrc/utils/tensor_new.cpp:253.)
+  edge_index_highway = torch.tensor([local_u, local_v], dtype=torch.long, device=device)
+[2026-09-30 21:08:40] [stage=context] built. nearest_k=(2560000, 16)
+[2026-09-30 21:08:40] [stage=grid] running configs from /root/autodl-tmp/terrain_suite_20260927/configs/USGS_WA_ours_s42_100ep.json (appended online)
+[2026-09-30 21:08:40] [stage=grid] #1 USGS_WA_ours_s42_100ep start
+[2026-09-30 21:12:41]   [USGS_WA_ours_s42_100ep] epoch=000 train_mae=161.8769 val_mae=131.0663 train_rel=0.022301 val_rel=0.018175 lr=1.00e-03 time=240.0s
+[2026-09-30 21:15:48]   [USGS_WA_ours_s42_100ep] epoch=001 train_mae=128.6162 val_mae=125.1348 train_rel=0.018163 val_rel=0.017378 lr=1.00e-03 time=186.7s
+[2026-09-30 21:18:54]   [USGS_WA_ours_s42_100ep] epoch=002 train_mae=121.2885 val_mae=122.7114 train_rel=0.017182 val_rel=0.016726 lr=1.00e-03 time=186.7s
+[2026-09-30 21:22:01]   [USGS_WA_ours_s42_100ep] epoch=003 train_mae=115.1775 val_mae=110.2419 train_rel=0.016427 val_rel=0.015649 lr=1.00e-03 time=187.0s
+[2026-09-30 21:25:08]   [USGS_WA_ours_s42_100ep] epoch=004 train_mae=112.0540 val_mae=103.0893 train_rel=0.015955 val_rel=0.014603 lr=1.00e-03 time=186.7s
+[2026-09-30 21:28:15]   [USGS_WA_ours_s42_100ep] epoch=005 train_mae=109.7454 val_mae=102.7234 train_rel=0.015727 val_rel=0.014804 lr=1.00e-03 time=186.9s
+[2026-09-30 21:31:22]   [USGS_WA_ours_s42_100ep] epoch=006 train_mae=108.4857 val_mae=99.5053 train_rel=0.015561 val_rel=0.014504 lr=1.00e-03 time=186.7s
+[2026-09-30 21:34:29]   [USGS_WA_ours_s42_100ep] epoch=007 train_mae=106.3890 val_mae=103.5238 train_rel=0.015295 val_rel=0.014948 lr=1.00e-03 time=187.0s
+[2026-09-30 21:37:35]   [USGS_WA_ours_s42_100ep] epoch=008 train_mae=105.9566 val_mae=97.9197 train_rel=0.015232 val_rel=0.014155 lr=1.00e-03 time=186.9s
+[2026-09-30 21:40:42]   [USGS_WA_ours_s42_100ep] epoch=009 train_mae=103.8744 val_mae=99.6456 train_rel=0.014950 val_rel=0.014734 lr=1.00e-03 time=186.8s
+[2026-09-30 21:43:49]   [USGS_WA_ours_s42_100ep] epoch=010 train_mae=103.1410 val_mae=99.3647 train_rel=0.014890 val_rel=0.014340 lr=1.00e-03 time=186.8s
+[2026-09-30 21:46:56]   [USGS_WA_ours_s42_100ep] epoch=011 train_mae=102.2918 val_mae=96.4265 train_rel=0.014756 val_rel=0.013997 lr=1.00e-03 time=186.9s
+[2026-09-30 21:50:03]   [USGS_WA_ours_s42_100ep] epoch=012 train_mae=101.7869 val_mae=107.2238 train_rel=0.014660 val_rel=0.015105 lr=1.00e-03 time=186.9s
+[2026-09-30 21:53:09]   [USGS_WA_ours_s42_100ep] epoch=013 train_mae=101.1571 val_mae=92.9194 train_rel=0.014629 val_rel=0.013484 lr=1.00e-03 time=186.5s
+[2026-09-30 21:56:16]   [USGS_WA_ours_s42_100ep] epoch=014 train_mae=100.8186 val_mae=98.1995 train_rel=0.014558 val_rel=0.013924 lr=1.00e-03 time=186.7s
+[2026-09-30 21:59:23]   [USGS_WA_ours_s42_100ep] epoch=015 train_mae=100.4461 val_mae=98.5573 train_rel=0.014492 val_rel=0.014227 lr=1.00e-03 time=186.6s
+[2026-09-30 22:02:29]   [USGS_WA_ours_s42_100ep] epoch=016 train_mae=99.4309 val_mae=97.1241 train_rel=0.014392 val_rel=0.013984 lr=1.00e-03 time=186.7s
+[2026-09-30 22:05:36]   [USGS_WA_ours_s42_100ep] epoch=017 train_mae=98.9090 val_mae=93.9591 train_rel=0.014305 val_rel=0.013614 lr=1.00e-03 time=186.5s
+[2026-09-30 22:08:42]   [USGS_WA_ours_s42_100ep] epoch=018 train_mae=98.3286 val_mae=92.6645 train_rel=0.014217 val_rel=0.013615 lr=1.00e-03 time=186.6s
+[2026-09-30 22:11:49]   [USGS_WA_ours_s42_100ep] epoch=019 train_mae=98.3048 val_mae=92.0863 train_rel=0.014237 val_rel=0.013529 lr=1.00e-03 time=186.5s
+[2026-09-30 22:14:56]   [USGS_WA_ours_s42_100ep] epoch=020 train_mae=90.5757 val_mae=87.2217 train_rel=0.013291 val_rel=0.012895 lr=5.00e-04 time=186.9s
+[2026-09-30 22:18:06]   [USGS_WA_ours_s42_100ep] epoch=021 train_mae=90.0009 val_mae=85.9016 train_rel=0.013213 val_rel=0.012699 lr=5.00e-04 time=190.2s
+[2026-09-30 22:21:15]   [USGS_WA_ours_s42_100ep] epoch=022 train_mae=89.3024 val_mae=86.1295 train_rel=0.013127 val_rel=0.012627 lr=5.00e-04 time=189.4s
+[2026-09-30 22:24:24]   [USGS_WA_ours_s42_100ep] epoch=023 train_mae=88.6874 val_mae=83.4994 train_rel=0.013056 val_rel=0.012438 lr=5.00e-04 time=189.0s
+[2026-09-30 22:27:33]   [USGS_WA_ours_s42_100ep] epoch=024 train_mae=88.6966 val_mae=82.6733 train_rel=0.013037 val_rel=0.012251 lr=5.00e-04 time=188.8s
+[2026-09-30 22:30:41]   [USGS_WA_ours_s42_100ep] epoch=025 train_mae=87.9605 val_mae=85.1665 train_rel=0.012947 val_rel=0.012554 lr=5.00e-04 time=187.6s
+[2026-09-30 22:33:50]   [USGS_WA_ours_s42_100ep] epoch=026 train_mae=88.2867 val_mae=84.1906 train_rel=0.012979 val_rel=0.012418 lr=5.00e-04 time=188.9s
+[2026-09-30 22:36:59]   [USGS_WA_ours_s42_100ep] epoch=027 train_mae=87.9155 val_mae=85.5638 train_rel=0.012953 val_rel=0.012613 lr=5.00e-04 time=189.0s
+[2026-09-30 22:40:07]   [USGS_WA_ours_s42_100ep] epoch=028 train_mae=87.9984 val_mae=83.4235 train_rel=0.012951 val_rel=0.012432 lr=5.00e-04 time=188.6s
+[2026-09-30 22:43:16]   [USGS_WA_ours_s42_100ep] epoch=029 train_mae=87.3344 val_mae=82.3200 train_rel=0.012848 val_rel=0.012174 lr=5.00e-04 time=188.4s
+[2026-09-30 22:46:24]   [USGS_WA_ours_s42_100ep] epoch=030 train_mae=87.3818 val_mae=81.9902 train_rel=0.012874 val_rel=0.012168 lr=5.00e-04 time=188.4s
+[2026-09-30 22:49:32]   [USGS_WA_ours_s42_100ep] epoch=031 train_mae=87.1307 val_mae=82.7283 train_rel=0.012865 val_rel=0.012316 lr=5.00e-04 time=188.3s
+[2026-09-30 22:52:41]   [USGS_WA_ours_s42_100ep] epoch=032 train_mae=87.1761 val_mae=81.2539 train_rel=0.012844 val_rel=0.012024 lr=5.00e-04 time=188.4s
+[2026-09-30 22:55:49]   [USGS_WA_ours_s42_100ep] epoch=033 train_mae=87.2076 val_mae=82.1266 train_rel=0.012832 val_rel=0.012215 lr=5.00e-04 time=188.5s
+[2026-09-30 22:58:58]   [USGS_WA_ours_s42_100ep] epoch=034 train_mae=86.7404 val_mae=82.8195 train_rel=0.012831 val_rel=0.012216 lr=5.00e-04 time=188.3s
+[2026-09-30 23:02:06]   [USGS_WA_ours_s42_100ep] epoch=035 train_mae=86.4907 val_mae=82.5901 train_rel=0.012756 val_rel=0.012236 lr=5.00e-04 time=188.6s
+[2026-09-30 23:05:15]   [USGS_WA_ours_s42_100ep] epoch=036 train_mae=86.4699 val_mae=80.5484 train_rel=0.012749 val_rel=0.011894 lr=5.00e-04 time=188.2s
+[2026-09-30 23:08:23]   [USGS_WA_ours_s42_100ep] epoch=037 train_mae=86.3612 val_mae=80.6781 train_rel=0.012723 val_rel=0.011973 lr=5.00e-04 time=188.4s
+[2026-09-30 23:11:31]   [USGS_WA_ours_s42_100ep] epoch=038 train_mae=86.4404 val_mae=80.3303 train_rel=0.012733 val_rel=0.011937 lr=5.00e-04 time=188.4s
+[2026-09-30 23:14:40]   [USGS_WA_ours_s42_100ep] epoch=039 train_mae=86.2182 val_mae=80.8022 train_rel=0.012715 val_rel=0.011994 lr=5.00e-04 time=188.4s
+[2026-09-30 23:17:49]   [USGS_WA_ours_s42_100ep] epoch=040 train_mae=86.2105 val_mae=82.5571 train_rel=0.012695 val_rel=0.012150 lr=5.00e-04 time=188.8s
+[2026-09-30 23:20:57]   [USGS_WA_ours_s42_100ep] epoch=041 train_mae=86.2865 val_mae=81.1771 train_rel=0.012708 val_rel=0.012056 lr=5.00e-04 time=188.3s
+[2026-09-30 23:24:05]   [USGS_WA_ours_s42_100ep] epoch=042 train_mae=85.3846 val_mae=80.6638 train_rel=0.012595 val_rel=0.012045 lr=5.00e-04 time=188.4s
+[2026-09-30 23:27:14]   [USGS_WA_ours_s42_100ep] epoch=043 train_mae=81.6962 val_mae=79.8066 train_rel=0.012163 val_rel=0.011853 lr=2.50e-04 time=188.4s
+[2026-09-30 23:30:22]   [USGS_WA_ours_s42_100ep] epoch=044 train_mae=81.5514 val_mae=78.4114 train_rel=0.012139 val_rel=0.011636 lr=2.50e-04 time=188.5s
+[2026-09-30 23:33:31]   [USGS_WA_ours_s42_100ep] epoch=045 train_mae=81.4456 val_mae=77.3179 train_rel=0.012106 val_rel=0.011549 lr=2.50e-04 time=188.6s
+[2026-09-30 23:36:39]   [USGS_WA_ours_s42_100ep] epoch=046 train_mae=81.1469 val_mae=77.7091 train_rel=0.012072 val_rel=0.011613 lr=2.50e-04 time=188.5s
+[2026-09-30 23:39:47]   [USGS_WA_ours_s42_100ep] epoch=047 train_mae=81.0871 val_mae=77.4242 train_rel=0.012091 val_rel=0.011556 lr=2.50e-04 time=188.3s
+[2026-09-30 23:42:56]   [USGS_WA_ours_s42_100ep] epoch=048 train_mae=81.0495 val_mae=78.4598 train_rel=0.012071 val_rel=0.011661 lr=2.50e-04 time=188.5s
+[2026-09-30 23:46:04]   [USGS_WA_ours_s42_100ep] epoch=049 train_mae=80.8703 val_mae=77.1667 train_rel=0.012054 val_rel=0.011537 lr=2.50e-04 time=188.5s
+[2026-09-30 23:49:13]   [USGS_WA_ours_s42_100ep] epoch=050 train_mae=80.8092 val_mae=76.9407 train_rel=0.012046 val_rel=0.011503 lr=2.50e-04 time=188.7s
+[2026-09-30 23:52:22]   [USGS_WA_ours_s42_100ep] epoch=051 train_mae=80.5976 val_mae=78.4586 train_rel=0.012005 val_rel=0.011715 lr=2.50e-04 time=188.7s
+[2026-09-30 23:55:31]   [USGS_WA_ours_s42_100ep] epoch=052 train_mae=80.2652 val_mae=77.1060 train_rel=0.011968 val_rel=0.011530 lr=2.50e-04 time=188.7s
+[2026-09-30 23:58:39]   [USGS_WA_ours_s42_100ep] epoch=053 train_mae=80.6141 val_mae=77.5684 train_rel=0.012010 val_rel=0.011534 lr=2.50e-04 time=188.6s
+[2026-10-01 00:01:48]   [USGS_WA_ours_s42_100ep] epoch=054 train_mae=80.1219 val_mae=77.0686 train_rel=0.011939 val_rel=0.011560 lr=2.50e-04 time=188.7s
+[2026-10-01 00:04:57]   [USGS_WA_ours_s42_100ep] epoch=055 train_mae=80.2406 val_mae=78.3706 train_rel=0.011950 val_rel=0.011590 lr=2.50e-04 time=188.9s
+[2026-10-01 00:08:05]   [USGS_WA_ours_s42_100ep] epoch=056 train_mae=80.0873 val_mae=75.6983 train_rel=0.011934 val_rel=0.011336 lr=2.50e-04 time=188.7s
+[2026-10-01 00:11:14]   [USGS_WA_ours_s42_100ep] epoch=057 train_mae=79.3778 val_mae=76.1393 train_rel=0.011857 val_rel=0.011392 lr=2.50e-04 time=188.6s
+[2026-10-01 00:14:23]   [USGS_WA_ours_s42_100ep] epoch=058 train_mae=79.9396 val_mae=76.8182 train_rel=0.011923 val_rel=0.011464 lr=2.50e-04 time=188.6s
+[2026-10-01 00:17:31]   [USGS_WA_ours_s42_100ep] epoch=059 train_mae=79.8951 val_mae=76.3010 train_rel=0.011920 val_rel=0.011434 lr=2.50e-04 time=188.6s
+[2026-10-01 00:20:40]   [USGS_WA_ours_s42_100ep] epoch=060 train_mae=79.7432 val_mae=76.8232 train_rel=0.011901 val_rel=0.011480 lr=2.50e-04 time=188.5s
+[2026-10-01 00:23:48]   [USGS_WA_ours_s42_100ep] epoch=061 train_mae=79.6104 val_mae=75.6949 train_rel=0.011873 val_rel=0.011324 lr=2.50e-04 time=188.5s
+[2026-10-01 00:26:57]   [USGS_WA_ours_s42_100ep] epoch=062 train_mae=79.3781 val_mae=77.1371 train_rel=0.011842 val_rel=0.011452 lr=2.50e-04 time=188.5s
+[2026-10-01 00:30:05]   [USGS_WA_ours_s42_100ep] epoch=063 train_mae=79.4380 val_mae=76.0474 train_rel=0.011833 val_rel=0.011413 lr=2.50e-04 time=188.5s
+[2026-10-01 00:33:14]   [USGS_WA_ours_s42_100ep] epoch=064 train_mae=79.5255 val_mae=75.4150 train_rel=0.011856 val_rel=0.011314 lr=2.50e-04 time=188.5s
+[2026-10-01 00:36:22]   [USGS_WA_ours_s42_100ep] epoch=065 train_mae=79.1101 val_mae=76.0186 train_rel=0.011786 val_rel=0.011381 lr=2.50e-04 time=188.6s
+[2026-10-01 00:39:31]   [USGS_WA_ours_s42_100ep] epoch=066 train_mae=79.2864 val_mae=76.3374 train_rel=0.011831 val_rel=0.011406 lr=2.50e-04 time=188.5s
+[2026-10-01 00:42:39]   [USGS_WA_ours_s42_100ep] epoch=067 train_mae=78.9055 val_mae=75.5907 train_rel=0.011795 val_rel=0.011340 lr=2.50e-04 time=188.5s
+[2026-10-01 00:45:48]   [USGS_WA_ours_s42_100ep] epoch=068 train_mae=79.0413 val_mae=76.9391 train_rel=0.011804 val_rel=0.011442 lr=2.50e-04 time=188.5s
+[2026-10-01 00:48:56]   [USGS_WA_ours_s42_100ep] epoch=069 train_mae=79.2782 val_mae=76.9308 train_rel=0.011800 val_rel=0.011450 lr=2.50e-04 time=188.3s
+[2026-10-01 00:52:05]   [USGS_WA_ours_s42_100ep] epoch=070 train_mae=78.7616 val_mae=75.8441 train_rel=0.011801 val_rel=0.011318 lr=2.50e-04 time=188.4s
+[2026-10-01 00:55:13]   [USGS_WA_ours_s42_100ep] epoch=071 train_mae=76.7036 val_mae=73.6833 train_rel=0.011501 val_rel=0.011072 lr=1.25e-04 time=188.4s
+[2026-10-01 00:58:21]   [USGS_WA_ours_s42_100ep] epoch=072 train_mae=76.4671 val_mae=75.2765 train_rel=0.011459 val_rel=0.011203 lr=1.25e-04 time=188.4s
+[2026-10-01 01:01:30]   [USGS_WA_ours_s42_100ep] epoch=073 train_mae=76.5973 val_mae=74.1153 train_rel=0.011482 val_rel=0.011063 lr=1.25e-04 time=188.5s
+[2026-10-01 01:04:38]   [USGS_WA_ours_s42_100ep] epoch=074 train_mae=76.1920 val_mae=73.4201 train_rel=0.011433 val_rel=0.011015 lr=1.25e-04 time=188.5s
+[2026-10-01 01:07:47]   [USGS_WA_ours_s42_100ep] epoch=075 train_mae=76.5202 val_mae=73.6680 train_rel=0.011476 val_rel=0.011021 lr=1.25e-04 time=188.7s
+[2026-10-01 01:10:56]   [USGS_WA_ours_s42_100ep] epoch=076 train_mae=76.6146 val_mae=73.6732 train_rel=0.011478 val_rel=0.011041 lr=1.25e-04 time=188.5s
+[2026-10-01 01:14:04]   [USGS_WA_ours_s42_100ep] epoch=077 train_mae=76.0930 val_mae=73.0405 train_rel=0.011416 val_rel=0.010975 lr=1.25e-04 time=188.5s
+[2026-10-01 01:17:13]   [USGS_WA_ours_s42_100ep] epoch=078 train_mae=76.3758 val_mae=74.1375 train_rel=0.011436 val_rel=0.011084 lr=1.25e-04 time=188.8s
+[2026-10-01 01:20:21]   [USGS_WA_ours_s42_100ep] epoch=079 train_mae=76.4048 val_mae=73.2934 train_rel=0.011460 val_rel=0.011022 lr=1.25e-04 time=188.6s
+[2026-10-01 01:23:30]   [USGS_WA_ours_s42_100ep] epoch=080 train_mae=76.2122 val_mae=73.6106 train_rel=0.011431 val_rel=0.011027 lr=1.25e-04 time=188.5s
+[2026-10-01 01:26:39]   [USGS_WA_ours_s42_100ep] epoch=081 train_mae=76.2885 val_mae=73.7036 train_rel=0.011440 val_rel=0.011027 lr=1.25e-04 time=188.7s
+[2026-10-01 01:29:47]   [USGS_WA_ours_s42_100ep] epoch=082 train_mae=75.8260 val_mae=72.8559 train_rel=0.011393 val_rel=0.010970 lr=1.25e-04 time=188.7s
+[2026-10-01 01:32:56]   [USGS_WA_ours_s42_100ep] epoch=083 train_mae=76.0312 val_mae=73.9774 train_rel=0.011405 val_rel=0.011098 lr=1.25e-04 time=188.7s
+[2026-10-01 01:36:04]   [USGS_WA_ours_s42_100ep] epoch=084 train_mae=75.8141 val_mae=73.0142 train_rel=0.011380 val_rel=0.010937 lr=1.25e-04 time=188.5s
+[2026-10-01 01:39:13]   [USGS_WA_ours_s42_100ep] epoch=085 train_mae=75.5314 val_mae=73.3383 train_rel=0.011359 val_rel=0.010995 lr=1.25e-04 time=188.7s
+[2026-10-01 01:42:22]   [USGS_WA_ours_s42_100ep] epoch=086 train_mae=75.5231 val_mae=73.2215 train_rel=0.011351 val_rel=0.010990 lr=1.25e-04 time=188.5s
+[2026-10-01 01:45:30]   [USGS_WA_ours_s42_100ep] epoch=087 train_mae=75.7322 val_mae=73.5876 train_rel=0.011361 val_rel=0.010993 lr=1.25e-04 time=188.4s
+[2026-10-01 01:48:39]   [USGS_WA_ours_s42_100ep] epoch=088 train_mae=75.4859 val_mae=73.0601 train_rel=0.011314 val_rel=0.010946 lr=1.25e-04 time=188.5s
+[2026-10-01 01:51:47]   [USGS_WA_ours_s42_100ep] epoch=089 train_mae=75.5467 val_mae=73.3727 train_rel=0.011340 val_rel=0.010983 lr=1.25e-04 time=188.4s
+[2026-10-01 01:54:54]   [USGS_WA_ours_s42_100ep] epoch=090 train_mae=75.6639 val_mae=73.2189 train_rel=0.011337 val_rel=0.010980 lr=1.25e-04 time=187.0s
+[2026-10-01 01:58:02]   [USGS_WA_ours_s42_100ep] epoch=091 train_mae=74.3739 val_mae=72.4144 train_rel=0.011201 val_rel=0.010878 lr=6.25e-05 time=188.3s
+[2026-10-01 02:01:11]   [USGS_WA_ours_s42_100ep] epoch=092 train_mae=74.4290 val_mae=72.0592 train_rel=0.011205 val_rel=0.010830 lr=6.25e-05 time=188.7s
+[2026-10-01 02:04:20]   [USGS_WA_ours_s42_100ep] epoch=093 train_mae=74.3371 val_mae=72.1437 train_rel=0.011198 val_rel=0.010838 lr=6.25e-05 time=188.9s
+[2026-10-01 02:07:29]   [USGS_WA_ours_s42_100ep] epoch=094 train_mae=74.0659 val_mae=72.0071 train_rel=0.011146 val_rel=0.010838 lr=6.25e-05 time=188.8s
+[2026-10-01 02:10:37]   [USGS_WA_ours_s42_100ep] epoch=095 train_mae=73.9216 val_mae=71.7423 train_rel=0.011137 val_rel=0.010814 lr=6.25e-05 time=188.7s
+[2026-10-01 02:13:46]   [USGS_WA_ours_s42_100ep] epoch=096 train_mae=74.0074 val_mae=72.4178 train_rel=0.011163 val_rel=0.010877 lr=6.25e-05 time=188.7s
+[2026-10-01 02:16:55]   [USGS_WA_ours_s42_100ep] epoch=097 train_mae=74.2802 val_mae=72.4654 train_rel=0.011191 val_rel=0.010882 lr=6.25e-05 time=189.1s
+[2026-10-01 02:20:04]   [USGS_WA_ours_s42_100ep] epoch=098 train_mae=73.6749 val_mae=72.1263 train_rel=0.011119 val_rel=0.010855 lr=6.25e-05 time=188.6s
+[2026-10-01 02:23:12]   [USGS_WA_ours_s42_100ep] epoch=099 train_mae=73.6405 val_mae=72.1615 train_rel=0.011125 val_rel=0.010805 lr=6.25e-05 time=188.2s
+[2026-10-01 02:23:35] [stage=grid] #1 USGS_WA_ours_s42_100ep done test_rel=0.010969099588692188
+[2026-10-01 02:23:35] [stage=grid] === RANKING (by test_relative_error) ===
+[2026-10-01 02:23:35]   0.01097 | USGS_WA_ours_s42_100ep | best_ep=99 mae=73.76 rmse=105.90
+[2026-10-01 02:23:35] [ALL DONE] total 18940.3s

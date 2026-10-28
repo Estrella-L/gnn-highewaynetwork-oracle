@@ -1,0 +1,36 @@
+{
+  "name": "USGS_WA",
+  "vertices": 2560000,
+  "faces": 5113602,
+  "crop_pixels": [
+    1906,
+    826,
+    1600,
+    1600
+  ],
+  "source_crs": "EPSG:4269",
+  "target_crs": "EPSG:32610",
+  "xy_origin_m": [
+    595297.0999680025,
+    5189254.743007667
+  ],
+  "xy_units": "metres",
+  "z_units": "metres (USGS DEM convention; source product retained)",
+  "source_transform": [
+    9.259259269220167e-05,
+    0.0,
+    -122.00055555599357,
+    0.0,
+    -9.259259269220167e-05,
+    47.00055555589512,
+    0.0,
+    0.0,
+    1.0
+  ],
+  "resampling": "none; contiguous native-resolution crop",
+  "center_requested_lonlat": [
+    -121.75,
+    46.85
+  ],
+  "nodata_pixels": 0
+}

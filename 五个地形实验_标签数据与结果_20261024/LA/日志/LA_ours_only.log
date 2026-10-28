@@ -1,0 +1,182 @@
+
+=== Authorized resume 2026-10-05: preprocessing_and_training ===
+[2026-10-07 12:59:56] [stage=prep] loading /root/autodl-tmp/terrain_suite_20260927/data/LA.off
+[2026-10-07 13:02:49] [stage=prep] |V|=16000000 leaves=64 occupied=64
+[2026-10-07 13:02:53] [stage=prep] boundary K=111804 (0.70% of V)
+[2026-10-07 13:03:50] [stage=prep] single-source dijkstra ~5.247s -> seq est 162.97h / 2 workers est 81.48h
+  [prep] merged 48 / 111804
+  [prep] merged 96 / 111804
+  [prep] merged 144 / 111804
+  [prep] merged 192 / 111804
+  [prep] merged 240 / 111804
+  [prep] merged 288 / 111804
+  [prep] merged 336 / 111804
+  [prep] merged 384 / 111804
+  [prep] merged 432 / 111804
+  [prep] merged 480 / 111804
+  [prep] merged 528 / 111804
+  [prep] merged 576 / 111804
+  [prep] merged 624 / 111804
+  [prep] merged 672 / 111804
+  [prep] merged 720 / 111804
+  [prep] merged 768 / 111804
+  [prep] merged 816 / 111804
+  [prep] merged 864 / 111804
+  [prep] merged 912 / 111804
+  [prep] merged 960 / 111804
+  [prep] merged 1008 / 111804
+  [prep] merged 1056 / 111804
+  [prep] merged 1104 / 111804
+  [prep] merged 1152 / 111804
+  [prep] merged 1200 / 111804
+  [prep] merged 1248 / 111804
+  [prep] merged 1296 / 111804
+  [prep] merged 1344 / 111804
+  [prep] merged 1392 / 111804
+  [prep] merged 1440 / 111804
+  [prep] merged 1488 / 111804
+  [prep] merged 1536 / 111804
+  [prep] merged 1584 / 111804
+  [prep] merged 1632 / 111804
+  [prep] merged 1680 / 111804
+  [prep] merged 1728 / 111804
+  [prep] merged 1776 / 111804
+  [prep] merged 1824 / 111804
+  [prep] merged 1872 / 111804
+  [prep] merged 1920 / 111804
+  [prep] merged 1968 / 111804
+  [prep] merged 2016 / 111804
+  [prep] merged 2064 / 111804
+  [prep] merged 2112 / 111804
+  [prep] merged 2160 / 111804
+  [prep] merged 2208 / 111804
+  [prep] merged 2256 / 111804
+  [prep] merged 2304 / 111804
+  [prep] merged 2352 / 111804
+  [prep] merged 2400 / 111804
+  [prep] merged 2448 / 111804
+  [prep] merged 2496 / 111804
+  [prep] merged 2544 / 111804
+  [prep] merged 2592 / 111804
+  [prep] merged 2640 / 111804
+  [prep] merged 2688 / 111804
+  [prep] merged 2736 / 111804
+  [prep] merged 2784 / 111804
+  [prep] merged 2832 / 111804
+  [prep] merged 2880 / 111804
+  [prep] merged 2928 / 111804
+  [prep] merged 2976 / 111804
+  [prep] merged 3024 / 111804
+  [prep] merged 3072 / 111804
+  [prep] merged 3120 / 111804
+  [prep] merged 3168 / 111804
+  [prep] merged 3216 / 111804
+  [prep] merged 3264 / 111804
+  [prep] merged 3312 / 111804
+  [prep] merged 3360 / 111804
+
+=== Authorized resume 2026-10-05: training ===
+[2026-10-07 19:34:44] [stage=grid] exact dependency evaluation; original 100 epochs seed42 configuration
+original_training_with_epoch_checkpoints:17: UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor. (Triggered internally at /pytorch/torch/csrc/utils/tensor_new.cpp:253.)
+  from build_highway import load_off, build_mesh_graph, build_quadtree, find_boundary_nodes, _adj_from_graph_info
+[2026-10-07 19:36:33]   [LA_ours_s42_100ep] epoch=000 train_mae=858.1217 val_mae=683.3489 train_rel=0.014163 val_rel=0.011339 lr=1.00e-03 time=108.8s
+[2026-10-07 19:37:39]   [LA_ours_s42_100ep] epoch=001 train_mae=724.3759 val_mae=723.8225 train_rel=0.011952 val_rel=0.011918 lr=1.00e-03 time=66.1s
+[2026-10-07 19:38:46]   [LA_ours_s42_100ep] epoch=002 train_mae=691.4648 val_mae=658.0108 train_rel=0.011379 val_rel=0.010906 lr=1.00e-03 time=66.9s
+[2026-10-07 19:39:53]   [LA_ours_s42_100ep] epoch=003 train_mae=669.9529 val_mae=665.3547 train_rel=0.011020 val_rel=0.011024 lr=1.00e-03 time=67.5s
+[2026-10-07 19:41:00]   [LA_ours_s42_100ep] epoch=004 train_mae=659.3174 val_mae=705.3012 train_rel=0.010841 val_rel=0.011458 lr=1.00e-03 time=66.4s
+[2026-10-07 19:42:07]   [LA_ours_s42_100ep] epoch=005 train_mae=649.9868 val_mae=651.7891 train_rel=0.010676 val_rel=0.010792 lr=1.00e-03 time=67.0s
+[2026-10-07 19:43:14]   [LA_ours_s42_100ep] epoch=006 train_mae=644.0951 val_mae=655.5767 train_rel=0.010574 val_rel=0.010631 lr=1.00e-03 time=67.1s
+[2026-10-07 19:44:20]   [LA_ours_s42_100ep] epoch=007 train_mae=637.8349 val_mae=657.3867 train_rel=0.010471 val_rel=0.010712 lr=1.00e-03 time=66.8s
+[2026-10-07 19:45:26]   [LA_ours_s42_100ep] epoch=008 train_mae=631.2011 val_mae=637.3458 train_rel=0.010369 val_rel=0.010351 lr=1.00e-03 time=65.7s
+[2026-10-07 19:46:34]   [LA_ours_s42_100ep] epoch=009 train_mae=622.0995 val_mae=609.7377 train_rel=0.010211 val_rel=0.010017 lr=1.00e-03 time=67.3s
+[2026-10-07 19:47:24]   [LA_ours_s42_100ep] epoch=010 train_mae=620.7848 val_mae=618.2561 train_rel=0.010203 val_rel=0.010082 lr=1.00e-03 time=50.5s
+[2026-10-07 19:48:08]   [LA_ours_s42_100ep] epoch=011 train_mae=617.7943 val_mae=596.4686 train_rel=0.010140 val_rel=0.009799 lr=1.00e-03 time=43.9s
+[2026-10-07 19:49:08]   [LA_ours_s42_100ep] epoch=012 train_mae=613.4088 val_mae=634.8628 train_rel=0.010092 val_rel=0.010541 lr=1.00e-03 time=60.3s
+[2026-10-07 19:50:15]   [LA_ours_s42_100ep] epoch=013 train_mae=607.8599 val_mae=585.9326 train_rel=0.010011 val_rel=0.009658 lr=1.00e-03 time=66.6s
+[2026-10-07 19:51:21]   [LA_ours_s42_100ep] epoch=014 train_mae=601.4898 val_mae=578.9960 train_rel=0.009884 val_rel=0.009545 lr=1.00e-03 time=66.6s
+[2026-10-07 19:52:29]   [LA_ours_s42_100ep] epoch=015 train_mae=600.7527 val_mae=641.2806 train_rel=0.009910 val_rel=0.010419 lr=1.00e-03 time=67.5s
+[2026-10-07 19:53:20]   [LA_ours_s42_100ep] epoch=016 train_mae=600.5274 val_mae=615.2712 train_rel=0.009875 val_rel=0.010027 lr=1.00e-03 time=51.4s
+[2026-10-07 19:54:25]   [LA_ours_s42_100ep] epoch=017 train_mae=597.6353 val_mae=596.4023 train_rel=0.009819 val_rel=0.009752 lr=1.00e-03 time=64.7s
+[2026-10-07 19:55:32]   [LA_ours_s42_100ep] epoch=018 train_mae=595.5895 val_mae=593.9664 train_rel=0.009823 val_rel=0.009803 lr=1.00e-03 time=66.8s
+[2026-10-07 19:56:39]   [LA_ours_s42_100ep] epoch=019 train_mae=594.1209 val_mae=588.2207 train_rel=0.009804 val_rel=0.009556 lr=1.00e-03 time=67.0s
+[2026-10-07 19:57:47]   [LA_ours_s42_100ep] epoch=020 train_mae=592.7658 val_mae=589.4278 train_rel=0.009764 val_rel=0.009548 lr=1.00e-03 time=67.7s
+[2026-10-07 19:58:51]   [LA_ours_s42_100ep] epoch=021 train_mae=560.8959 val_mae=559.1723 train_rel=0.009251 val_rel=0.009206 lr=5.00e-04 time=64.2s
+[2026-10-07 19:59:57]   [LA_ours_s42_100ep] epoch=022 train_mae=555.7242 val_mae=544.4105 train_rel=0.009195 val_rel=0.008990 lr=5.00e-04 time=66.0s
+[2026-10-07 20:01:04]   [LA_ours_s42_100ep] epoch=023 train_mae=552.0681 val_mae=544.8240 train_rel=0.009123 val_rel=0.009050 lr=5.00e-04 time=66.8s
+[2026-10-07 20:02:08]   [LA_ours_s42_100ep] epoch=024 train_mae=550.9381 val_mae=535.2091 train_rel=0.009108 val_rel=0.008857 lr=5.00e-04 time=63.9s
+[2026-10-07 20:03:13]   [LA_ours_s42_100ep] epoch=025 train_mae=548.2608 val_mae=547.3558 train_rel=0.009080 val_rel=0.008961 lr=5.00e-04 time=65.9s
+[2026-10-07 20:04:20]   [LA_ours_s42_100ep] epoch=026 train_mae=547.0121 val_mae=544.7082 train_rel=0.009080 val_rel=0.009017 lr=5.00e-04 time=66.6s
+[2026-10-07 20:05:28]   [LA_ours_s42_100ep] epoch=027 train_mae=542.1434 val_mae=539.6908 train_rel=0.009003 val_rel=0.008859 lr=5.00e-04 time=67.6s
+[2026-10-07 20:06:34]   [LA_ours_s42_100ep] epoch=028 train_mae=542.3922 val_mae=528.6364 train_rel=0.009010 val_rel=0.008803 lr=5.00e-04 time=66.4s
+[2026-10-07 20:07:42]   [LA_ours_s42_100ep] epoch=029 train_mae=539.2960 val_mae=521.5005 train_rel=0.008962 val_rel=0.008683 lr=5.00e-04 time=67.4s
+[2026-10-07 20:08:48]   [LA_ours_s42_100ep] epoch=030 train_mae=536.9651 val_mae=524.4758 train_rel=0.008915 val_rel=0.008743 lr=5.00e-04 time=66.4s
+[2026-10-07 20:09:55]   [LA_ours_s42_100ep] epoch=031 train_mae=534.8120 val_mae=517.9938 train_rel=0.008889 val_rel=0.008592 lr=5.00e-04 time=67.0s
+[2026-10-07 20:11:02]   [LA_ours_s42_100ep] epoch=032 train_mae=533.1458 val_mae=517.9749 train_rel=0.008884 val_rel=0.008648 lr=5.00e-04 time=66.7s
+[2026-10-07 20:12:09]   [LA_ours_s42_100ep] epoch=033 train_mae=530.8328 val_mae=511.4748 train_rel=0.008831 val_rel=0.008525 lr=5.00e-04 time=67.1s
+[2026-10-07 20:13:16]   [LA_ours_s42_100ep] epoch=034 train_mae=531.3266 val_mae=514.8269 train_rel=0.008856 val_rel=0.008716 lr=5.00e-04 time=67.5s
+[2026-10-07 20:14:23]   [LA_ours_s42_100ep] epoch=035 train_mae=525.7081 val_mae=510.5910 train_rel=0.008777 val_rel=0.008530 lr=5.00e-04 time=66.6s
+[2026-10-07 20:15:29]   [LA_ours_s42_100ep] epoch=036 train_mae=525.0983 val_mae=499.3148 train_rel=0.008784 val_rel=0.008410 lr=5.00e-04 time=66.2s
+[2026-10-07 20:16:36]   [LA_ours_s42_100ep] epoch=037 train_mae=520.8926 val_mae=494.0822 train_rel=0.008743 val_rel=0.008317 lr=5.00e-04 time=66.9s
+[2026-10-07 20:17:41]   [LA_ours_s42_100ep] epoch=038 train_mae=520.8300 val_mae=491.9100 train_rel=0.008726 val_rel=0.008321 lr=5.00e-04 time=64.5s
+[2026-10-07 20:18:47]   [LA_ours_s42_100ep] epoch=039 train_mae=516.4965 val_mae=497.7634 train_rel=0.008677 val_rel=0.008410 lr=5.00e-04 time=66.5s
+[2026-10-07 20:19:52]   [LA_ours_s42_100ep] epoch=040 train_mae=515.0894 val_mae=496.9051 train_rel=0.008671 val_rel=0.008402 lr=5.00e-04 time=65.4s
+[2026-10-07 20:20:59]   [LA_ours_s42_100ep] epoch=041 train_mae=513.5649 val_mae=508.0631 train_rel=0.008630 val_rel=0.008559 lr=5.00e-04 time=66.9s
+[2026-10-07 20:22:04]   [LA_ours_s42_100ep] epoch=042 train_mae=512.1179 val_mae=508.4220 train_rel=0.008611 val_rel=0.008508 lr=5.00e-04 time=64.4s
+[2026-10-07 20:23:11]   [LA_ours_s42_100ep] epoch=043 train_mae=512.6063 val_mae=502.6417 train_rel=0.008623 val_rel=0.008487 lr=5.00e-04 time=67.4s
+[2026-10-07 20:24:17]   [LA_ours_s42_100ep] epoch=044 train_mae=482.6111 val_mae=474.0878 train_rel=0.008196 val_rel=0.008069 lr=2.50e-04 time=66.2s
+[2026-10-07 20:25:23]   [LA_ours_s42_100ep] epoch=045 train_mae=482.0278 val_mae=471.1853 train_rel=0.008170 val_rel=0.008035 lr=2.50e-04 time=65.4s
+[2026-10-07 20:26:29]   [LA_ours_s42_100ep] epoch=046 train_mae=477.4430 val_mae=473.5113 train_rel=0.008113 val_rel=0.008047 lr=2.50e-04 time=66.1s
+[2026-10-07 20:27:36]   [LA_ours_s42_100ep] epoch=047 train_mae=476.3116 val_mae=467.5003 train_rel=0.008097 val_rel=0.007954 lr=2.50e-04 time=67.4s
+[2026-10-07 20:28:42]   [LA_ours_s42_100ep] epoch=048 train_mae=474.5988 val_mae=475.6487 train_rel=0.008083 val_rel=0.008056 lr=2.50e-04 time=65.9s
+[2026-10-07 20:29:49]   [LA_ours_s42_100ep] epoch=049 train_mae=475.4631 val_mae=470.4346 train_rel=0.008090 val_rel=0.007984 lr=2.50e-04 time=66.8s
+[2026-10-07 20:30:54]   [LA_ours_s42_100ep] epoch=050 train_mae=471.2079 val_mae=466.2386 train_rel=0.008050 val_rel=0.007960 lr=2.50e-04 time=65.4s
+[2026-10-07 20:32:00]   [LA_ours_s42_100ep] epoch=051 train_mae=472.0237 val_mae=458.7349 train_rel=0.008048 val_rel=0.007842 lr=2.50e-04 time=66.0s
+[2026-10-07 20:33:07]   [LA_ours_s42_100ep] epoch=052 train_mae=469.8615 val_mae=459.8970 train_rel=0.008025 val_rel=0.007857 lr=2.50e-04 time=66.6s
+[2026-10-07 20:34:13]   [LA_ours_s42_100ep] epoch=053 train_mae=467.7608 val_mae=462.6507 train_rel=0.007987 val_rel=0.007870 lr=2.50e-04 time=66.2s
+[2026-10-07 20:35:19]   [LA_ours_s42_100ep] epoch=054 train_mae=468.8150 val_mae=466.7613 train_rel=0.008014 val_rel=0.007900 lr=2.50e-04 time=66.4s
+[2026-10-07 20:36:26]   [LA_ours_s42_100ep] epoch=055 train_mae=464.3198 val_mae=464.0675 train_rel=0.007939 val_rel=0.007940 lr=2.50e-04 time=67.1s
+[2026-10-07 20:37:33]   [LA_ours_s42_100ep] epoch=056 train_mae=467.3317 val_mae=460.2519 train_rel=0.007970 val_rel=0.007832 lr=2.50e-04 time=66.3s
+[2026-10-07 20:38:40]   [LA_ours_s42_100ep] epoch=057 train_mae=462.9344 val_mae=458.5959 train_rel=0.007933 val_rel=0.007819 lr=2.50e-04 time=67.2s
+[2026-10-07 20:39:46]   [LA_ours_s42_100ep] epoch=058 train_mae=465.5304 val_mae=458.4703 train_rel=0.007969 val_rel=0.007821 lr=2.50e-04 time=65.5s
+[2026-10-07 20:40:51]   [LA_ours_s42_100ep] epoch=059 train_mae=462.7038 val_mae=461.3823 train_rel=0.007932 val_rel=0.007851 lr=2.50e-04 time=65.8s
+[2026-10-07 20:41:58]   [LA_ours_s42_100ep] epoch=060 train_mae=460.3679 val_mae=462.5398 train_rel=0.007900 val_rel=0.007828 lr=2.50e-04 time=66.8s
+[2026-10-07 20:43:05]   [LA_ours_s42_100ep] epoch=061 train_mae=460.2372 val_mae=451.0492 train_rel=0.007875 val_rel=0.007702 lr=2.50e-04 time=67.0s
+[2026-10-07 20:44:12]   [LA_ours_s42_100ep] epoch=062 train_mae=460.4377 val_mae=478.0349 train_rel=0.007901 val_rel=0.008044 lr=2.50e-04 time=66.3s
+[2026-10-07 20:45:16]   [LA_ours_s42_100ep] epoch=063 train_mae=458.5395 val_mae=469.6253 train_rel=0.007854 val_rel=0.007938 lr=2.50e-04 time=64.8s
+[2026-10-07 20:46:23]   [LA_ours_s42_100ep] epoch=064 train_mae=457.3047 val_mae=454.0817 train_rel=0.007843 val_rel=0.007743 lr=2.50e-04 time=66.2s
+[2026-10-07 20:47:29]   [LA_ours_s42_100ep] epoch=065 train_mae=455.8136 val_mae=465.1484 train_rel=0.007836 val_rel=0.007858 lr=2.50e-04 time=66.6s
+[2026-10-07 20:48:36]   [LA_ours_s42_100ep] epoch=066 train_mae=455.6269 val_mae=450.0040 train_rel=0.007828 val_rel=0.007682 lr=2.50e-04 time=66.4s
+[2026-10-07 20:49:42]   [LA_ours_s42_100ep] epoch=067 train_mae=455.9846 val_mae=460.5799 train_rel=0.007822 val_rel=0.007802 lr=2.50e-04 time=66.2s
+[2026-10-07 20:50:49]   [LA_ours_s42_100ep] epoch=068 train_mae=457.6258 val_mae=462.4737 train_rel=0.007846 val_rel=0.007822 lr=2.50e-04 time=66.8s
+[2026-10-07 20:51:55]   [LA_ours_s42_100ep] epoch=069 train_mae=455.6685 val_mae=449.4441 train_rel=0.007806 val_rel=0.007650 lr=2.50e-04 time=66.0s
+[2026-10-07 20:52:56]   [LA_ours_s42_100ep] epoch=070 train_mae=455.3107 val_mae=453.6214 train_rel=0.007812 val_rel=0.007696 lr=2.50e-04 time=61.7s
+[2026-10-07 20:54:03]   [LA_ours_s42_100ep] epoch=071 train_mae=453.7550 val_mae=454.5573 train_rel=0.007793 val_rel=0.007779 lr=2.50e-04 time=66.7s
+[2026-10-07 20:55:09]   [LA_ours_s42_100ep] epoch=072 train_mae=453.1119 val_mae=454.6167 train_rel=0.007786 val_rel=0.007764 lr=2.50e-04 time=66.1s
+[2026-10-07 20:56:16]   [LA_ours_s42_100ep] epoch=073 train_mae=453.6118 val_mae=447.7965 train_rel=0.007793 val_rel=0.007619 lr=2.50e-04 time=66.5s
+[2026-10-07 20:57:22]   [LA_ours_s42_100ep] epoch=074 train_mae=454.4424 val_mae=467.5078 train_rel=0.007805 val_rel=0.007878 lr=2.50e-04 time=66.8s
+[2026-10-07 20:58:27]   [LA_ours_s42_100ep] epoch=075 train_mae=450.9121 val_mae=462.8535 train_rel=0.007759 val_rel=0.007807 lr=2.50e-04 time=64.8s
+[2026-10-07 20:59:34]   [LA_ours_s42_100ep] epoch=076 train_mae=452.5273 val_mae=450.2028 train_rel=0.007766 val_rel=0.007658 lr=2.50e-04 time=66.4s
+[2026-10-07 21:00:41]   [LA_ours_s42_100ep] epoch=077 train_mae=449.8400 val_mae=449.8420 train_rel=0.007741 val_rel=0.007647 lr=2.50e-04 time=66.8s
+[2026-10-07 21:01:47]   [LA_ours_s42_100ep] epoch=078 train_mae=448.4791 val_mae=464.9188 train_rel=0.007720 val_rel=0.007824 lr=2.50e-04 time=66.4s
+[2026-10-07 21:02:52]   [LA_ours_s42_100ep] epoch=079 train_mae=447.4870 val_mae=466.1356 train_rel=0.007702 val_rel=0.007931 lr=2.50e-04 time=64.5s
+[2026-10-07 21:03:57]   [LA_ours_s42_100ep] epoch=080 train_mae=434.4785 val_mae=439.8751 train_rel=0.007519 val_rel=0.007524 lr=1.25e-04 time=65.4s
+[2026-10-07 21:05:04]   [LA_ours_s42_100ep] epoch=081 train_mae=431.4742 val_mae=434.7022 train_rel=0.007466 val_rel=0.007451 lr=1.25e-04 time=67.3s
+[2026-10-07 21:06:07]   [LA_ours_s42_100ep] epoch=082 train_mae=432.2491 val_mae=436.4771 train_rel=0.007485 val_rel=0.007492 lr=1.25e-04 time=62.6s
+[2026-10-07 21:07:14]   [LA_ours_s42_100ep] epoch=083 train_mae=431.1406 val_mae=436.6306 train_rel=0.007474 val_rel=0.007469 lr=1.25e-04 time=67.1s
+[2026-10-07 21:08:21]   [LA_ours_s42_100ep] epoch=084 train_mae=430.2479 val_mae=438.9074 train_rel=0.007458 val_rel=0.007492 lr=1.25e-04 time=67.3s
+[2026-10-07 21:09:28]   [LA_ours_s42_100ep] epoch=085 train_mae=429.0661 val_mae=443.2742 train_rel=0.007449 val_rel=0.007547 lr=1.25e-04 time=66.9s
+[2026-10-07 21:10:35]   [LA_ours_s42_100ep] epoch=086 train_mae=426.1900 val_mae=440.2454 train_rel=0.007411 val_rel=0.007506 lr=1.25e-04 time=67.3s
+[2026-10-07 21:11:41]   [LA_ours_s42_100ep] epoch=087 train_mae=427.3001 val_mae=439.7483 train_rel=0.007410 val_rel=0.007542 lr=1.25e-04 time=66.0s
+[2026-10-07 21:12:48]   [LA_ours_s42_100ep] epoch=088 train_mae=420.5706 val_mae=426.8353 train_rel=0.007312 val_rel=0.007341 lr=6.25e-05 time=66.4s
+[2026-10-07 21:13:55]   [LA_ours_s42_100ep] epoch=089 train_mae=421.7186 val_mae=425.8528 train_rel=0.007327 val_rel=0.007328 lr=6.25e-05 time=66.9s
+[2026-10-07 21:15:02]   [LA_ours_s42_100ep] epoch=090 train_mae=420.6511 val_mae=427.1708 train_rel=0.007316 val_rel=0.007334 lr=6.25e-05 time=67.5s
+[2026-10-07 21:16:09]   [LA_ours_s42_100ep] epoch=091 train_mae=420.5398 val_mae=426.2097 train_rel=0.007313 val_rel=0.007328 lr=6.25e-05 time=66.7s
+[2026-10-07 21:17:15]   [LA_ours_s42_100ep] epoch=092 train_mae=419.8576 val_mae=428.7410 train_rel=0.007305 val_rel=0.007363 lr=6.25e-05 time=66.2s
+[2026-10-07 21:18:22]   [LA_ours_s42_100ep] epoch=093 train_mae=418.4431 val_mae=429.6354 train_rel=0.007280 val_rel=0.007349 lr=6.25e-05 time=66.5s
+[2026-10-07 21:19:28]   [LA_ours_s42_100ep] epoch=094 train_mae=418.1953 val_mae=428.1307 train_rel=0.007286 val_rel=0.007347 lr=6.25e-05 time=66.7s
+[2026-10-07 21:20:35]   [LA_ours_s42_100ep] epoch=095 train_mae=418.5707 val_mae=425.9877 train_rel=0.007288 val_rel=0.007327 lr=6.25e-05 time=66.8s
+[2026-10-07 21:21:42]   [LA_ours_s42_100ep] epoch=096 train_mae=417.6183 val_mae=424.1947 train_rel=0.007260 val_rel=0.007287 lr=6.25e-05 time=67.0s
+[2026-10-07 21:22:49]   [LA_ours_s42_100ep] epoch=097 train_mae=418.7810 val_mae=430.7708 train_rel=0.007285 val_rel=0.007383 lr=6.25e-05 time=66.5s
+[2026-10-07 21:23:55]   [LA_ours_s42_100ep] epoch=098 train_mae=419.9480 val_mae=428.8737 train_rel=0.007298 val_rel=0.007363 lr=6.25e-05 time=66.6s
+[2026-10-07 21:25:02]   [LA_ours_s42_100ep] epoch=099 train_mae=417.3900 val_mae=424.6770 train_rel=0.007264 val_rel=0.007320 lr=6.25e-05 time=66.7s
+{"name": "LA_ours_s42_100ep", "sample_strategy": "random", "loss_type": "huber", "highway_k": 3, "hidden_dim": 64, "out_dim": 32, "transit_k": 8, "epochs_run": 100, "best_epoch": 96, "best_val_relative_error": 0.007287122309207916, "best_val_mae": 424.1947021484375, "test_mae": 420.18115234375, "test_rmse": 803.6009521484375, "test_relative_error": 0.007357150781899691, "group_same_leaf_count": 69, "group_same_leaf_relative_error": 0.0074747768230736256, "group_same_leaf_mae": 52.538272857666016, "group_cross_leaf_count": 4931, "group_cross_leaf_relative_error": 0.007355505134910345, "group_cross_leaf_mae": 425.3255920410156, "group_short_dist_count": 1667, "group_short_dist_relative_error": 0.008827433921396732, "group_short_dist_mae": 252.29458618164062, "group_mid_dist_count": 1667, "group_mid_dist_relative_error": 0.007227704394608736, "group_mid_dist_mae": 430.3727111816406, "group_long_dist_count": 1666, "group_long_dist_relative_error": 0.006015507970005274, "group_long_dist_mae": 577.970703125, "residual_scale": 1.0}

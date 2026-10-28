@@ -1,0 +1,21 @@
+{
+  "original_files_verified": 147,
+  "completed_datasets": [
+    "BH_high",
+    "USGS_CO",
+    "SF_high",
+    "USGS_WA",
+    "LA"
+  ],
+  "epoch_records": 500,
+  "label_rows_per_completed_dataset": 50000,
+  "la_snapshot_rows": 50000,
+  "la_snapshot_invalid_rows": 0,
+  "desktop_export_verified": true,
+  "prior_four_raw_and_convergence_files_unchanged": 80,
+  "prior_four_summary_rows_unchanged": true,
+  "raw_files_verified": 147,
+  "local_links_verified": true,
+  "failed_datasets": [],
+  "blocked_datasets": []
+}
