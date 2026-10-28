@@ -16,6 +16,7 @@ from preprocess import (
     build_pair_euclidean_features,
     build_point_feature_tensors,
     load_label_pairs_csv,
+    load_fixed_split_samples,
 )
 from build_highway import (
     build_pipeline_inputs_cached,
@@ -157,6 +158,25 @@ def build_parser():
         type=str,
         default="distance",
         help="外部标签 CSV 中作为监督距离的列名（精确测地结果里是 exact_geo）",
+    )
+    parser.add_argument(
+        "--train_pairs_file",
+        type=str,
+        default="",
+        help="固定划分：train 点对 CSV（含 s,t 列，距离从 --labels_file 查找）。"
+             "三个 pairs 文件同时给出时跳过随机洗牌切分，复现归档划分协议",
+    )
+    parser.add_argument(
+        "--val_pairs_file",
+        type=str,
+        default="",
+        help="固定划分：val 点对 CSV（含 s,t 列）",
+    )
+    parser.add_argument(
+        "--test_pairs_file",
+        type=str,
+        default="",
+        help="固定划分：test 点对 CSV（含 s,t 列）",
     )
     parser.add_argument(
         "--run_tag",
@@ -575,12 +595,34 @@ if __name__ == "__main__":
             sample_strategy=args.sample_strategy,
             leaf_of=leaf_of,
         )
-    train_samples, val_samples, test_samples = split_distance_dataset(
-        sample_list=distance_samples,
-        train_ratio=args.train_percent,
-        val_ratio=0.1,
-        seed=args.seed,
-    )
+    if args.train_pairs_file or args.val_pairs_file or args.test_pairs_file:
+        # 固定划分：严格使用归档给出的 train/val/test 点对，跳过随机洗牌切分。
+        # 对照实验必须和已有模型在同一批 test 点上评估，否则数字不可比。
+        if not (args.train_pairs_file and args.val_pairs_file and args.test_pairs_file):
+            raise ValueError(
+                "--train_pairs_file / --val_pairs_file / --test_pairs_file 必须同时提供"
+            )
+        if not args.labels_file:
+            raise ValueError("固定划分需要同时用 --labels_file 提供监督距离列")
+        _resolve = lambda p: p if os.path.isabs(p) else os.path.join(project_root, p)
+        sample_by_pair = {(s["s"], s["t"]): s for s in distance_samples}
+        train_samples, val_samples, test_samples = load_fixed_split_samples(
+            train_csv=_resolve(args.train_pairs_file),
+            val_csv=_resolve(args.val_pairs_file),
+            test_csv=_resolve(args.test_pairs_file),
+            sample_by_pair=sample_by_pair,
+        )
+        print(
+            f"[distance] 固定划分（跳过随机切分）：train={len(train_samples)}, "
+            f"val={len(val_samples)}, test={len(test_samples)}"
+        )
+    else:
+        train_samples, val_samples, test_samples = split_distance_dataset(
+            sample_list=distance_samples,
+            train_ratio=args.train_percent,
+            val_ratio=0.1,
+            seed=args.seed,
+        )
     print(
         f"[distance] samples: train={len(train_samples)}, "
         f"val={len(val_samples)}, test={len(test_samples)}"

@@ -435,6 +435,53 @@ def load_label_pairs_csv(path, value_col="distance", num_nodes=None):
     return samples
 
 
+def load_fixed_split_samples(train_csv, val_csv, test_csv, sample_by_pair):
+    """按外部固定划分（train/val/test 三份点对 CSV）组装样本集。
+
+    与 split_distance_dataset 的随机洗牌切分不同，这里**严格使用文件里给出的点对**，
+    用于复现「按 CSV 行序 40000/5000/5000 固定划分」的归档协议：
+    消融/对照实验必须和已有模型在同一批 test 点上评估，否则数字不可比。
+
+    Args:
+        train_csv / val_csv / test_csv: 点对 CSV 路径，需含列 s, t
+            （行列顺序无所谓，按无向规范化后与标签表对齐）。
+        sample_by_pair: {(min(s,t), max(s,t)): sample_dict}，
+            一般由 load_label_pairs_csv 的返回结果构造，用来给每个点对补上监督距离。
+
+    Returns:
+        (train_samples, val_samples, test_samples)
+    """
+    import csv as _csv
+
+    def _read(path, split_name):
+        samples = []
+        missing = 0
+        with open(path, "r", encoding="utf-8-sig") as f:
+            reader = _csv.DictReader(f)
+            if not {"s", "t"}.issubset(reader.fieldnames or []):
+                raise ValueError(f"划分文件缺少列 s,t: {path}")
+            for row in reader:
+                s, t = int(row["s"]), int(row["t"])
+                key = (s, t) if s <= t else (t, s)
+                smp = sample_by_pair.get(key)
+                if smp is None:
+                    missing += 1
+                    continue
+                samples.append(smp)
+        if missing:
+            raise ValueError(
+                f"{split_name} 划分有 {missing} 个点对在标签表中找不到距离: {path}"
+            )
+        if not samples:
+            raise ValueError(f"{split_name} 划分为空: {path}")
+        return samples
+
+    train_samples = _read(train_csv, "train")
+    val_samples = _read(val_csv, "val")
+    test_samples = _read(test_csv, "test")
+    return train_samples, val_samples, test_samples
+
+
 def split_distance_dataset(sample_list, train_ratio=0.8, val_ratio=0.1, seed=42):
     """对**唯一**样本对做无重叠切分；输入已去重，故 train/val/test 之间不会泄漏同一对。"""
     random.seed(seed)
