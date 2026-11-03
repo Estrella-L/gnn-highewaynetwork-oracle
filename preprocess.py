@@ -875,8 +875,10 @@ def build_full_graph_tensors(graph_info, coords, feature_dim=64, device="cpu"):
     x = torch.tensor(np.ascontiguousarray(x_np), dtype=torch.float, device=device)
 
     eu, ev = graph_info[3][0], graph_info[3][1]
+    # 先 np.stack 成单个 (2,E) 数组再转 tensor：避免 "list of ndarrays" 的逐元素慢速转换
+    # （PyTorch UserWarning），张量内容与原写法完全一致
     edge_index = torch.tensor(
-        [np.asarray(eu, dtype=np.int64), np.asarray(ev, dtype=np.int64)],
+        np.stack([np.asarray(eu, dtype=np.int64), np.asarray(ev, dtype=np.int64)]),
         dtype=torch.long, device=device,
     )
     return x, edge_index
