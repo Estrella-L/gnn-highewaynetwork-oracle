@@ -13,11 +13,16 @@
 # single_gnn 若 CUDA OOM：在该配置命令后加  --single_gnn_head_batch 2048  重试。
 
 param(
-    [string[]]$terrains = @("BH_high", "SF_high", "USGS_CO", "USGS_WA")
+    [string[]]$terrains = @("BH_high", "SF_high", "USGS_CO", "USGS_WA"),
+    [string[]]$only = @()   # 例：-only A2,A3 只跑这两类配置（按 tag 前缀匹配）；默认三个配置全跑
 )
 
 $ErrorActionPreference = "Continue"
 $env:EUCLID_RESIDUAL_SCALE = "1.0"
+# 中文输出走 UTF-8，避免日志/控制台乱码
+$env:PYTHONIOENCODING = "utf-8"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
 New-Item -ItemType Directory -Force logs | Out-Null
 
 # A1：three_stage + direct（去欧氏残差）
@@ -39,6 +44,11 @@ foreach ($ds in $terrains) {
     }
     foreach ($c in $configs) {
         $tag = $c.tag
+        if ($only.Count -gt 0) {
+            $hit = $false
+            foreach ($o in $only) { if ($tag.StartsWith($o)) { $hit = $true; break } }
+            if (-not $hit) { continue }
+        }
         $done = "outputs\results\${ds}_${tag}.txt"
         if (Test-Path $done) {
             Write-Host "[已完成，跳过] $ds $tag"
