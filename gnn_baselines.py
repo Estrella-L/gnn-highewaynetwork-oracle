@@ -42,9 +42,14 @@
 因此可以直接复用 main.py 里 single_gnn 的「整图前向 + 单头批次梯度累积」训练循环。
 """
 import math
+import os as _os
 
 import torch
 import torch.nn as nn
+
+# 欧氏残差幅度：与 gnn.py 读同一个环境变量，默认 0.5（历史对照口径，区间 [0.5,1.5]x 直线距离）。
+# 五个地形归档 M0 用 1.0（区间 [0,2]x），baseline 对照跑法必须设 EUCLID_RESIDUAL_SCALE=1.0 才与 M0 同构。
+_RESIDUAL_SCALE = float(_os.environ.get("EUCLID_RESIDUAL_SCALE", "0.5"))
 
 
 # ---------------------------------------------------------------------------
@@ -55,7 +60,7 @@ def apply_output_parameterization(raw, mode, euclidean_feat=None):
 
     - "native"            : 各自论文原样（raw 线性输出，不加激活）
     - "softplus"          : softplus(raw)，与主方法 direct 模式一致
-    - "euclidean_residual": d_3D * (1 + 0.5*tanh(raw))，与主方法一致
+    - "euclidean_residual": d_3D * (1 + s*tanh(raw))，s=EUCLID_RESIDUAL_SCALE（默认 0.5），与主方法一致
     """
     if mode == "native":
         return raw
@@ -65,7 +70,7 @@ def apply_output_parameterization(raw, mode, euclidean_feat=None):
         if euclidean_feat is None:
             raise ValueError("euclidean_residual 需要 euclidean_feat")
         base = torch.expm1(euclidean_feat.to(raw.device).view(-1)).clamp_min(1e-6)
-        return (base * (1.0 + 0.5 * torch.tanh(raw))).clamp_min(1e-6)
+        return (base * (1.0 + _RESIDUAL_SCALE * torch.tanh(raw))).clamp_min(1e-6)
     raise ValueError("unknown prediction_mode: " + mode)
 
 
