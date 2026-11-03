@@ -603,6 +603,12 @@ def precompute_nearest_k(access_dist, k_max=16):
     Returns:
         np.ndarray[int32]: [N, kk] 最近入口的 local 索引（近→远），kk = min(k_max, K)。
     """
+    # 轻量 topk 视图（build_highway.AccessTopK，大图默认走那条路径）：
+    # 每行最近若干入口已按距离升序存好，直接切片即可，无需也无法 np.asarray 成稠密矩阵。
+    topk_idx_view = getattr(access_dist, "topk_idx", None)
+    if topk_idx_view is not None:
+        kk_view = min(max(1, k_max), topk_idx_view.shape[1])
+        return np.asarray(topk_idx_view[:, :kk_view], dtype=np.int32)
     arr = np.asarray(access_dist, dtype=np.float32)
     n, K = arr.shape
     kk = min(max(1, k_max), K)

@@ -31,6 +31,95 @@ import math
 import os
 from collections import defaultdict
 
+import numpy as np
+
+
+# ---------------------------------------------------------------------------
+# access 距离表：轻量 topk 视图 + 滚动归并
+# ---------------------------------------------------------------------------
+# 每节点预存的高速入口数上限：与训练侧 precompute_nearest_k(k_max=16) 及归档 M0 的
+# topk-16 口径一致；消费侧只会用到每行最近 ≤16 个入口，未存入口按 inf 处理。
+ACCESS_TOPK_KEEP = 16
+# 滚动归并的列批大小：每积累这么多高速源列就与 topk 表合并一次（控制 N×(keep+batch) 临时内存）
+_ACCESS_MERGE_BATCH = 64
+
+
+class _AccessRowProxy:
+    """单行只读视图（语义等价稠密 [K] 行）：j 在预存 topk 内返回其距离，否则 inf。
+
+    实现 __len__/__getitem__ 的序列协议，因此 sorted/enumerate 等整行遍历也能用
+    （如 baseline._nearest_indices 的兜底路径），只是整行扫是 O(K)。
+    """
+
+    __slots__ = ("_idx", "_dist", "_K")
+
+    def __init__(self, idx, dist, K):
+        self._idx = idx
+        self._dist = dist
+        self._K = K
+
+    def __len__(self):
+        return self._K
+
+    def __getitem__(self, j):
+        j = int(j)
+        if j < 0:
+            j += self._K  # 与 numpy 负索引语义一致
+        if j < 0 or j >= self._K:
+            # 越界必须抛 IndexError：序列迭代协议（enumerate/sorted/for）靠它终止，
+            # 否则 for 循环会永远取下去（每次都返回 inf）
+            raise IndexError(j)
+        for p in range(len(self._idx)):
+            if int(self._idx[p]) == j:
+                return float(self._dist[p])
+        return float("inf")
+
+
+class AccessTopK:
+    """替代 [N,K] 稠密 access 矩阵的轻量只读视图：每节点只存最近 kk 个高速入口。
+
+    稠密矩阵在百万级顶点 × 数万高速点下需上百 GiB（BH_high：1318844×33531≈165 GiB），
+    而消费侧（precompute_nearest_k / 逐样本入口选取 / access 距离特征）只触及每行最近 16
+    项，因此只保留 topk 即可保持语义一致（未存入口按 inf；与归档 M0 的 topk-16 runner 同口径）。
+    支持 list 式访问 access_dist[node][j]；可被 pickle（随 outputs/cache 的 .pt 存取）。
+    """
+
+    def __init__(self, topk_idx, topk_dist, K):
+        self.topk_idx = np.asarray(topk_idx, dtype=np.int32)      # [N, kk] local 索引，近→远
+        self.topk_dist = np.asarray(topk_dist, dtype=np.float32)  # [N, kk] 对应距离
+        self.K = int(K)
+        self.shape = (self.topk_idx.shape[0], self.K)
+
+    def __getitem__(self, node):
+        node = int(node)
+        n_rows = self.shape[0]
+        if node < 0:
+            node += n_rows
+        if node < 0 or node >= n_rows:
+            raise IndexError(node)  # 同上：序列协议靠 IndexError 终止
+        return _AccessRowProxy(self.topk_idx[node], self.topk_dist[node], self.K)
+
+
+def _merge_access_topk(topk_dist, topk_idx, pending, keep):
+    """把一批 (local 列号, 列距离[N]) 归并进滚动 topk 表（就地更新，保持近→远有序）。
+
+    内存峰值 O(N×(keep+batch))，远小于稠密 O(N×K)；同距时稳定排序保证确定性。
+    """
+    n = topk_dist.shape[0]
+    cols = np.stack([c for _, c in pending], axis=1)                     # [N, c] float32
+    col_ids = np.asarray([l for l, _ in pending], dtype=np.int32)        # [c]
+    cat_dist = np.concatenate([topk_dist, cols], axis=1)                 # [N, keep+c]
+    cat_idx = np.concatenate(
+        [topk_idx, np.broadcast_to(col_ids, (n, len(pending)))], axis=1
+    )
+    take = np.argpartition(cat_dist, keep - 1, axis=1)[:, :keep]
+    rows = np.arange(n)[:, None]
+    new_dist = cat_dist[rows, take]
+    new_idx = cat_idx[rows, take]
+    order = np.argsort(new_dist, axis=1, kind="stable")
+    topk_dist[:] = new_dist[rows, order]
+    topk_idx[:] = new_idx[rows, order]
+
 
 # ---------------------------------------------------------------------------
 # .off 读取（与 EAR-Oracle 的输入格式一致）
@@ -358,11 +447,30 @@ def build_pipeline_inputs(
 
     # (2) 流式：每个高速点一次全图 Dijkstra → 填 access_dist 列 + 盒内 transit 边，随即丢弃
     #     底层用 iter_source_distances（有 scipy 走 C 分块，否则回退 Python），保持 O(chunk×N) 内存。
+    #     K 较大时不物化 [N,K] 稠密矩阵（百万顶点×数万高速点需上百 GiB，本机直接 OOM），
+    #     改为滚动维护每节点最近 ACCESS_TOPK_KEEP 个入口的 AccessTopK 视图——消费侧本就
+    #     只用 top-16（precompute_nearest_k k_max=16），与归档 M0 的 topk-16 口径一致；
+    #     K ≤ keep 的小图仍走原稠密路径。
     eu_g, ev_g, ew_g = graph_info[3][0], graph_info[3][1], graph_info[4]
-    access_dist = np.full((n_full, K), np.inf, dtype=np.float32)
+    kk_keep = min(ACCESS_TOPK_KEEP, K)
+    if kk_keep >= K:
+        access_dist = np.full((n_full, K), np.inf, dtype=np.float32)
+        topk_dist = topk_idx = None
+    else:
+        access_dist = None
+        topk_dist = np.full((n_full, kk_keep), np.inf, dtype=np.float32)
+        topk_idx = np.full((n_full, kk_keep), -1, dtype=np.int32)
+    pending_cols = []
     for g, dl in iter_source_distances(n_full, eu_g, ev_g, ew_g, boundary_sorted, weighted=weighted):
         local = g2l[g]
-        access_dist[:, local] = np.asarray(dl, dtype=np.float32)
+        col = np.asarray(dl, dtype=np.float32)
+        if access_dist is not None:
+            access_dist[:, local] = col
+        else:
+            pending_cols.append((local, col))
+            if len(pending_cols) >= _ACCESS_MERGE_BATCH:
+                _merge_access_topk(topk_dist, topk_idx, pending_cols, kk_keep)
+                pending_cols.clear()
         transit_candidates = []
         for b in cell_members[leaf_of[g]]:
             db = dl[b]
@@ -373,6 +481,11 @@ def build_pipeline_inputs(
             transit_candidates = transit_candidates[:transit_k]
         for db, b in transit_candidates:
             _add_edge(g, b, db)
+    if access_dist is None:
+        if pending_cols:
+            _merge_access_topk(topk_dist, topk_idx, pending_cols, kk_keep)
+            pending_cols.clear()
+        access_dist = AccessTopK(topk_idx, topk_dist, K)
 
     # 高速图内部 local 邻接（收集边+权）+ 两两最短路（float32 存储）
     local_u, local_v, local_w = [], [], []
