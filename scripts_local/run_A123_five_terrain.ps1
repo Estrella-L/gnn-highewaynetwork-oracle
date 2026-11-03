@@ -23,10 +23,12 @@ New-Item -ItemType Directory -Force logs | Out-Null
 # A1：three_stage + direct（去欧氏残差）
 # A2：single_gnn + euclidean_residual（去分区+highway）
 # A3：single_gnn + direct（两项都去）
+# 顺序：先跑快的 A2/A3（single_gnn 无高速预处理，每轮几秒），A1 放最后
+# （three_stage 首次需数小时的高速 Dijkstra 预处理，之后走缓存）。
 $configs = @(
-    @{ tag = "A1_no_res_s42_100ep";        arch = "three_stage"; mode = "direct" },
     @{ tag = "A2_single_res_s42_100ep";    arch = "single_gnn";  mode = "euclidean_residual" },
-    @{ tag = "A3_single_direct_s42_100ep"; arch = "single_gnn";  mode = "direct" }
+    @{ tag = "A3_single_direct_s42_100ep"; arch = "single_gnn";  mode = "direct" },
+    @{ tag = "A1_no_res_s42_100ep";        arch = "three_stage"; mode = "direct" }
 )
 
 foreach ($ds in $terrains) {
